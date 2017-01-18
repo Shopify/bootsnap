@@ -1,0 +1,1133 @@
+AllCops:
+  Exclude:
+  - 'db/schema.rb'
+  DisabledByDefault: true
+
+Style/AccessModifierIndentation:
+  EnforcedStyle: indent
+  SupportedStyles:
+  - outdent
+  - indent
+  IndentationWidth:
+
+Style/Alias:
+  EnforcedStyle: prefer_alias_method
+  SupportedStyles:
+  - prefer_alias
+  - prefer_alias_method
+
+Style/AlignHash:
+  EnforcedHashRocketStyle: key
+  EnforcedColonStyle: key
+  EnforcedLastArgumentHashStyle: ignore_implicit
+  SupportedLastArgumentHashStyles:
+  - always_inspect
+  - always_ignore
+  - ignore_implicit
+  - ignore_explicit
+
+Style/AlignParameters:
+  EnforcedStyle: with_fixed_indentation
+  SupportedStyles:
+  - with_first_parameter
+  - with_fixed_indentation
+  IndentationWidth:
+
+Style/AndOr:
+  EnforcedStyle: always
+  SupportedStyles:
+  - always
+  - conditionals
+
+Style/BarePercentLiterals:
+  EnforcedStyle: bare_percent
+  SupportedStyles:
+  - percent_q
+  - bare_percent
+
+Style/BlockDelimiters:
+  EnforcedStyle: line_count_based
+  SupportedStyles:
+  - line_count_based
+  - semantic
+  - braces_for_chaining
+  ProceduralMethods:
+  - benchmark
+  - bm
+  - bmbm
+  - create
+  - each_with_object
+  - measure
+  - new
+  - realtime
+  - tap
+  - with_object
+  FunctionalMethods:
+  - let
+  - let!
+  - subject
+  - watch
+  IgnoredMethods:
+  - lambda
+  - proc
+  - it
+
+Style/BracesAroundHashParameters:
+  EnforcedStyle: no_braces
+  SupportedStyles:
+  - braces
+  - no_braces
+  - context_dependent
+
+Style/CaseIndentation:
+  IndentWhenRelativeTo: end
+  SupportedStyles:
+  - case
+  - end
+  IndentOneStep: false
+  IndentationWidth:
+
+Style/ClassAndModuleChildren:
+  EnforcedStyle: nested
+  SupportedStyles:
+  - nested
+  - compact
+
+Style/ClassCheck:
+  EnforcedStyle: is_a?
+  SupportedStyles:
+  - is_a?
+  - kind_of?
+
+Style/CommandLiteral:
+  EnforcedStyle: backticks
+  SupportedStyles:
+  - backticks
+  - percent_x
+  - mixed
+  AllowInnerBackticks: false
+
+Style/CommentAnnotation:
+  Keywords:
+  - TODO
+  - FIXME
+  - OPTIMIZE
+  - HACK
+  - REVIEW
+
+Style/ConditionalAssignment:
+  EnforcedStyle: assign_to_condition
+  SupportedStyles:
+  - assign_to_condition
+  - assign_inside_condition
+  SingleLineConditionsOnly: true
+
+Style/DotPosition:
+  EnforcedStyle: leading
+  SupportedStyles:
+  - leading
+  - trailing
+
+Style/EmptyElse:
+  EnforcedStyle: both
+  SupportedStyles:
+  - empty
+  - nil
+  - both
+
+Style/EmptyLineBetweenDefs:
+  AllowAdjacentOneLineDefs: false
+
+Style/EmptyLinesAroundBlockBody:
+  EnforcedStyle: no_empty_lines
+  SupportedStyles:
+  - empty_lines
+  - no_empty_lines
+
+Style/EmptyLinesAroundClassBody:
+  EnforcedStyle: no_empty_lines
+  SupportedStyles:
+  - empty_lines
+  - empty_lines_except_namespace
+  - no_empty_lines
+
+Style/EmptyLinesAroundModuleBody:
+  EnforcedStyle: no_empty_lines
+  SupportedStyles:
+  - empty_lines
+  - empty_lines_except_namespace
+  - no_empty_lines
+
+Style/ExtraSpacing:
+  AllowForAlignment: true
+  ForceEqualSignAlignment: false
+
+Style/FileName:
+  Exclude: []
+  ExpectMatchingDefinition: false
+  Regex:
+  IgnoreExecutableScripts: true
+
+Style/FirstParameterIndentation:
+  EnforcedStyle: consistent
+  SupportedStyles:
+  - consistent
+  - special_for_inner_method_call
+  - special_for_inner_method_call_in_parentheses
+  IndentationWidth:
+
+Style/For:
+  EnforcedStyle: each
+  SupportedStyles:
+  - for
+  - each
+
+Style/FormatString:
+  EnforcedStyle: format
+  SupportedStyles:
+  - format
+  - sprintf
+  - percent
+
+Style/GlobalVars:
+  AllowedVariables: []
+
+Style/HashSyntax:
+  EnforcedStyle: ruby19
+  SupportedStyles:
+  - ruby19
+  - hash_rockets
+  - no_mixed_keys
+  - ruby19_no_mixed_keys
+  UseHashRocketsWithSymbolValues: false
+  PreferHashRocketsForNonAlnumEndingSymbols: false
+
+Style/IndentationConsistency:
+  EnforcedStyle: normal
+  SupportedStyles:
+  - normal
+  - rails
+
+Style/IndentationWidth:
+  Width: 2
+
+Style/IndentArray:
+  EnforcedStyle: consistent
+  SupportedStyles:
+  - special_inside_parentheses
+  - consistent
+  - align_brackets
+  IndentationWidth:
+
+Style/IndentAssignment:
+  IndentationWidth:
+
+Style/IndentHash:
+  EnforcedStyle: consistent
+  SupportedStyles:
+  - special_inside_parentheses
+  - consistent
+  - align_braces
+  IndentationWidth:
+
+Style/LambdaCall:
+  EnforcedStyle: call
+  SupportedStyles:
+  - call
+  - braces
+
+Style/Next:
+  EnforcedStyle: skip_modifier_ifs
+  MinBodyLength: 3
+  SupportedStyles:
+  - skip_modifier_ifs
+  - always
+
+Style/NonNilCheck:
+  IncludeSemanticChanges: false
+
+Style/MethodDefParentheses:
+  EnforcedStyle: require_parentheses
+  SupportedStyles:
+  - require_parentheses
+  - require_no_parentheses
+  - require_no_parentheses_except_multiline
+
+Style/MethodName:
+  EnforcedStyle: snake_case
+  SupportedStyles:
+  - snake_case
+  - camelCase
+
+Style/MultilineArrayBraceLayout:
+  EnforcedStyle: symmetrical
+  SupportedStyles:
+  - symmetrical
+  - new_line
+  - same_line
+
+Style/MultilineHashBraceLayout:
+  EnforcedStyle: symmetrical
+  SupportedStyles:
+  - symmetrical
+  - new_line
+  - same_line
+
+Style/MultilineMethodCallBraceLayout:
+  EnforcedStyle: symmetrical
+  SupportedStyles:
+  - symmetrical
+  - new_line
+  - same_line
+
+Style/MultilineMethodCallIndentation:
+  EnforcedStyle: indented
+  SupportedStyles:
+  - aligned
+  - indented
+  - indented_relative_to_receiver
+  IndentationWidth: 2
+
+Style/MultilineMethodDefinitionBraceLayout:
+  EnforcedStyle: symmetrical
+  SupportedStyles:
+  - symmetrical
+  - new_line
+  - same_line
+
+Style/NumericLiteralPrefix:
+  EnforcedOctalStyle: zero_only
+  SupportedOctalStyles:
+  - zero_with_o
+  - zero_only
+
+Style/ParenthesesAroundCondition:
+  AllowSafeAssignment: true
+
+Style/PercentLiteralDelimiters:
+  PreferredDelimiters:
+    '%': '()'
+    '%i': '()'
+    '%q': '()'
+    '%Q': '()'
+    '%r': '{}'
+    '%s': '()'
+    '%w': '()'
+    '%W': '()'
+    '%x': '()'
+
+Style/PercentQLiterals:
+  EnforcedStyle: lower_case_q
+  SupportedStyles:
+  - lower_case_q
+  - upper_case_q
+
+Style/PredicateName:
+  NamePrefix:
+  - is_
+  - has_
+  - have_
+  NamePrefixBlacklist:
+  - is_
+  - has_
+  - have_
+  NameWhitelist:
+  - is_a?
+  Exclude:
+  - 'spec/**/*'
+
+Style/PreferredHashMethods:
+  EnforcedStyle: short
+  SupportedStyles:
+  - short
+  - verbose
+
+Style/RaiseArgs:
+  EnforcedStyle: exploded
+  SupportedStyles:
+  - compact
+  - exploded
+
+Style/RedundantReturn:
+  AllowMultipleReturnValues: false
+
+Style/RegexpLiteral:
+  EnforcedStyle: slashes
+  SupportedStyles:
+  - slashes
+  - percent_r
+  - mixed
+  AllowInnerSlashes: false
+
+Style/SafeNavigation:
+  ConvertCodeThatCanStartToReturnNil: false
+
+Style/Semicolon:
+  AllowAsExpressionSeparator: false
+
+Style/SignalException:
+  EnforcedStyle: only_raise
+  SupportedStyles:
+  - only_raise
+  - only_fail
+  - semantic
+
+Style/SingleLineMethods:
+  AllowIfMethodIsEmpty: true
+
+Style/SpaceBeforeFirstArg:
+  AllowForAlignment: true
+
+Style/SpecialGlobalVars:
+  EnforcedStyle: use_english_names
+  SupportedStyles:
+  - use_perl_names
+  - use_english_names
+
+Style/StabbyLambdaParentheses:
+  EnforcedStyle: require_parentheses
+  SupportedStyles:
+  - require_parentheses
+  - require_no_parentheses
+
+Style/StringLiteralsInInterpolation:
+  EnforcedStyle: single_quotes
+  SupportedStyles:
+  - single_quotes
+  - double_quotes
+
+Style/SpaceAroundBlockParameters:
+  EnforcedStyleInsidePipes: no_space
+  SupportedStyles:
+  - space
+  - no_space
+
+Style/SpaceAroundEqualsInParameterDefault:
+  EnforcedStyle: space
+  SupportedStyles:
+  - space
+  - no_space
+
+Style/SpaceAroundOperators:
+  AllowForAlignment: true
+
+Style/SpaceBeforeBlockBraces:
+  EnforcedStyle: space
+  SupportedStyles:
+  - space
+  - no_space
+
+Style/SpaceInsideBlockBraces:
+  EnforcedStyle: space
+  SupportedStyles:
+  - space
+  - no_space
+  EnforcedStyleForEmptyBraces: no_space
+  SpaceBeforeBlockParameters: true
+
+Style/SpaceInsideHashLiteralBraces:
+  EnforcedStyle: space
+  EnforcedStyleForEmptyBraces: no_space
+  SupportedStyles:
+  - space
+  - no_space
+  - compact
+
+Style/SpaceInsideStringInterpolation:
+  EnforcedStyle: no_space
+  SupportedStyles:
+  - space
+  - no_space
+
+Style/SymbolProc:
+  IgnoredMethods:
+  - respond_to
+  - define_method
+
+Style/TernaryParentheses:
+  EnforcedStyle: require_no_parentheses
+  SupportedStyles:
+  - require_parentheses
+  - require_no_parentheses
+  AllowSafeAssignment: true
+
+Style/TrailingBlankLines:
+  EnforcedStyle: final_newline
+  SupportedStyles:
+  - final_newline
+  - final_blank_line
+
+Style/TrivialAccessors:
+  ExactNameMatch: true
+  AllowPredicates: true
+  AllowDSLWriters: false
+  IgnoreClassMethods: false
+  Whitelist:
+  - to_ary
+  - to_a
+  - to_c
+  - to_enum
+  - to_h
+  - to_hash
+  - to_i
+  - to_int
+  - to_io
+  - to_open
+  - to_path
+  - to_proc
+  - to_r
+  - to_regexp
+  - to_str
+  - to_s
+  - to_sym
+
+Style/VariableName:
+  EnforcedStyle: snake_case
+  SupportedStyles:
+  - snake_case
+  - camelCase
+
+Style/WhileUntilModifier:
+  MaxLineLength: 80
+
+Style/WordArray:
+  EnforcedStyle: percent
+  SupportedStyles:
+  - percent
+  - brackets
+  MinSize: 0
+  WordRegex: !ruby/regexp /\A[\p{Word}\n\t]+\z/
+
+Metrics/BlockNesting:
+  Max: 3
+
+Metrics/LineLength:
+  Max: 120
+  AllowHeredoc: true
+  AllowURI: true
+  URISchemes:
+  - http
+  - https
+  IgnoreCopDirectives: false
+  IgnoredPatterns:
+  - '\A\s*test\s.*(do|->)\Z'
+
+Metrics/ParameterLists:
+  Max: 5
+  CountKeywordArgs: false
+
+Lint/BlockAlignment:
+  AlignWith: either
+  SupportedStyles:
+  - either
+  - start_of_block
+  - start_of_line
+
+Lint/EndAlignment:
+  AlignWith: variable
+  SupportedStyles:
+  - keyword
+  - variable
+  - start_of_line
+
+Lint/DefEndAlignment:
+  AlignWith: start_of_line
+  SupportedStyles:
+  - start_of_line
+  - def
+
+Lint/InheritException:
+  EnforcedStyle: runtime_error
+  SupportedStyles:
+  - runtime_error
+  - standard_error
+
+Lint/UnusedBlockArgument:
+  IgnoreEmptyBlocks: true
+  AllowUnusedKeywordArguments: false
+
+Lint/UnusedMethodArgument:
+  AllowUnusedKeywordArguments: false
+  IgnoreEmptyMethods: true
+
+Performance/RedundantMerge:
+  MaxKeyValuePairs: 2
+
+Rails/ActionFilter:
+  EnforcedStyle: action
+  SupportedStyles:
+  - action
+  - filter
+  Include:
+  - app/controllers/**/*.rb
+
+Rails/Date:
+  EnforcedStyle: flexible
+  SupportedStyles:
+  - strict
+  - flexible
+
+Rails/DynamicFindBy:
+  Whitelist:
+  - find_by_sql
+
+Rails/Exit:
+  Include:
+  - app/**/*.rb
+  - config/**/*.rb
+  - lib/**/*.rb
+  Exclude:
+  - 'lib/**/*.rake'
+
+Rails/FindBy:
+  Include:
+  - app/models/**/*.rb
+
+Rails/FindEach:
+  Include:
+  - app/models/**/*.rb
+
+Rails/HasAndBelongsToMany:
+  Include:
+  - app/models/**/*.rb
+
+Rails/NotNullColumn:
+  Include:
+  - db/migrate/*.rb
+
+Rails/Output:
+  Include:
+  - app/**/*.rb
+  - config/**/*.rb
+  - db/**/*.rb
+  - lib/**/*.rb
+
+Rails/ReadWriteAttribute:
+  Include:
+  - app/models/**/*.rb
+
+Rails/RequestReferer:
+  EnforcedStyle: referer
+  SupportedStyles:
+  - referer
+  - referrer
+
+Rails/SafeNavigation:
+  ConvertTry: false
+
+Rails/ScopeArgs:
+  Include:
+  - app/models/**/*.rb
+
+Rails/TimeZone:
+  EnforcedStyle: flexible
+  SupportedStyles:
+  - strict
+  - flexible
+
+Rails/UniqBeforePluck:
+  EnforcedMode: conservative
+  SupportedModes:
+  - conservative
+  - aggressive
+
+Rails/Validation:
+  Include:
+  - app/models/**/*.rb
+
+Style/AccessorMethodName:
+  Enabled: true
+
+Style/AlignArray:
+  Enabled: true
+
+Style/ArrayJoin:
+  Enabled: true
+
+Style/AsciiIdentifiers:
+  Enabled: true
+
+Style/Attr:
+  Enabled: true
+
+Style/BeginBlock:
+  Enabled: true
+
+Style/BlockComments:
+  Enabled: true
+
+Style/BlockEndNewline:
+  Enabled: true
+
+Style/CaseEquality:
+  Enabled: true
+
+Style/CharacterLiteral:
+  Enabled: true
+
+Style/ClassAndModuleCamelCase:
+  Enabled: true
+
+Style/ClassMethods:
+  Enabled: true
+
+Style/ClassVars:
+  Enabled: true
+
+Style/ClosingParenthesisIndentation:
+  Enabled: true
+
+Style/ColonMethodCall:
+  Enabled: true
+
+Style/CommentIndentation:
+  Enabled: true
+
+Style/ConstantName:
+  Enabled: true
+
+Style/DefWithParentheses:
+  Enabled: true
+
+Style/EachForSimpleLoop:
+  Enabled: true
+
+Style/EachWithObject:
+  Enabled: true
+
+Style/ElseAlignment:
+  Enabled: true
+
+Style/EmptyCaseCondition:
+  Enabled: true
+
+Style/EmptyLines:
+  Enabled: true
+
+Style/EmptyLinesAroundAccessModifier:
+  Enabled: true
+
+Style/EmptyLinesAroundMethodBody:
+  Enabled: true
+
+Style/EmptyLiteral:
+  Enabled: true
+
+Style/EndBlock:
+  Enabled: true
+
+Style/EndOfLine:
+  Enabled: true
+
+Style/EvenOdd:
+  Enabled: true
+
+Style/InitialIndentation:
+  Enabled: true
+
+Style/FlipFlop:
+  Enabled: true
+
+Style/IfInsideElse:
+  Enabled: true
+
+Style/IfUnlessModifierOfIfUnless:
+  Enabled: true
+
+Style/IfWithSemicolon:
+  Enabled: true
+
+Style/IdenticalConditionalBranches:
+  Enabled: true
+
+Style/InfiniteLoop:
+  Enabled: true
+
+Style/LeadingCommentSpace:
+  Enabled: true
+
+Style/LineEndConcatenation:
+  Enabled: true
+
+Style/MethodCallParentheses:
+  Enabled: true
+
+Style/MethodMissing:
+  Enabled: true
+
+Style/MultilineBlockChain:
+  Enabled: true
+
+Style/MultilineBlockLayout:
+  Enabled: true
+
+Style/MultilineIfThen:
+  Enabled: true
+
+Style/MultilineMemoization:
+  Enabled: true
+
+Style/MultilineTernaryOperator:
+  Enabled: true
+
+Style/NegatedIf:
+  Enabled: true
+
+Style/NegatedWhile:
+  Enabled: true
+
+Style/NestedModifier:
+  Enabled: true
+
+Style/NestedParenthesizedCalls:
+  Enabled: true
+
+Style/NestedTernaryOperator:
+  Enabled: true
+
+Style/NilComparison:
+  Enabled: true
+
+Style/Not:
+  Enabled: true
+
+Style/OneLineConditional:
+  Enabled: true
+
+Style/OpMethod:
+  Enabled: true
+
+Style/OptionalArguments:
+  Enabled: true
+
+Style/ParallelAssignment:
+  Enabled: true
+
+Style/PerlBackrefs:
+  Enabled: true
+
+Style/Proc:
+  Enabled: true
+
+Style/RedundantBegin:
+  Enabled: true
+
+Style/RedundantException:
+  Enabled: true
+
+Style/RedundantFreeze:
+  Enabled: true
+
+Style/RedundantParentheses:
+  Enabled: true
+
+Style/RedundantSelf:
+  Enabled: true
+
+Style/RescueEnsureAlignment:
+  Enabled: true
+
+Style/RescueModifier:
+  Enabled: true
+
+Style/SelfAssignment:
+  Enabled: true
+
+Style/SpaceAfterColon:
+  Enabled: true
+
+Style/SpaceAfterComma:
+  Enabled: true
+
+Style/SpaceAfterMethodName:
+  Enabled: true
+
+Style/SpaceAfterNot:
+  Enabled: true
+
+Style/SpaceAfterSemicolon:
+  Enabled: true
+
+Style/SpaceBeforeComma:
+  Enabled: true
+
+Style/SpaceBeforeComment:
+  Enabled: true
+
+Style/SpaceBeforeSemicolon:
+  Enabled: true
+
+Style/SpaceAroundKeyword:
+  Enabled: true
+
+Style/SpaceInsideArrayPercentLiteral:
+  Enabled: true
+
+Style/SpaceInsidePercentLiteralDelimiters:
+  Enabled: true
+
+Style/SpaceInsideBrackets:
+  Enabled: true
+
+Style/SpaceInsideParens:
+  Enabled: true
+
+Style/SpaceInsideRangeLiteral:
+  Enabled: true
+
+Style/SymbolLiteral:
+  Enabled: true
+
+Style/Tab:
+  Enabled: true
+
+Style/TrailingWhitespace:
+  Enabled: true
+
+Style/UnlessElse:
+  Enabled: true
+
+Style/UnneededCapitalW:
+  Enabled: true
+
+Style/UnneededInterpolation:
+  Enabled: true
+
+Style/UnneededPercentQ:
+  Enabled: true
+
+Style/VariableInterpolation:
+  Enabled: true
+
+Style/WhenThen:
+  Enabled: true
+
+Style/WhileUntilDo:
+  Enabled: true
+
+Style/ZeroLengthPredicate:
+  Enabled: true
+
+Lint/AmbiguousOperator:
+  Enabled: true
+
+Lint/AmbiguousRegexpLiteral:
+  Enabled: true
+
+Lint/CircularArgumentReference:
+  Enabled: true
+
+Lint/ConditionPosition:
+  Enabled: true
+
+Lint/Debugger:
+  Enabled: true
+
+Lint/DeprecatedClassMethods:
+  Enabled: true
+
+Lint/DuplicateMethods:
+  Enabled: true
+
+Lint/DuplicatedKey:
+  Enabled: true
+
+Lint/EachWithObjectArgument:
+  Enabled: true
+
+Lint/ElseLayout:
+  Enabled: true
+
+Lint/EmptyEnsure:
+  Enabled: true
+
+Lint/EmptyInterpolation:
+  Enabled: true
+
+Lint/EndInMethod:
+  Enabled: true
+
+Lint/EnsureReturn:
+  Enabled: true
+
+Lint/Eval:
+  Enabled: true
+
+Lint/FloatOutOfRange:
+  Enabled: true
+
+Lint/FormatParameterMismatch:
+  Enabled: true
+
+Lint/HandleExceptions:
+  Enabled: true
+
+Lint/ImplicitStringConcatenation:
+  Description: Checks for adjacent string literals on the same line, which could
+    better be represented as a single string literal.
+
+Lint/IneffectiveAccessModifier:
+  Description: Checks for attempts to use `private` or `protected` to set the visibility
+    of a class method, which does not work.
+
+Lint/InvalidCharacterLiteral:
+  Description: Checks for invalid character literals with a non-escaped whitespace
+    character.
+
+Lint/LiteralInCondition:
+  Enabled: true
+
+Lint/LiteralInInterpolation:
+  Enabled: true
+
+Lint/Loop:
+  Description: Use Kernel#loop with break rather than begin/end/until or begin/end/while
+    for post-loop tests.
+
+Lint/NestedMethodDefinition:
+  Enabled: true
+
+Lint/NextWithoutAccumulator:
+  Description: Do not omit the accumulator when calling `next` in a `reduce`/`inject`
+    block.
+
+Lint/NonLocalExitFromIterator:
+  Enabled: true
+
+Lint/ParenthesesAsGroupedExpression:
+  Enabled: true
+
+Lint/PercentStringArray:
+  Enabled: true
+
+Lint/PercentSymbolArray:
+  Enabled: true
+
+Lint/RandOne:
+  Description: Checks for `rand(1)` calls. Such calls always return `0` and most
+    likely a mistake.
+
+Lint/RequireParentheses:
+  Enabled: true
+
+Lint/RescueException:
+  Enabled: true
+
+Lint/ShadowedException:
+  Enabled: true
+
+Lint/ShadowingOuterLocalVariable:
+  Enabled: true
+
+Lint/StringConversionInInterpolation:
+  Enabled: true
+
+Lint/UnderscorePrefixedVariableName:
+  Enabled: true
+
+Lint/UnifiedInteger:
+  Enabled: true
+
+Lint/UnneededDisable:
+  Enabled: true
+
+Lint/UnneededSplatExpansion:
+  Enabled: true
+
+Lint/UnreachableCode:
+  Enabled: true
+
+Lint/UselessAccessModifier:
+  ContextCreatingMethods: []
+
+Lint/UselessAssignment:
+  Enabled: true
+
+Lint/UselessComparison:
+  Enabled: true
+
+Lint/UselessElseWithoutRescue:
+  Enabled: true
+
+Lint/UselessSetterCall:
+  Enabled: true
+
+Lint/Void:
+  Enabled: true
+
+Performance/CaseWhenSplat:
+  Enabled: true
+
+Performance/Count:
+  SafeMode: true
+
+Performance/Detect:
+  SafeMode: true
+
+Performance/DoubleStartEndWith:
+  Enabled: true
+
+Performance/EndWith:
+  Enabled: true
+
+Performance/FixedSize:
+  Enabled: true
+
+Performance/FlatMap:
+  EnabledForFlattenWithoutParams: false
+
+Performance/HashEachMethods:
+  Enabled: true
+
+Performance/LstripRstrip:
+  Enabled: true
+
+Performance/RangeInclude:
+  Enabled: true
+
+Performance/RedundantBlockCall:
+  Enabled: true
+
+Performance/RedundantMatch:
+  Enabled: true
+
+Performance/RedundantSortBy:
+  Enabled: true
+
+Performance/ReverseEach:
+  Enabled: true
+
+Performance/Sample:
+  Enabled: true
+
+Performance/Size:
+  Enabled: true
+
+Performance/CompareWithBlock:
+  Enabled: true
+
+Performance/StartWith:
+  Enabled: true
+
+Performance/StringReplacement:
+  Enabled: true
+
+Rails/Delegate:
+  Enabled: true
+
+Rails/DelegateAllowBlank:
+  Enabled: true
+
+Rails/HttpPositionalArguments:
+  Include:
+  - spec/**/*
+  - test/**/*
+
+Rails/OutputSafety:
+  Enabled: true
+
+Rails/PluralizationGrammar:
+  Enabled: true
+
+Security/JSONLoad:
+  Enabled: true
