@@ -1,8 +1,24 @@
 # AOTCompileCache
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/aot_compile_cache`. To experiment with that code, run `bin/console` for an interactive prompt.
+Ruby spends a lot of time compiling source to bytecode, and a lot of Rails apps
+spend quite a bit of time parsing yaml. The majority of that code and data
+stays the same across many boots.
 
-TODO: Delete this and the text above, and describe your gem
+AOTCompileCache caches the results of those compilation (as a binary ISeq for
+ruby, and as MessagePack or Marshal for YAML) in extended filesystem attributes.
+
+This is what a successful cache hit looks like in strace/dtruss:
+
+```
+open("/path/to/file.rb", 0x2, 0x5)		 = 7 0
+fstat64(0x7, 0x7FFF57927728, 0x5)		 = 0 0
+fgetxattr(0x7, 0x108B51E10, 0x7FFF579277B8)		 = 25 0
+fgetxattr(0x7, 0x108B51E28, 0x7FD00F86F000)		 = 3626 0
+close(0x7)		 = 0 0
+```
+
+The data fetched from the xattr is the compiled bytecode/messagepack.
+
 
 ## Installation
 
@@ -12,17 +28,14 @@ Add this line to your application's Gemfile:
 gem 'aot_compile_cache'
 ```
 
-And then execute:
+Then, add, as early as possible in your application's boot process:
 
-    $ bundle
+```ruby
+require 'aot_compile_cache/iseq'
+require 'aot_compile_cache/yaml'
+```
 
-Or install it yourself as:
-
-    $ gem install aot_compile_cache
-
-## Usage
-
-TODO: Write usage instructions here
+Usually the best place for this is immediately after `require 'bundler/setup'`.
 
 ## Development
 
