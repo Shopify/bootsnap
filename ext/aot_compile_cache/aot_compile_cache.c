@@ -47,10 +47,10 @@ struct s2o_data {
   VALUE storage_data;
 };
 
-const uint8_t current_version = 9;
-const char * xattr_key_name = "com.shopify.AOTCacheKey";
-const size_t xattr_key_size = sizeof (struct xattr_key);
-const char * xattr_data_name = "com.apple.ResourceFork";
+static const uint8_t current_version = 9;
+static const char * xattr_key_name = "com.shopify.AOTCacheKey";
+static const size_t xattr_key_size = sizeof (struct xattr_key);
+static const char * xattr_data_name = "com.apple.ResourceFork";
 
 #ifdef __APPLE__
 #define XATTR_TRAILER ,0,0
