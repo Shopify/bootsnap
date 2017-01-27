@@ -1,18 +1,11 @@
-require "bundler/gem_tasks"
-require "rake/testtask"
+require 'rake/extensiontask'
 
-Rake::TestTask.new(:test) do |t|
-  t.libs << "test"
-  t.libs << "lib"
-  t.test_files = FileList['test/**/*_test.rb']
+gemspec = Gem::Specification.load('aot_compile_cache.gemspec')
+Rake::ExtensionTask.new do |ext|
+  ext.name = 'aot_compile_cache'
+  ext.ext_dir = 'ext/aot_compile_cache'
+  ext.lib_dir = 'lib/aot_compile_cache'
+  ext.gem_spec = gemspec
 end
 
-require "rake/extensiontask"
-
-task :build => :compile
-
-Rake::ExtensionTask.new("aot_compile_cache") do |ext|
-  ext.lib_dir = "lib/aot_compile_cache"
-end
-
-task :default => [:clobber, :compile, :test]
+task(default: :compile)

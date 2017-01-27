@@ -34,6 +34,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rake", "~> 10.0"
   spec.add_development_dependency "rake-compiler"
   spec.add_development_dependency "minitest", "~> 5.0"
+  spec.add_development_dependency "mocha", "~> 1.2"
 
   spec.add_runtime_dependency "msgpack", ">= 1.0.2"
 end

@@ -12,7 +12,6 @@
  * TODO:
  * - test on linux or reject on non-darwin
  * - source files over 4GB will likely break things (meh)
- * - toggleable debug logging
  */
 
 static VALUE rb_cAOTCompileCache;
@@ -59,7 +58,7 @@ static const char * xattr_data_name = "com.apple.ResourceFork";
 #endif
 
 /* forward declarations */
-static int aotcc_fetch_data(int fd, size_t size, VALUE handler, VALUE * storage_data);
+static int aotcc_fetch_data(int fd, size_t size, VALUE handler, VALUE * storage_data, int * exception_tag);
 static int aotcc_update_key(int fd, uint32_t data_size, uint64_t current_mtime, uint64_t current_checksum);
 static int aotcc_open(const char * path, bool * writable);
 static int aotcc_get_cache(int fd, struct xattr_key * key);
@@ -110,9 +109,9 @@ aotcc_compile_option_crc32_set(VALUE self, VALUE crc32val)
     goto fail; \
   } while(0);
 
-#define PROT_CHECK(ret) \
+#define PROT_CHECK(body) \
   do { \
-    (ret); \
+    (body); \
     if (exception_tag != 0) goto raise; \
   } while (0);
 
@@ -130,7 +129,7 @@ aotcc_fetch(VALUE self, VALUE pathval, VALUE handler)
   VALUE exception;
   int exception_tag;
 
-  int fd;
+  int fd, ret;
   bool valid_cache;
   bool writable;
   uint32_t data_size;
@@ -158,7 +157,10 @@ aotcc_fetch(VALUE self, VALUE pathval, VALUE handler)
   CHECKED(valid_cache = aotcc_get_cache(fd, &cache_key), "fgetxattr");
 
   if (valid_cache && cache_key.mtime == (uint64_t)statbuf.st_mtime) {
-    CHECKED(aotcc_fetch_data(fd, (size_t)cache_key.data_size, handler, &output_data), "fgetxattr/fetch-data");
+    ret = aotcc_fetch_data(fd, (size_t)cache_key.data_size, handler, &output_data, &exception_tag);
+    /* TODO: if the value was gone, recover gracefully */
+    PROT_CHECK((void)0);
+    CHECKED(ret, "fgetxattr/fetch-data");
     if (!NIL_P(output_data)) {
       SUCCEED(output_data);
     }
@@ -169,7 +171,10 @@ aotcc_fetch(VALUE self, VALUE pathval, VALUE handler)
   current_checksum = (uint64_t)crc32(contents, statbuf.st_size);
 
   if (valid_cache && current_checksum == cache_key.checksum) {
-    CHECKED(aotcc_fetch_data(fd, (size_t)cache_key.data_size, handler, &output_data), "fgetxattr/fetch-data");
+    ret = aotcc_fetch_data(fd, (size_t)cache_key.data_size, handler, &output_data, &exception_tag);
+    /* TODO: if the value was gone, recover gracefully */
+    PROT_CHECK((void)0);
+    CHECKED(ret, "fgetxattr/fetch-data");
     if (!NIL_P(output_data)) {
       if (writable) {
         CHECKED(aotcc_update_key(fd, (uint32_t)statbuf.st_size, statbuf.st_mtime, current_checksum), "fsetxattr");
@@ -188,13 +193,16 @@ aotcc_fetch(VALUE self, VALUE pathval, VALUE handler)
   }
 
   /* mtime and checksum both mismatched, or the cache was invalid/absent */
-  if (0 != (aotcc_input_to_storage(handler, input_data, pathval, &storage_data))) {
-    FAIL("input_to_storage", 0);
-  }
+  PROT_CHECK(exception_tag = aotcc_input_to_storage(handler, input_data, pathval, &storage_data));
   if (storage_data == uncompilable) {
     PROT_CHECK(aotcc_input_to_output(handler, input_data, &output_data, &exception_tag));
     SUCCEED(output_data);
   }
+
+  if (!RB_TYPE_P(storage_data, T_STRING)) {
+    goto invalid_type_storage_data;
+  }
+
   /* xattrs can't exceed 64MB */
   if (RB_TYPE_P(storage_data, T_STRING) && RSTRING_LEN(storage_data) > 64 * 1024 * 1024) {
     if (logging_enabled()) {
@@ -204,40 +212,40 @@ aotcc_fetch(VALUE self, VALUE pathval, VALUE handler)
     SUCCEED(output_data);
   }
 
-  if (!RB_TYPE_P(storage_data, T_STRING)) {
-    FAIL("unexpected type", 0);
-  }
-
   data_size = (uint32_t)RSTRING_LEN(storage_data);
 
   CHECKED(aotcc_update_key(fd, data_size, statbuf.st_mtime, current_checksum), "fsetxattr");
   CHECKED(fsetxattr(fd, xattr_data_name, RSTRING_PTR(storage_data), (size_t)data_size XATTR_TRAILER), "fsetxattr");
   CHECKED(aotcc_close_and_unclobber_times(&fd, path, statbuf.st_atime, statbuf.st_mtime), "close/utime");
-  if (0 != aotcc_storage_to_output(handler, storage_data, &output_data)) {
-    FAIL("storage_to_output", 0);
-  }
+  PROT_CHECK(exception_tag = aotcc_storage_to_output(handler, storage_data, &output_data));
+  /* TODO: input_to_output if storage_data is nil */
   SUCCEED(output_data);
 
 #undef return
 #undef rb_raise
-cleanup:
-  if (contents != 0) xfree(contents);
+#define CLEANUP \
+  if (contents != 0) xfree(contents); \
   if (fd > 0) close(fd);
+
+cleanup:
+  CLEANUP;
   return output_data;
 fail:
-  if (contents != 0) xfree(contents);
-  if (fd > 0) close(fd);
+  CLEANUP;
   rb_exc_raise(exception);
   __builtin_unreachable();
+invalid_type_storage_data:
+  CLEANUP;
+  Check_Type(storage_data, T_STRING);
+  __builtin_unreachable();
 raise:
-  if (contents != 0) xfree(contents);
-  if (fd > 0) close(fd);
+  CLEANUP;
   rb_jump_tag(exception_tag);
   __builtin_unreachable();
 }
 
 static int
-aotcc_fetch_data(int fd, size_t size, VALUE handler, VALUE * output_data)
+aotcc_fetch_data(int fd, size_t size, VALUE handler, VALUE * output_data, int * exception_tag)
 {
   int ret;
   ssize_t nbytes;
@@ -245,6 +253,7 @@ aotcc_fetch_data(int fd, size_t size, VALUE handler, VALUE * output_data)
   VALUE storage_data;
 
   *output_data = Qnil;
+  *exception_tag = 0;
 
   xattr_data = ALLOC_N(uint8_t, size);
   nbytes = fgetxattr(fd, xattr_data_name, xattr_data, size XATTR_TRAILER);
@@ -260,7 +269,8 @@ aotcc_fetch_data(int fd, size_t size, VALUE handler, VALUE * output_data)
   storage_data = rb_str_new(xattr_data, nbytes);
   ret = aotcc_storage_to_output(handler, storage_data, output_data);
   if (ret != 0) {
-    ret = -1; /* to work with CHECKED */
+    *exception_tag = ret;
+    errno = 0;
   }
 done:
   xfree(xattr_data);
