@@ -53,8 +53,10 @@ static const char * xattr_data_name = "com.apple.ResourceFork";
 
 #ifdef __APPLE__
 #define XATTR_TRAILER ,0,0
+#define REMOVE_XATTR_TRAILER ,0
 #else
 #define XATTR_TRAILER
+#define REMOVE_XATTR_TRAILER
 #endif
 
 /* forward declarations */
@@ -168,7 +170,7 @@ begin:
     if (ret == -1 && errno == ENOATTR) {
       /* the key was present, but the data was missing. remove the key, and
        * start over */
-      CHECK_C(fremovexattr(fd, xattr_key_name, 0), "fremovexattr");
+      CHECK_C(fremovexattr(fd, xattr_key_name REMOVE_XATTR_TRAILER), "fremovexattr");
       goto retry;
     }
     CHECK_RB0();
@@ -188,7 +190,7 @@ begin:
   if (valid_cache && current_checksum == cache_key.checksum) {
     ret = aotcc_fetch_data(fd, (size_t)cache_key.data_size, handler, &output_data, &exception_tag);
     if (ret == -1 && errno == ENOATTR) {
-      CHECK_C(fremovexattr(fd, xattr_key_name, 0), "fremovexattr");
+      CHECK_C(fremovexattr(fd, xattr_key_name REMOVE_XATTR_TRAILER), "fremovexattr");
       goto retry;
     }
     CHECK_RB0();
@@ -261,8 +263,8 @@ begin:
   /* if the storage data was broken, remove the cache and run input_to_output */
   if (output_data == Qnil) {
     /* deletion here is best effort; no need to fail if it does */
-    fremovexattr(fd, xattr_key_name, 0);
-    fremovexattr(fd, xattr_data_name, 0);
+    fremovexattr(fd, xattr_key_name REMOVE_XATTR_TRAILER);
+    fremovexattr(fd, xattr_data_name REMOVE_XATTR_TRAILER);
     CHECK_RB(aotcc_input_to_output(handler, input_data, &output_data, &exception_tag));
   }
 
