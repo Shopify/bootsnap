@@ -109,11 +109,11 @@ aotcc_compile_option_crc32_set(VALUE self, VALUE crc32val)
     goto fail; \
   } while(0);
 
+#define CHECK_RB0() \
+  do { if (exception_tag != 0) goto raise; } while (0);
+
 #define CHECK_RB(body) \
-  do { \
-    (body); \
-    if (exception_tag != 0) goto raise; \
-  } while (0);
+  do { (body); CHECK_RB0(); } while (0);
 
 #define SUCCEED(final) \
   do { \
@@ -151,41 +151,55 @@ begin:
   output_data = Qnil;
   contents = 0;
 
+  /* Blow up if we can't turn our argument into a char* */
   Check_Type(pathval, T_STRING);
   path = RSTRING_PTR(pathval);
 
+  /* open the file, get its mtime and read the cache key xattr */
   CHECK_C(fd          = aotcc_open(path, &writable),     "open");
   CHECK_C(              fstat(fd, &statbuf),             "fstat");
   CHECK_C(valid_cache = aotcc_get_cache(fd, &cache_key), "fgetxattr");
 
+  /* `valid_cache` is true if the cache key isn't trivially invalid, e.g. built
+   * with a different RUBY_REVISION */
   if (valid_cache && cache_key.mtime == (uint64_t)statbuf.st_mtime) {
+    /* if the mtimes match, assume the cache is valid. fetch the cached data. */
     ret = aotcc_fetch_data(fd, (size_t)cache_key.data_size, handler, &output_data, &exception_tag);
     if (ret == -1 && errno == ENOATTR) {
+      /* the key was present, but the data was missing. remove the key, and
+       * start over */
       CHECK_C(fremovexattr(fd, xattr_key_name, 0), "fremovexattr");
       goto retry;
     }
-    CHECK_RB((void)0);
+    CHECK_RB0();
     CHECK_C(ret, "fgetxattr/fetch-data");
     if (!NIL_P(output_data)) {
-      SUCCEED(output_data);
+      SUCCEED(output_data); /* this is the fast-path to shoot for */
     }
-    valid_cache = false;
+    valid_cache = false; /* invalid cache; we'll want to regenerate it */
   }
 
+  /* read the contents of the file and crc32 it to compare with the cache key */
   CHECK_C(aotcc_read_contents(fd, statbuf.st_size, &contents), "read") /* contents must be xfree'd */
   current_checksum = (uint64_t)crc32(contents, statbuf.st_size);
 
+  /* mtime didn't match, but if the contents are the same as when the cache was
+   * generated, we can use it anyway */
   if (valid_cache && current_checksum == cache_key.checksum) {
     ret = aotcc_fetch_data(fd, (size_t)cache_key.data_size, handler, &output_data, &exception_tag);
     if (ret == -1 && errno == ENOATTR) {
       CHECK_C(fremovexattr(fd, xattr_key_name, 0), "fremovexattr");
       goto retry;
     }
-    CHECK_RB((void)0);
+    CHECK_RB0();
     CHECK_C(ret, "fgetxattr/fetch-data");
     if (!NIL_P(output_data)) {
+      /* because we can only get to this point if the cached data was valid,
+       * but the mtime in the key was different from the mtime of the file, we
+       * should update the cache key with the new mtime */
       if (writable) {
         CHECK_C(aotcc_update_key(fd, (uint32_t)statbuf.st_size, statbuf.st_mtime, current_checksum), "fsetxattr");
+        /* updating xattrs bumps mtime, so we set them back after */
         CHECK_C(aotcc_close_and_unclobber_times(&fd, path, statbuf.st_atime, statbuf.st_mtime), "close/utime");
       }
       SUCCEED(output_data);
@@ -193,20 +207,32 @@ begin:
     valid_cache = false;
   }
 
+  /* we need to pass this char* to ruby-land */
   input_data = rb_str_new(contents, statbuf.st_size);
 
+  /* if we didn't have write permission to the file, bail now -- everything
+   * that follows is about generating and writing the cache. Let's just convert
+   * the input format to the output format and return */
   if (!writable) {
     CHECK_RB(aotcc_input_to_output(handler, input_data, &output_data, &exception_tag));
     SUCCEED(output_data);
   }
 
-  /* mtime and checksum both mismatched, or the cache was invalid/absent */
+  /* Now, we know we have write permission, and can update the xattrs.
+   * Additionally, we know the cache is currently missing or absent, and needs
+   * to be updated. */
+
+  /* First, convert the input format to the storage format by calling into the
+   * handler. */
   CHECK_RB(exception_tag = aotcc_input_to_storage(handler, input_data, pathval, &storage_data));
   if (storage_data == uncompilable) {
+    /* The handler can raise AOTCompileCache::Uncompilable. When it does this,
+     * we just call the input_to_output handler method, bypassing the storage format. */
     CHECK_RB(aotcc_input_to_output(handler, input_data, &output_data, &exception_tag));
     SUCCEED(output_data);
   }
 
+  /* we can only really write strings to xattrs */
   if (!RB_TYPE_P(storage_data, T_STRING)) {
     goto invalid_type_storage_data;
   }
@@ -222,9 +248,14 @@ begin:
 
   data_size = (uint32_t)RSTRING_LEN(storage_data);
 
+  /* update the cache key, then the cache data. */
   CHECK_C(aotcc_update_key(fd, data_size, statbuf.st_mtime, current_checksum), "fsetxattr");
   CHECK_C(fsetxattr(fd, xattr_data_name, RSTRING_PTR(storage_data), (size_t)data_size XATTR_TRAILER), "fsetxattr");
+
+  /* updating xattrs bumps mtime, so we set them back after */
   CHECK_C(aotcc_close_and_unclobber_times(&fd, path, statbuf.st_atime, statbuf.st_mtime), "close/utime");
+
+  /* convert the data we just stored into the output format */
   CHECK_RB(exception_tag = aotcc_storage_to_output(handler, storage_data, &output_data));
 
   /* if the storage data was broken, remove the cache and run input_to_output */
@@ -243,6 +274,7 @@ begin:
   if (contents != 0) xfree(contents); \
   if (fd > 0) close(fd);
 
+  __builtin_unreachable();
 cleanup:
   CLEANUP;
   return output_data;
