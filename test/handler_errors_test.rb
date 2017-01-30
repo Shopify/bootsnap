@@ -33,10 +33,9 @@ class AOTCompileCacheTest < Minitest::Test
   end
 
   def test_input_to_storage_invalid_instance_of_expected_type
-    skip 'see todo in aot_compile_cache.c around L222'
     path = set_file('a.rb', 'a = 3', 100)
-    AOTCompileCache::ISeq.expects(:input_to_storage).returns('lolnope')
-    AOTCompileCache::ISeq.expects(:input_to_output).returns('whatever')
+    AOTCompileCache::ISeq.expects(:input_to_storage).returns('broken')
+    AOTCompileCache::ISeq.expects(:input_to_output).with('a = 3').returns('whatever')
     _, err = capture_subprocess_io do
       load(path)
     end

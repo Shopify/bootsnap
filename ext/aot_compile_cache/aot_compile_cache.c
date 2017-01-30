@@ -226,7 +226,15 @@ begin:
   CHECKED(fsetxattr(fd, xattr_data_name, RSTRING_PTR(storage_data), (size_t)data_size XATTR_TRAILER), "fsetxattr");
   CHECKED(aotcc_close_and_unclobber_times(&fd, path, statbuf.st_atime, statbuf.st_mtime), "close/utime");
   PROT_CHECK(exception_tag = aotcc_storage_to_output(handler, storage_data, &output_data));
-  /* TODO: input_to_output if storage_data is nil */
+
+  /* if the storage data was broken, remove the cache and run input_to_output */
+  if (output_data == Qnil) {
+    /* deletion here is best effort; no need to fail if it does */
+    fremovexattr(fd, xattr_key_name, 0);
+    fremovexattr(fd, xattr_data_name, 0);
+    PROT_CHECK(aotcc_input_to_output(handler, input_data, &output_data, &exception_tag));
+  }
+
   SUCCEED(output_data);
 
 #undef return
