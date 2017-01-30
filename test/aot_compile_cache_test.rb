@@ -5,8 +5,38 @@ require 'aot_compile_cache/iseq'
 class AOTCompileCacheTest < Minitest::Test
   include TmpdirHelper
 
+  def setup
+    ENV.delete('OPT_AOT_LOG')
+    super
+  end
+
   def test_that_it_has_a_version_number
     refute_nil ::AOTCompileCache::VERSION
+  end
+
+  def test_no_write_permission
+    path = set_file('a.rb', 'a = 3', 100)
+    FileUtils.chmod(0400, 'a.rb')
+    AOTCompileCache::ISeq.expects(:input_to_storage).never
+    AOTCompileCache::ISeq.expects(:input_to_output).times(2).returns('whatever')
+    _, err = capture_subprocess_io do
+      load(path)
+      load(path)
+    end
+    assert_match(/no write perm.*no write perm/m, err)
+  end
+
+  def test_no_write_permission_without_logging
+    path = set_file('a.rb', 'a = 3', 100)
+    FileUtils.chmod(0400, 'a.rb')
+    AOTCompileCache::ISeq.expects(:input_to_storage).never
+    AOTCompileCache::ISeq.expects(:input_to_output).times(2).returns('whatever')
+    ENV['OPT_AOT_LOG'] = '0'
+    _, err = capture_subprocess_io do
+      load(path)
+      load(path)
+    end
+    assert_empty(err)
   end
 
   def test_file_is_only_read_once
