@@ -103,7 +103,7 @@ class AOTCompileCacheTest < Minitest::Test
     AOTCompileCache::ISeq.expects(:input_to_storage).times(2).returns(storage)
     AOTCompileCache::ISeq.expects(:storage_to_output).times(2).returns(output)
     load(path)
-    `xattr -d com.apple.ResourceFork #{path}`
+    `xattr -d user.aotcc.value #{path}`
     load(path)
   end
 

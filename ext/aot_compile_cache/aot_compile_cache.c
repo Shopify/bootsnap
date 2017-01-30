@@ -8,9 +8,10 @@
 #include <stdbool.h>
 #include <utime.h>
 
-/* ENOATTR comes from sys/errno.h on darwin, attr/xattr.h on linux */
-#ifndef __APPLE__
-#include <attr/xattr.h>
+#ifdef __APPLE__
+#define _ENOATTR ENOATTR
+#else
+#define _ENOATTR ENODATA
 #endif
 
 /* 
@@ -52,9 +53,9 @@ struct s2o_data {
 };
 
 static const uint8_t current_version = 9;
-static const char * xattr_key_name = "com.shopify.AOTCacheKey";
+static const char * xattr_key_name = "user.aotcc.key";
+static const char * xattr_data_name = "user.aotcc.value";
 static const size_t xattr_key_size = sizeof (struct xattr_key);
-static const char * xattr_data_name = "com.apple.ResourceFork";
 
 #ifdef __APPLE__
 #define GETXATTR_TRAILER ,0,0
@@ -174,7 +175,7 @@ begin:
   if (valid_cache && cache_key.mtime == (uint64_t)statbuf.st_mtime) {
     /* if the mtimes match, assume the cache is valid. fetch the cached data. */
     ret = aotcc_fetch_data(fd, (size_t)cache_key.data_size, handler, &output_data, &exception_tag);
-    if (ret == -1 && errno == ENOATTR) {
+    if (ret == -1 && errno == _ENOATTR) {
       /* the key was present, but the data was missing. remove the key, and
        * start over */
       CHECK_C(fremovexattr(fd, xattr_key_name REMOVEXATTR_TRAILER), "fremovexattr");
@@ -196,7 +197,7 @@ begin:
    * generated, we can use it anyway */
   if (valid_cache && current_checksum == cache_key.checksum) {
     ret = aotcc_fetch_data(fd, (size_t)cache_key.data_size, handler, &output_data, &exception_tag);
-    if (ret == -1 && errno == ENOATTR) {
+    if (ret == -1 && errno == _ENOATTR) {
       CHECK_C(fremovexattr(fd, xattr_key_name REMOVEXATTR_TRAILER), "fremovexattr");
       goto retry;
     }
@@ -393,7 +394,7 @@ aotcc_get_cache(int fd, struct xattr_key * key)
   ssize_t nbytes;
 
   nbytes = fgetxattr(fd, xattr_key_name, (void *)key, xattr_key_size GETXATTR_TRAILER);
-  if (nbytes == -1 && errno != ENOATTR) {
+  if (nbytes == -1 && errno != _ENOATTR) {
     return -1;
   }
 

@@ -88,8 +88,8 @@ class KeyFormatTest < Minitest::Test
     path = format("./%05d.rb", (rand * 100000).to_i)
     File.write(path, contents)
     require(path)
-    key = get_attr("com.shopify.AOTCacheKey", path)
-    cache = get_attr("com.apple.ResourceFork", path)
+    key = get_attr("user.aotcc.key", path)
+    cache = get_attr("user.aotcc.value", path)
     [key, cache, path]
   end
 
