@@ -98,7 +98,7 @@ aotcc_compile_option_crc32_set(VALUE self, VALUE crc32val)
   return Qnil;
 }
 
-#define CHECKED(ret, func) \
+#define CHECK_C(ret, func) \
   do { if ((int)(ret) == -1) FAIL((func), errno); } while(0);
 
 #define FAIL(func, err) \
@@ -109,7 +109,7 @@ aotcc_compile_option_crc32_set(VALUE self, VALUE crc32val)
     goto fail; \
   } while(0);
 
-#define PROT_CHECK(body) \
+#define CHECK_RB(body) \
   do { \
     (body); \
     if (exception_tag != 0) goto raise; \
@@ -154,39 +154,39 @@ begin:
   Check_Type(pathval, T_STRING);
   path = RSTRING_PTR(pathval);
 
-  CHECKED(fd          = aotcc_open(path, &writable),     "open");
-  CHECKED(              fstat(fd, &statbuf),             "fstat");
-  CHECKED(valid_cache = aotcc_get_cache(fd, &cache_key), "fgetxattr");
+  CHECK_C(fd          = aotcc_open(path, &writable),     "open");
+  CHECK_C(              fstat(fd, &statbuf),             "fstat");
+  CHECK_C(valid_cache = aotcc_get_cache(fd, &cache_key), "fgetxattr");
 
   if (valid_cache && cache_key.mtime == (uint64_t)statbuf.st_mtime) {
     ret = aotcc_fetch_data(fd, (size_t)cache_key.data_size, handler, &output_data, &exception_tag);
     if (ret == -1 && errno == ENOATTR) {
-      CHECKED(fremovexattr(fd, xattr_key_name, 0), "fremovexattr");
+      CHECK_C(fremovexattr(fd, xattr_key_name, 0), "fremovexattr");
       goto retry;
     }
-    PROT_CHECK((void)0);
-    CHECKED(ret, "fgetxattr/fetch-data");
+    CHECK_RB((void)0);
+    CHECK_C(ret, "fgetxattr/fetch-data");
     if (!NIL_P(output_data)) {
       SUCCEED(output_data);
     }
     valid_cache = false;
   }
 
-  CHECKED(aotcc_read_contents(fd, statbuf.st_size, &contents), "read") /* contents must be xfree'd */
+  CHECK_C(aotcc_read_contents(fd, statbuf.st_size, &contents), "read") /* contents must be xfree'd */
   current_checksum = (uint64_t)crc32(contents, statbuf.st_size);
 
   if (valid_cache && current_checksum == cache_key.checksum) {
     ret = aotcc_fetch_data(fd, (size_t)cache_key.data_size, handler, &output_data, &exception_tag);
     if (ret == -1 && errno == ENOATTR) {
-      CHECKED(fremovexattr(fd, xattr_key_name, 0), "fremovexattr");
+      CHECK_C(fremovexattr(fd, xattr_key_name, 0), "fremovexattr");
       goto retry;
     }
-    PROT_CHECK((void)0);
-    CHECKED(ret, "fgetxattr/fetch-data");
+    CHECK_RB((void)0);
+    CHECK_C(ret, "fgetxattr/fetch-data");
     if (!NIL_P(output_data)) {
       if (writable) {
-        CHECKED(aotcc_update_key(fd, (uint32_t)statbuf.st_size, statbuf.st_mtime, current_checksum), "fsetxattr");
-        CHECKED(aotcc_close_and_unclobber_times(&fd, path, statbuf.st_atime, statbuf.st_mtime), "close/utime");
+        CHECK_C(aotcc_update_key(fd, (uint32_t)statbuf.st_size, statbuf.st_mtime, current_checksum), "fsetxattr");
+        CHECK_C(aotcc_close_and_unclobber_times(&fd, path, statbuf.st_atime, statbuf.st_mtime), "close/utime");
       }
       SUCCEED(output_data);
     }
@@ -196,14 +196,14 @@ begin:
   input_data = rb_str_new(contents, statbuf.st_size);
 
   if (!writable) {
-    PROT_CHECK(aotcc_input_to_output(handler, input_data, &output_data, &exception_tag));
+    CHECK_RB(aotcc_input_to_output(handler, input_data, &output_data, &exception_tag));
     SUCCEED(output_data);
   }
 
   /* mtime and checksum both mismatched, or the cache was invalid/absent */
-  PROT_CHECK(exception_tag = aotcc_input_to_storage(handler, input_data, pathval, &storage_data));
+  CHECK_RB(exception_tag = aotcc_input_to_storage(handler, input_data, pathval, &storage_data));
   if (storage_data == uncompilable) {
-    PROT_CHECK(aotcc_input_to_output(handler, input_data, &output_data, &exception_tag));
+    CHECK_RB(aotcc_input_to_output(handler, input_data, &output_data, &exception_tag));
     SUCCEED(output_data);
   }
 
@@ -216,23 +216,23 @@ begin:
     if (logging_enabled()) {
       fprintf(stderr, "[OPT_AOT_LOG] warning: compiled artifact is over 64MB, which is too large to store in an xattr.%s\n", path);
     }
-    PROT_CHECK(aotcc_input_to_output(handler, input_data, &output_data, &exception_tag));
+    CHECK_RB(aotcc_input_to_output(handler, input_data, &output_data, &exception_tag));
     SUCCEED(output_data);
   }
 
   data_size = (uint32_t)RSTRING_LEN(storage_data);
 
-  CHECKED(aotcc_update_key(fd, data_size, statbuf.st_mtime, current_checksum), "fsetxattr");
-  CHECKED(fsetxattr(fd, xattr_data_name, RSTRING_PTR(storage_data), (size_t)data_size XATTR_TRAILER), "fsetxattr");
-  CHECKED(aotcc_close_and_unclobber_times(&fd, path, statbuf.st_atime, statbuf.st_mtime), "close/utime");
-  PROT_CHECK(exception_tag = aotcc_storage_to_output(handler, storage_data, &output_data));
+  CHECK_C(aotcc_update_key(fd, data_size, statbuf.st_mtime, current_checksum), "fsetxattr");
+  CHECK_C(fsetxattr(fd, xattr_data_name, RSTRING_PTR(storage_data), (size_t)data_size XATTR_TRAILER), "fsetxattr");
+  CHECK_C(aotcc_close_and_unclobber_times(&fd, path, statbuf.st_atime, statbuf.st_mtime), "close/utime");
+  CHECK_RB(exception_tag = aotcc_storage_to_output(handler, storage_data, &output_data));
 
   /* if the storage data was broken, remove the cache and run input_to_output */
   if (output_data == Qnil) {
     /* deletion here is best effort; no need to fail if it does */
     fremovexattr(fd, xattr_key_name, 0);
     fremovexattr(fd, xattr_data_name, 0);
-    PROT_CHECK(aotcc_input_to_output(handler, input_data, &output_data, &exception_tag));
+    CHECK_RB(aotcc_input_to_output(handler, input_data, &output_data, &exception_tag));
   }
 
   SUCCEED(output_data);
