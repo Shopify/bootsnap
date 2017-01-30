@@ -356,7 +356,7 @@ aotcc_update_key(int fd, uint32_t data_size, uint64_t current_mtime, uint64_t cu
     .checksum       = current_checksum,
   };
 
-  return fsetxattr(fd, xattr_key_name, &xattr_key, (size_t)xattr_key_size, 0 GETXATTR_TRAILER);
+  return fsetxattr(fd, xattr_key_name, &xattr_key, (size_t)xattr_key_size, 0 SETXATTR_TRAILER);
 }
 
 /*
