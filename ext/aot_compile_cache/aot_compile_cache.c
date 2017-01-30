@@ -59,7 +59,7 @@ static const char * xattr_data_name = "com.apple.ResourceFork";
 #ifdef __APPLE__
 #define GETXATTR_TRAILER ,0,0
 #define SETXATTR_TRAILER ,0
-#define REMOVE_XATTR_TRAILER ,0
+#define REMOVEXATTR_TRAILER ,0
 #else
 #define GETXATTR_TRAILER
 #define SETXATTR_TRAILER
