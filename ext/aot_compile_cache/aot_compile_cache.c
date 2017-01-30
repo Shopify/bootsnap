@@ -27,6 +27,25 @@ static uint32_t current_ruby_revision;
 static uint32_t current_compile_option_crc32 = 0;
 static ID uncompilable;
 
+struct stats {
+  uint64_t mtime_hit;
+  uint64_t crc_hit;
+  uint64_t unwritable;
+  uint64_t uncompilable;
+  uint64_t miss;
+  uint64_t fail;
+  uint64_t retry;
+};
+static struct stats stats = {
+  .mtime_hit = 0,
+  .crc_hit = 0,
+  .unwritable = 0,
+  .uncompilable = 0,
+  .miss = 0,
+  .fail = 0,
+  .retry = 0,
+};
+
 struct xattr_key {
   uint8_t  version;
   uint32_t compile_option;
@@ -84,6 +103,7 @@ static int aotcc_input_to_storage(VALUE handler, VALUE input_data, VALUE pathval
 static VALUE prot_storage_to_output(VALUE arg);
 static int aotcc_storage_to_output(VALUE handler, VALUE storage_data, VALUE * output_data);
 static int logging_enabled();
+static VALUE aotcc_stats(VALUE self);
 
 void
 Init_aot_compile_cache(void)
@@ -97,7 +117,22 @@ Init_aot_compile_cache(void)
   uncompilable = rb_intern("__aotcc_uncompilable__");
 
   rb_define_module_function(rb_cAOTCompileCache_Native, "fetch", aotcc_fetch, 2);
+  rb_define_module_function(rb_cAOTCompileCache_Native, "stats", aotcc_stats, 0);
   rb_define_module_function(rb_cAOTCompileCache_Native, "compile_option_crc32=", aotcc_compile_option_crc32_set, 1);
+}
+
+static VALUE
+aotcc_stats(VALUE self)
+{
+  VALUE ret = rb_hash_new();
+  rb_hash_aset(ret, ID2SYM(rb_intern("mtime_hit")), INT2NUM(stats.mtime_hit));
+  rb_hash_aset(ret, ID2SYM(rb_intern("crc_hit")), INT2NUM(stats.crc_hit));
+  rb_hash_aset(ret, ID2SYM(rb_intern("miss")), INT2NUM(stats.miss));
+  rb_hash_aset(ret, ID2SYM(rb_intern("unwritable")), INT2NUM(stats.unwritable));
+  rb_hash_aset(ret, ID2SYM(rb_intern("uncompilable")), INT2NUM(stats.uncompilable));
+  rb_hash_aset(ret, ID2SYM(rb_intern("fail")), INT2NUM(stats.fail));
+  rb_hash_aset(ret, ID2SYM(rb_intern("retry")), INT2NUM(stats.retry));
+  return ret;
 }
 
 static VALUE
@@ -184,6 +219,7 @@ begin:
     CHECK_RB0();
     CHECK_C(ret, "fgetxattr/fetch-data");
     if (!NIL_P(output_data)) {
+      stats.mtime_hit++;
       SUCCEED(output_data); /* this is the fast-path to shoot for */
     }
     valid_cache = false; /* invalid cache; we'll want to regenerate it */
@@ -212,6 +248,7 @@ begin:
         /* updating xattrs bumps mtime, so we set them back after */
         CHECK_C(aotcc_close_and_unclobber_times(&fd, path, statbuf.st_atime, statbuf.st_mtime), "close/utime");
       }
+      stats.crc_hit++;
       SUCCEED(output_data);
     }
     valid_cache = false;
@@ -224,6 +261,7 @@ begin:
    * that follows is about generating and writing the cache. Let's just convert
    * the input format to the output format and return */
   if (!writable) {
+    stats.unwritable++;
     CHECK_RB(aotcc_input_to_output(handler, input_data, &output_data, &exception_tag));
     SUCCEED(output_data);
   }
@@ -231,6 +269,7 @@ begin:
   /* Now, we know we have write permission, and can update the xattrs.
    * Additionally, we know the cache is currently missing or absent, and needs
    * to be updated. */
+  stats.miss++;
 
   /* First, convert the input format to the storage format by calling into the
    * handler. */
@@ -239,6 +278,7 @@ begin:
     /* The handler can raise AOTCompileCache::Uncompilable. When it does this,
      * we just call the input_to_output handler method, bypassing the storage format. */
     CHECK_RB(aotcc_input_to_output(handler, input_data, &output_data, &exception_tag));
+    stats.uncompilable++;
     SUCCEED(output_data);
   }
 
@@ -290,14 +330,17 @@ cleanup:
   return output_data;
 fail:
   CLEANUP;
+  stats.fail++;
   rb_exc_raise(exception);
   __builtin_unreachable();
 invalid_type_storage_data:
   CLEANUP;
+  stats.fail++;
   Check_Type(storage_data, T_STRING);
   __builtin_unreachable();
 retry:
   CLEANUP;
+  stats.retry++;
   if (retry == 1) {
     rb_raise(rb_eRuntimeError, "internal error in aot_compile_cache");
     __builtin_unreachable();
@@ -306,6 +349,7 @@ retry:
   goto begin;
 raise:
   CLEANUP;
+  stats.fail++;
   rb_jump_tag(exception_tag);
   __builtin_unreachable();
 }
