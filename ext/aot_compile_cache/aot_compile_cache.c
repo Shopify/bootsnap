@@ -8,6 +8,11 @@
 #include <stdbool.h>
 #include <utime.h>
 
+/* ENOATTR comes from sys/errno.h on darwin, attr/xattr.h on linux */
+#ifndef __APPLE__
+#include <attr/xattr.h>
+#endif
+
 /* 
  * TODO:
  * - test on linux or reject on non-darwin
@@ -52,11 +57,13 @@ static const size_t xattr_key_size = sizeof (struct xattr_key);
 static const char * xattr_data_name = "com.apple.ResourceFork";
 
 #ifdef __APPLE__
-#define XATTR_TRAILER ,0,0
+#define GETXATTR_TRAILER ,0,0
+#define SETXATTR_TRAILER ,0
 #define REMOVE_XATTR_TRAILER ,0
 #else
-#define XATTR_TRAILER
-#define REMOVE_XATTR_TRAILER
+#define GETXATTR_TRAILER
+#define SETXATTR_TRAILER
+#define REMOVEXATTR_TRAILER
 #endif
 
 /* forward declarations */
@@ -170,7 +177,7 @@ begin:
     if (ret == -1 && errno == ENOATTR) {
       /* the key was present, but the data was missing. remove the key, and
        * start over */
-      CHECK_C(fremovexattr(fd, xattr_key_name REMOVE_XATTR_TRAILER), "fremovexattr");
+      CHECK_C(fremovexattr(fd, xattr_key_name REMOVEXATTR_TRAILER), "fremovexattr");
       goto retry;
     }
     CHECK_RB0();
@@ -190,7 +197,7 @@ begin:
   if (valid_cache && current_checksum == cache_key.checksum) {
     ret = aotcc_fetch_data(fd, (size_t)cache_key.data_size, handler, &output_data, &exception_tag);
     if (ret == -1 && errno == ENOATTR) {
-      CHECK_C(fremovexattr(fd, xattr_key_name REMOVE_XATTR_TRAILER), "fremovexattr");
+      CHECK_C(fremovexattr(fd, xattr_key_name REMOVEXATTR_TRAILER), "fremovexattr");
       goto retry;
     }
     CHECK_RB0();
@@ -252,7 +259,7 @@ begin:
 
   /* update the cache key, then the cache data. */
   CHECK_C(aotcc_update_key(fd, data_size, statbuf.st_mtime, current_checksum), "fsetxattr");
-  CHECK_C(fsetxattr(fd, xattr_data_name, RSTRING_PTR(storage_data), (size_t)data_size XATTR_TRAILER), "fsetxattr");
+  CHECK_C(fsetxattr(fd, xattr_data_name, RSTRING_PTR(storage_data), (size_t)data_size, 0 SETXATTR_TRAILER), "fsetxattr");
 
   /* updating xattrs bumps mtime, so we set them back after */
   CHECK_C(aotcc_close_and_unclobber_times(&fd, path, statbuf.st_atime, statbuf.st_mtime), "close/utime");
@@ -263,8 +270,8 @@ begin:
   /* if the storage data was broken, remove the cache and run input_to_output */
   if (output_data == Qnil) {
     /* deletion here is best effort; no need to fail if it does */
-    fremovexattr(fd, xattr_key_name REMOVE_XATTR_TRAILER);
-    fremovexattr(fd, xattr_data_name REMOVE_XATTR_TRAILER);
+    fremovexattr(fd, xattr_key_name REMOVEXATTR_TRAILER);
+    fremovexattr(fd, xattr_data_name REMOVEXATTR_TRAILER);
     CHECK_RB(aotcc_input_to_output(handler, input_data, &output_data, &exception_tag));
   }
 
@@ -314,7 +321,7 @@ aotcc_fetch_data(int fd, size_t size, VALUE handler, VALUE * output_data, int * 
   *exception_tag = 0;
 
   xattr_data = ALLOC_N(uint8_t, size);
-  nbytes = fgetxattr(fd, xattr_data_name, xattr_data, size XATTR_TRAILER);
+  nbytes = fgetxattr(fd, xattr_data_name, xattr_data, size GETXATTR_TRAILER);
   if (nbytes == -1) {
     ret = -1;
     goto done;
@@ -349,7 +356,7 @@ aotcc_update_key(int fd, uint32_t data_size, uint64_t current_mtime, uint64_t cu
     .checksum       = current_checksum,
   };
 
-  return fsetxattr(fd, xattr_key_name, &xattr_key, (size_t)xattr_key_size XATTR_TRAILER);
+  return fsetxattr(fd, xattr_key_name, &xattr_key, (size_t)xattr_key_size, 0 GETXATTR_TRAILER);
 }
 
 /*
@@ -385,7 +392,7 @@ aotcc_get_cache(int fd, struct xattr_key * key)
 {
   ssize_t nbytes;
 
-  nbytes = fgetxattr(fd, xattr_key_name, (void *)key, xattr_key_size XATTR_TRAILER);
+  nbytes = fgetxattr(fd, xattr_key_name, (void *)key, xattr_key_size GETXATTR_TRAILER);
   if (nbytes == -1 && errno != ENOATTR) {
     return -1;
   }
