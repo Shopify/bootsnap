@@ -67,13 +67,10 @@ class AOTCompileCacheTest < Minitest::Test
   end
 
   def test_missing_cache_data
-    skip
     path = set_file('a.rb', 'a = 3', 100)
     storage = RubyVM::InstructionSequence.compile_file(path).to_binary
     output = RubyVM::InstructionSequence.load_from_binary(storage)
-    # This doesn't really *prove* the file is only read once, but
-    # it at least asserts the input is only cached once.
-    AOTCompileCache::ISeq.expects(:input_to_storage).times(1).returns(storage)
+    AOTCompileCache::ISeq.expects(:input_to_storage).times(2).returns(storage)
     AOTCompileCache::ISeq.expects(:storage_to_output).times(2).returns(output)
     load(path)
     `xattr -d com.apple.ResourceFork #{path}`

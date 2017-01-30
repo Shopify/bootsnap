@@ -129,7 +129,7 @@ aotcc_fetch(VALUE self, VALUE pathval, VALUE handler)
   VALUE exception;
   int exception_tag;
 
-  int fd, ret;
+  int fd, ret, retry;
   bool valid_cache;
   bool writable;
   uint32_t data_size;
@@ -146,6 +146,8 @@ aotcc_fetch(VALUE self, VALUE pathval, VALUE handler)
 #define return   error!
 #define rb_raise error!
 
+  retry = 0;
+begin:
   output_data = Qnil;
   contents = 0;
 
@@ -158,7 +160,10 @@ aotcc_fetch(VALUE self, VALUE pathval, VALUE handler)
 
   if (valid_cache && cache_key.mtime == (uint64_t)statbuf.st_mtime) {
     ret = aotcc_fetch_data(fd, (size_t)cache_key.data_size, handler, &output_data, &exception_tag);
-    /* TODO: if the value was gone, recover gracefully */
+    if (ret == -1 && errno == ENOATTR) {
+      CHECKED(fremovexattr(fd, xattr_key_name, 0), "fremovexattr");
+      goto retry;
+    }
     PROT_CHECK((void)0);
     CHECKED(ret, "fgetxattr/fetch-data");
     if (!NIL_P(output_data)) {
@@ -172,7 +177,10 @@ aotcc_fetch(VALUE self, VALUE pathval, VALUE handler)
 
   if (valid_cache && current_checksum == cache_key.checksum) {
     ret = aotcc_fetch_data(fd, (size_t)cache_key.data_size, handler, &output_data, &exception_tag);
-    /* TODO: if the value was gone, recover gracefully */
+    if (ret == -1 && errno == ENOATTR) {
+      CHECKED(fremovexattr(fd, xattr_key_name, 0), "fremovexattr");
+      goto retry;
+    }
     PROT_CHECK((void)0);
     CHECKED(ret, "fgetxattr/fetch-data");
     if (!NIL_P(output_data)) {
@@ -238,6 +246,14 @@ invalid_type_storage_data:
   CLEANUP;
   Check_Type(storage_data, T_STRING);
   __builtin_unreachable();
+retry:
+  CLEANUP;
+  if (retry == 1) {
+    rb_raise(rb_eRuntimeError, "internal error in aot_compile_cache");
+    __builtin_unreachable();
+  }
+  retry = 1;
+  goto begin;
 raise:
   CLEANUP;
   rb_jump_tag(exception_tag);
