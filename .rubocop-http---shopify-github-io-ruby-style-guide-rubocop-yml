@@ -189,6 +189,13 @@ Style/FormatString:
   - sprintf
   - percent
 
+Style/FrozenStringLiteralComment:
+  EnforcedStyle: when_needed
+  SupportedStyles:
+    - when_needed
+    - always
+    - never
+
 Style/GlobalVars:
   AllowedVariables: []
 

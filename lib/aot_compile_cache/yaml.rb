@@ -16,13 +16,14 @@ class AOTCompileCache
     end
 
     def self.storage_to_output(data)
-      msgpack_factory.unpacker.feed(data).read
-    rescue MessagePack::MalformedFormatError
-      # If it was a Marshal message, it will be invalid MessagePack.  Since
-      # this is a rare path, it's probably better to optimistically try
-      # MessagePack first. We could, however, check for 0x04, 0x08 at the start
-      # of the message, which indicates Marshal format.
-      return Marshal.load(data)
+      # This could have a meaning in messagepack, and we're being a little lazy
+      # about it. -- but a leading 0x04 would indicate the contents of the YAML
+      # is a positive integer, which is rare, to say the least.
+      if data[0] == 0x04.chr && data[1] == 0x08.chr
+        return Marshal.load(data)
+      else
+        msgpack_factory.unpacker.feed(data).read
+      end
     end
 
     def self.input_to_output(data)
