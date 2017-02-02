@@ -28,8 +28,7 @@ static uint32_t current_compile_option_crc32 = 0;
 static ID uncompilable;
 
 struct stats {
-  uint64_t mtime_hit;
-  uint64_t crc_hit;
+  uint64_t hit;
   uint64_t unwritable;
   uint64_t uncompilable;
   uint64_t miss;
@@ -37,8 +36,7 @@ struct stats {
   uint64_t retry;
 };
 static struct stats stats = {
-  .mtime_hit = 0,
-  .crc_hit = 0,
+  .hit = 0,
   .unwritable = 0,
   .uncompilable = 0,
   .miss = 0,
@@ -52,7 +50,6 @@ struct xattr_key {
   uint32_t data_size;
   uint32_t ruby_revision;
   uint64_t mtime;
-  uint64_t checksum;
 } __attribute__((packed));
 
 struct i2o_data {
@@ -71,7 +68,7 @@ struct s2o_data {
   VALUE storage_data;
 };
 
-static const uint8_t current_version = 9;
+static const uint8_t current_version = 10;
 static const char * xattr_key_name = "user.aotcc.key";
 static const char * xattr_data_name = "user.aotcc.value";
 static const size_t xattr_key_size = sizeof (struct xattr_key);
@@ -88,7 +85,7 @@ static const size_t xattr_key_size = sizeof (struct xattr_key);
 
 /* forward declarations */
 static int aotcc_fetch_data(int fd, size_t size, VALUE handler, VALUE * storage_data, int * exception_tag);
-static int aotcc_update_key(int fd, uint32_t data_size, uint64_t current_mtime, uint64_t current_checksum);
+static int aotcc_update_key(int fd, uint32_t data_size, uint64_t current_mtime);
 static int aotcc_open(const char * path, bool * writable);
 static int aotcc_get_cache(int fd, struct xattr_key * key);
 static size_t aotcc_read_contents(int fd, size_t size, char ** contents);
@@ -125,8 +122,7 @@ static VALUE
 aotcc_stats(VALUE self)
 {
   VALUE ret = rb_hash_new();
-  rb_hash_aset(ret, ID2SYM(rb_intern("mtime_hit")), INT2NUM(stats.mtime_hit));
-  rb_hash_aset(ret, ID2SYM(rb_intern("crc_hit")), INT2NUM(stats.crc_hit));
+  rb_hash_aset(ret, ID2SYM(rb_intern("hit")), INT2NUM(stats.hit));
   rb_hash_aset(ret, ID2SYM(rb_intern("miss")), INT2NUM(stats.miss));
   rb_hash_aset(ret, ID2SYM(rb_intern("unwritable")), INT2NUM(stats.unwritable));
   rb_hash_aset(ret, ID2SYM(rb_intern("uncompilable")), INT2NUM(stats.uncompilable));
@@ -178,7 +174,6 @@ aotcc_fetch(VALUE self, VALUE pathval, VALUE handler)
   bool valid_cache;
   bool writable;
   uint32_t data_size;
-  uint64_t current_checksum;
   struct xattr_key cache_key;
   struct stat statbuf;
   char * contents;
@@ -219,7 +214,7 @@ begin:
     CHECK_RB0();
     CHECK_C(ret, "fgetxattr/fetch-data");
     if (!NIL_P(output_data)) {
-      stats.mtime_hit++;
+      stats.hit++;
       SUCCEED(output_data); /* this is the fast-path to shoot for */
     }
     valid_cache = false; /* invalid cache; we'll want to regenerate it */
@@ -227,32 +222,6 @@ begin:
 
   /* read the contents of the file and crc32 it to compare with the cache key */
   CHECK_C(aotcc_read_contents(fd, statbuf.st_size, &contents), "read") /* contents must be xfree'd */
-  current_checksum = (uint64_t)crc32(contents, statbuf.st_size);
-
-  /* mtime didn't match, but if the contents are the same as when the cache was
-   * generated, we can use it anyway */
-  if (valid_cache && current_checksum == cache_key.checksum) {
-    ret = aotcc_fetch_data(fd, (size_t)cache_key.data_size, handler, &output_data, &exception_tag);
-    if (ret == -1 && errno == _ENOATTR) {
-      CHECK_C(fremovexattr(fd, xattr_key_name REMOVEXATTR_TRAILER), "fremovexattr");
-      goto retry;
-    }
-    CHECK_RB0();
-    CHECK_C(ret, "fgetxattr/fetch-data");
-    if (!NIL_P(output_data)) {
-      /* because we can only get to this point if the cached data was valid,
-       * but the mtime in the key was different from the mtime of the file, we
-       * should update the cache key with the new mtime */
-      if (writable) {
-        CHECK_C(aotcc_update_key(fd, (uint32_t)statbuf.st_size, statbuf.st_mtime, current_checksum), "fsetxattr");
-        /* updating xattrs bumps mtime, so we set them back after */
-        CHECK_C(aotcc_close_and_unclobber_times(&fd, path, statbuf.st_atime, statbuf.st_mtime), "close/utime");
-      }
-      stats.crc_hit++;
-      SUCCEED(output_data);
-    }
-    valid_cache = false;
-  }
 
   /* we need to pass this char* to ruby-land */
   input_data = rb_str_new(contents, statbuf.st_size);
@@ -299,7 +268,7 @@ begin:
   data_size = (uint32_t)RSTRING_LEN(storage_data);
 
   /* update the cache key, then the cache data. */
-  CHECK_C(aotcc_update_key(fd, data_size, statbuf.st_mtime, current_checksum), "fsetxattr");
+  CHECK_C(aotcc_update_key(fd, data_size, statbuf.st_mtime), "fsetxattr");
   CHECK_C(fsetxattr(fd, xattr_data_name, RSTRING_PTR(storage_data), (size_t)data_size, 0 SETXATTR_TRAILER), "fsetxattr");
 
   /* updating xattrs bumps mtime, so we set them back after */
@@ -388,7 +357,7 @@ done:
 }
 
 static int
-aotcc_update_key(int fd, uint32_t data_size, uint64_t current_mtime, uint64_t current_checksum)
+aotcc_update_key(int fd, uint32_t data_size, uint64_t current_mtime)
 {
   struct xattr_key xattr_key;
 
@@ -398,7 +367,6 @@ aotcc_update_key(int fd, uint32_t data_size, uint64_t current_mtime, uint64_t cu
     .compile_option = current_compile_option_crc32,
     .ruby_revision  = current_ruby_revision,
     .mtime          = current_mtime,
-    .checksum       = current_checksum,
   };
 
   return fsetxattr(fd, xattr_key_name, &xattr_key, (size_t)xattr_key_size, 0 SETXATTR_TRAILER);
