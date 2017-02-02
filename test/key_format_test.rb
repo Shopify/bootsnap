@@ -11,7 +11,6 @@ class KeyFormatTest < Minitest::Test
     data_size: 5..8,
     ruby_revision: 9..12,
     mtime: 13..20,
-    checksum: 21..28,
   }
 
   def setup
@@ -27,12 +26,12 @@ class KeyFormatTest < Minitest::Test
 
   def test_key_size
     key, = attrs_for_contents('a = 3')
-    assert_equal(8 + 8 + 4 + 4 + 4 + 1, key.size)
+    assert_equal(8 + 4 + 4 + 4 + 1, key.size)
   end
 
   def test_key_version
     key, = attrs_for_contents('a = 3')
-    assert_equal(9.chr, key[R[:version]])
+    assert_equal(10.chr, key[R[:version]])
   end
 
   def test_key_compile_option_stable
@@ -72,14 +71,6 @@ class KeyFormatTest < Minitest::Test
     exp = Time.now.to_i
     act = key[R[:mtime]].unpack("Q")[0]
     assert_in_delta(exp, act, 1)
-  end
-
-  def test_key_checksum
-    k1, = attrs_for_contents('a = 3')
-    k2, = attrs_for_contents('a = 3')
-    k3, = attrs_for_contents('b = 2')
-    assert_equal(k1[R[:checksum]], k2[R[:checksum]])
-    refute_equal(k1[R[:checksum]], k3[R[:checksum]])
   end
 
   private

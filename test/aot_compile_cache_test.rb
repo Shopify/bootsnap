@@ -71,18 +71,6 @@ class AOTCompileCacheTest < Minitest::Test
     load(path)
   end
 
-  def test_no_recache_when_mtime_different_but_contents_same
-    path = set_file('a.rb', 'a = 3', 100)
-    storage = RubyVM::InstructionSequence.compile_file(path).to_binary
-    output = RubyVM::InstructionSequence.load_from_binary(storage)
-    AOTCompileCache::ISeq.expects(:input_to_storage).times(1).returns(storage)
-    AOTCompileCache::ISeq.expects(:storage_to_output).times(2).returns(output)
-
-    load(path)
-    set_file(path, 'a = 3', 101)
-    load(path)
-  end
-
   def test_recache
     path = set_file('a.rb', 'a = 3', 100)
     storage = RubyVM::InstructionSequence.compile_file(path).to_binary
