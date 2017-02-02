@@ -267,9 +267,10 @@ begin:
 
   data_size = (uint32_t)RSTRING_LEN(storage_data);
 
-  /* update the cache key, then the cache data. */
-  CHECK_C(aotcc_update_key(fd, data_size, statbuf.st_mtime), "fsetxattr");
+  /* update the cache, but don't leave it in an invalid state even briefly: remove the key first. */
+  fremovexattr(fd, xattr_key_name REMOVEXATTR_TRAILER);
   CHECK_C(fsetxattr(fd, xattr_data_name, RSTRING_PTR(storage_data), (size_t)data_size, 0 SETXATTR_TRAILER), "fsetxattr");
+  CHECK_C(aotcc_update_key(fd, data_size, statbuf.st_mtime), "fsetxattr");
 
   /* updating xattrs bumps mtime, so we set them back after */
   CHECK_C(aotcc_close_and_unclobber_times(&fd, path, statbuf.st_atime, statbuf.st_mtime), "close/utime");
