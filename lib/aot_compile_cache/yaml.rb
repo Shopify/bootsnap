@@ -9,9 +9,10 @@ class AOTCompileCache
     def self.input_to_storage(contents, _)
       obj = ::YAML.load(contents)
       msgpack_factory.packer.write(obj).to_s
-    rescue NoMethodError
+    rescue NoMethodError, RangeError
       # if the object included things that we can't serialize, fall back to
       # Marshal. It's a bit slower, but can encode anything yaml can.
+      # NoMethodError is unexpected types; RangeError is Bignums
       return Marshal.dump(obj)
     end
 
