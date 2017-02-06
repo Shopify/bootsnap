@@ -1,4 +1,6 @@
+require 'msgpack'
 require 'active_support/dependencies'
+
 module BS2AS
   DOT_SO = '.so'.freeze
   DOT_RB = '.rb'.freeze

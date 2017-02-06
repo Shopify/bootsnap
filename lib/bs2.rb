@@ -1,3 +1,5 @@
+require 'msgpack'
+
 module BS2
   DOT_SO = '.so'.freeze
   DOT_RB = '.rb'.freeze
