@@ -4,15 +4,23 @@ require_relative 'bootsnap/bootsnap' # BootSnap::Native
 class BootSnap
   InvalidConfiguration = Class.new(StandardError)
 
-  def self.setup(cache_dir:, development_mode:, iseq: true, yaml: true, require: true, as_autoload: true)
+  def self.setup(
+    cache_dir:, development_mode:,
+    iseq: true, yaml: true, require: true, as_autoload: true, no_trace: true
+  )
     if as_autoload && !require
       raise InvalidConfiguration, "feature 'as_autoload' depends on feature 'require'"
     end
 
+    setup_no_trace                             if no_trace
     setup_iseq                                 if iseq
     setup_require(cache_dir, development_mode) if require
     setup_as_autoload(development_mode)        if as_autoload
     setup_yaml                                 if yaml
+  end
+
+  def self.setup_no_trace
+    RubyVM::InstructionSequence.compile_option = { trace_instruction: false }
   end
 
   def self.setup_iseq
