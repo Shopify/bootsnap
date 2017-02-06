@@ -1,3 +1,3 @@
-class AOTCompileCache
+class BootSnap
   VERSION = "0.1.0"
 end

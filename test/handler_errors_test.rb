@@ -1,17 +1,13 @@
 require 'test_helper'
 
-require 'aot_compile_cache/iseq'
+require 'bootsnap/iseq'
 
-class AOTCompileCacheTest < Minitest::Test
+class HandlerErrorsTest < Minitest::Test
   include TmpdirHelper
-
-  def test_that_it_has_a_version_number
-    refute_nil ::AOTCompileCache::VERSION
-  end
 
   def setup
     @prev_dir = Dir.pwd
-    @tmp_dir = Dir.mktmpdir('aotcc-test')
+    @tmp_dir = Dir.mktmpdir('bootsnap-test')
     Dir.chdir(@tmp_dir)
   end
 
@@ -27,15 +23,15 @@ class AOTCompileCacheTest < Minitest::Test
 
   def test_input_to_storage_unexpected_type
     path = set_file('a.rb', 'a = 3', 100)
-    AOTCompileCache::ISeq.expects(:input_to_storage).returns(nil)
+    BootSnap::ISeq.expects(:input_to_storage).returns(nil)
     # this could be made slightly more obvious though.
     assert_raises(TypeError) { load(path) }
   end
 
   def test_input_to_storage_invalid_instance_of_expected_type
     path = set_file('a.rb', 'a = 3', 100)
-    AOTCompileCache::ISeq.expects(:input_to_storage).returns('broken')
-    AOTCompileCache::ISeq.expects(:input_to_output).with('a = 3').returns('whatever')
+    BootSnap::ISeq.expects(:input_to_storage).returns('broken')
+    BootSnap::ISeq.expects(:input_to_output).with('a = 3').returns('whatever')
     _, err = capture_subprocess_io do
       load(path)
     end
@@ -45,13 +41,13 @@ class AOTCompileCacheTest < Minitest::Test
   def test_input_to_storage_raises
     path = set_file('a.rb', 'a = 3', 100)
     klass = Class.new(StandardError)
-    AOTCompileCache::ISeq.expects(:input_to_storage).raises(klass, 'oops')
+    BootSnap::ISeq.expects(:input_to_storage).raises(klass, 'oops')
     assert_raises(klass) { load(path) }
   end
 
   def test_storage_to_output_unexpected_type
     path = set_file('a.rb', 'a = 3', 100)
-    AOTCompileCache::ISeq.expects(:storage_to_output).returns(Object.new)
+    BootSnap::ISeq.expects(:storage_to_output).returns(Object.new)
     # It seems like ruby doesn't really care.
     load(path)
   end
@@ -63,7 +59,7 @@ class AOTCompileCacheTest < Minitest::Test
   def test_storage_to_output_raises
     path = set_file('a.rb', 'a = 3', 100)
     klass = Class.new(StandardError)
-    AOTCompileCache::ISeq.expects(:storage_to_output).times(2).raises(klass, 'oops')
+    BootSnap::ISeq.expects(:storage_to_output).times(2).raises(klass, 'oops')
     assert_raises(klass) { load(path) }
     # called from two paths; this tests the second.
     assert_raises(klass) { load(path) }
@@ -71,8 +67,8 @@ class AOTCompileCacheTest < Minitest::Test
 
   def test_input_to_output_unexpected_type
     path = set_file('a.rb', 'a = 3', 100)
-    AOTCompileCache::ISeq.expects(:input_to_storage).raises(AOTCompileCache::Uncompilable)
-    AOTCompileCache::ISeq.expects(:input_to_output).returns(Object.new)
+    BootSnap::ISeq.expects(:input_to_storage).raises(BootSnap::Uncompilable)
+    BootSnap::ISeq.expects(:input_to_output).returns(Object.new)
     # It seems like ruby doesn't really care.
     load(path)
   end
@@ -84,8 +80,8 @@ class AOTCompileCacheTest < Minitest::Test
   def test_input_to_output_raises
     path = set_file('a.rb', 'a = 3', 100)
     klass = Class.new(StandardError)
-    AOTCompileCache::ISeq.expects(:input_to_storage).raises(AOTCompileCache::Uncompilable)
-    AOTCompileCache::ISeq.expects(:input_to_output).raises(klass, 'oops')
+    BootSnap::ISeq.expects(:input_to_storage).raises(BootSnap::Uncompilable)
+    BootSnap::ISeq.expects(:input_to_output).raises(klass, 'oops')
     assert_raises(klass) { load(path) }
   end
 

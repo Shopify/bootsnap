@@ -1,5 +1,5 @@
 $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
-require 'aot_compile_cache'
+require 'bootsnap'
 
 require 'minitest/autorun'
 require 'mocha/mini_test'
@@ -11,7 +11,7 @@ module TmpdirHelper
   def setup
     super
     @prev_dir = Dir.pwd
-    @tmp_dir = Dir.mktmpdir('aotcc-test')
+    @tmp_dir = Dir.mktmpdir('bootsnap-test')
     Dir.chdir(@tmp_dir)
   end
 

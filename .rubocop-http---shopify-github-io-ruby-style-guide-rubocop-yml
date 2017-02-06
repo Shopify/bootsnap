@@ -190,6 +190,10 @@ Style/FormatString:
   - percent
 
 Style/FrozenStringLiteralComment:
+  Details: >-
+    Add `# frozen_string_literal: true` to the top of the file. Frozen string
+    literals will become the default in a future Ruby version, and we want to
+    make sure we're ready.
   EnforcedStyle: when_needed
   SupportedStyles:
     - when_needed
@@ -332,12 +336,8 @@ Style/PercentQLiterals:
 Style/PredicateName:
   NamePrefix:
   - is_
-  - has_
-  - have_
   NamePrefixBlacklist:
   - is_
-  - has_
-  - have_
   NameWhitelist:
   - is_a?
   Exclude:

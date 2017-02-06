@@ -1,4 +1,4 @@
-#include "aot_compile_cache.h"
+#include "bootsnap.h"
 #include <sys/types.h>
 #include <sys/xattr.h>
 #include <sys/stat.h>
@@ -20,9 +20,9 @@
  * - source files over 4GB will likely break things (meh)
  */
 
-static VALUE rb_cAOTCompileCache;
-static VALUE rb_cAOTCompileCache_Native;
-static VALUE rb_eAOTCompileCache_Uncompilable;
+static VALUE rb_cBootSnap;
+static VALUE rb_cBootSnap_Native;
+static VALUE rb_eBootSnap_Uncompilable;
 static uint32_t current_ruby_revision;
 static uint32_t current_compile_option_crc32 = 0;
 static ID uncompilable;
@@ -84,42 +84,42 @@ static const size_t xattr_key_size = sizeof (struct xattr_key);
 #endif
 
 /* forward declarations */
-static int aotcc_fetch_data(int fd, size_t size, VALUE handler, VALUE * storage_data, int * exception_tag);
-static int aotcc_update_key(int fd, uint32_t data_size, uint64_t current_mtime);
-static int aotcc_open(const char * path, bool * writable);
-static int aotcc_get_cache(int fd, struct xattr_key * key);
-static size_t aotcc_read_contents(int fd, size_t size, char ** contents);
-static int aotcc_close_and_unclobber_times(int * fd, const char * path, time_t atime, time_t mtime);
-static VALUE aotcc_fetch(VALUE self, VALUE pathval, VALUE handler);
-static VALUE aotcc_compile_option_crc32_set(VALUE self, VALUE crc32val);
+static int bs_fetch_data(int fd, size_t size, VALUE handler, VALUE * storage_data, int * exception_tag);
+static int bs_update_key(int fd, uint32_t data_size, uint64_t current_mtime);
+static int bs_open(const char * path, bool * writable);
+static int bs_get_cache(int fd, struct xattr_key * key);
+static size_t bs_read_contents(int fd, size_t size, char ** contents);
+static int bs_close_and_unclobber_times(int * fd, const char * path, time_t atime, time_t mtime);
+static VALUE bs_fetch(VALUE self, VALUE pathval, VALUE handler);
+static VALUE bs_compile_option_crc32_set(VALUE self, VALUE crc32val);
 static VALUE prot_exception_for_errno(VALUE err);
 static VALUE prot_input_to_output(VALUE arg);
-static void aotcc_input_to_output(VALUE handler, VALUE input_data, VALUE * output_data, int * exception_tag);
+static void bs_input_to_output(VALUE handler, VALUE input_data, VALUE * output_data, int * exception_tag);
 static VALUE prot_input_to_storage(VALUE arg);
-static int aotcc_input_to_storage(VALUE handler, VALUE input_data, VALUE pathval, VALUE * storage_data);
+static int bs_input_to_storage(VALUE handler, VALUE input_data, VALUE pathval, VALUE * storage_data);
 static VALUE prot_storage_to_output(VALUE arg);
-static int aotcc_storage_to_output(VALUE handler, VALUE storage_data, VALUE * output_data);
+static int bs_storage_to_output(VALUE handler, VALUE storage_data, VALUE * output_data);
 static int logging_enabled();
-static VALUE aotcc_stats(VALUE self);
+static VALUE bs_stats(VALUE self);
 
 void
-Init_aot_compile_cache(void)
+Init_bootsnap(void)
 {
-  rb_cAOTCompileCache = rb_define_class("AOTCompileCache", rb_cObject);
-  rb_cAOTCompileCache_Native = rb_define_module_under(rb_cAOTCompileCache, "Native");
+  rb_cBootSnap = rb_define_class("BootSnap", rb_cObject);
+  rb_cBootSnap_Native = rb_define_module_under(rb_cBootSnap, "Native");
   current_ruby_revision = FIX2INT(rb_const_get(rb_cObject, rb_intern("RUBY_REVISION")));
 
-  rb_eAOTCompileCache_Uncompilable = rb_define_class_under(rb_cAOTCompileCache, "Uncompilable", rb_eStandardError);
+  rb_eBootSnap_Uncompilable = rb_define_class_under(rb_cBootSnap, "Uncompilable", rb_eStandardError);
 
-  uncompilable = rb_intern("__aotcc_uncompilable__");
+  uncompilable = rb_intern("__bs_uncompilable__");
 
-  rb_define_module_function(rb_cAOTCompileCache_Native, "fetch", aotcc_fetch, 2);
-  rb_define_module_function(rb_cAOTCompileCache_Native, "stats", aotcc_stats, 0);
-  rb_define_module_function(rb_cAOTCompileCache_Native, "compile_option_crc32=", aotcc_compile_option_crc32_set, 1);
+  rb_define_module_function(rb_cBootSnap_Native, "fetch", bs_fetch, 2);
+  rb_define_module_function(rb_cBootSnap_Native, "stats", bs_stats, 0);
+  rb_define_module_function(rb_cBootSnap_Native, "compile_option_crc32=", bs_compile_option_crc32_set, 1);
 }
 
 static VALUE
-aotcc_stats(VALUE self)
+bs_stats(VALUE self)
 {
   VALUE ret = rb_hash_new();
   rb_hash_aset(ret, ID2SYM(rb_intern("hit")), INT2NUM(stats.hit));
@@ -132,7 +132,7 @@ aotcc_stats(VALUE self)
 }
 
 static VALUE
-aotcc_compile_option_crc32_set(VALUE self, VALUE crc32val)
+bs_compile_option_crc32_set(VALUE self, VALUE crc32val)
 {
   Check_Type(crc32val, T_FIXNUM);
   current_compile_option_crc32 = FIX2UINT(crc32val);
@@ -163,7 +163,7 @@ aotcc_compile_option_crc32_set(VALUE self, VALUE crc32val)
   } while(0);
 
 static VALUE
-aotcc_fetch(VALUE self, VALUE pathval, VALUE handler)
+bs_fetch(VALUE self, VALUE pathval, VALUE handler)
 {
   const char * path;
 
@@ -196,15 +196,15 @@ begin:
   path = RSTRING_PTR(pathval);
 
   /* open the file, get its mtime and read the cache key xattr */
-  CHECK_C(fd          = aotcc_open(path, &writable),     "open");
+  CHECK_C(fd          = bs_open(path, &writable),     "open");
   CHECK_C(              fstat(fd, &statbuf),             "fstat");
-  CHECK_C(valid_cache = aotcc_get_cache(fd, &cache_key), "fgetxattr");
+  CHECK_C(valid_cache = bs_get_cache(fd, &cache_key), "fgetxattr");
 
   /* `valid_cache` is true if the cache key isn't trivially invalid, e.g. built
    * with a different RUBY_REVISION */
   if (valid_cache && cache_key.mtime == (uint64_t)statbuf.st_mtime) {
     /* if the mtimes match, assume the cache is valid. fetch the cached data. */
-    ret = aotcc_fetch_data(fd, (size_t)cache_key.data_size, handler, &output_data, &exception_tag);
+    ret = bs_fetch_data(fd, (size_t)cache_key.data_size, handler, &output_data, &exception_tag);
     if (ret == -1 && errno == _ENOATTR) {
       /* the key was present, but the data was missing. remove the key, and
        * start over */
@@ -221,7 +221,7 @@ begin:
   }
 
   /* read the contents of the file and crc32 it to compare with the cache key */
-  CHECK_C(aotcc_read_contents(fd, statbuf.st_size, &contents), "read") /* contents must be xfree'd */
+  CHECK_C(bs_read_contents(fd, statbuf.st_size, &contents), "read") /* contents must be xfree'd */
 
   /* we need to pass this char* to ruby-land */
   input_data = rb_str_new(contents, statbuf.st_size);
@@ -231,7 +231,7 @@ begin:
    * the input format to the output format and return */
   if (!writable) {
     stats.unwritable++;
-    CHECK_RB(aotcc_input_to_output(handler, input_data, &output_data, &exception_tag));
+    CHECK_RB(bs_input_to_output(handler, input_data, &output_data, &exception_tag));
     SUCCEED(output_data);
   }
 
@@ -242,11 +242,11 @@ begin:
 
   /* First, convert the input format to the storage format by calling into the
    * handler. */
-  CHECK_RB(exception_tag = aotcc_input_to_storage(handler, input_data, pathval, &storage_data));
+  CHECK_RB(exception_tag = bs_input_to_storage(handler, input_data, pathval, &storage_data));
   if (storage_data == uncompilable) {
-    /* The handler can raise AOTCompileCache::Uncompilable. When it does this,
+    /* The handler can raise BootSnap::Uncompilable. When it does this,
      * we just call the input_to_output handler method, bypassing the storage format. */
-    CHECK_RB(aotcc_input_to_output(handler, input_data, &output_data, &exception_tag));
+    CHECK_RB(bs_input_to_output(handler, input_data, &output_data, &exception_tag));
     stats.uncompilable++;
     SUCCEED(output_data);
   }
@@ -261,7 +261,7 @@ begin:
     if (logging_enabled()) {
       fprintf(stderr, "[OPT_AOT_LOG] warning: compiled artifact is over 64MB, which is too large to store in an xattr.%s\n", path);
     }
-    CHECK_RB(aotcc_input_to_output(handler, input_data, &output_data, &exception_tag));
+    CHECK_RB(bs_input_to_output(handler, input_data, &output_data, &exception_tag));
     SUCCEED(output_data);
   }
 
@@ -270,20 +270,20 @@ begin:
   /* update the cache, but don't leave it in an invalid state even briefly: remove the key first. */
   fremovexattr(fd, xattr_key_name REMOVEXATTR_TRAILER);
   CHECK_C(fsetxattr(fd, xattr_data_name, RSTRING_PTR(storage_data), (size_t)data_size, 0 SETXATTR_TRAILER), "fsetxattr");
-  CHECK_C(aotcc_update_key(fd, data_size, statbuf.st_mtime), "fsetxattr");
+  CHECK_C(bs_update_key(fd, data_size, statbuf.st_mtime), "fsetxattr");
 
   /* updating xattrs bumps mtime, so we set them back after */
-  CHECK_C(aotcc_close_and_unclobber_times(&fd, path, statbuf.st_atime, statbuf.st_mtime), "close/utime");
+  CHECK_C(bs_close_and_unclobber_times(&fd, path, statbuf.st_atime, statbuf.st_mtime), "close/utime");
 
   /* convert the data we just stored into the output format */
-  CHECK_RB(exception_tag = aotcc_storage_to_output(handler, storage_data, &output_data));
+  CHECK_RB(exception_tag = bs_storage_to_output(handler, storage_data, &output_data));
 
   /* if the storage data was broken, remove the cache and run input_to_output */
   if (output_data == Qnil) {
     /* deletion here is best effort; no need to fail if it does */
     fremovexattr(fd, xattr_key_name REMOVEXATTR_TRAILER);
     fremovexattr(fd, xattr_data_name REMOVEXATTR_TRAILER);
-    CHECK_RB(aotcc_input_to_output(handler, input_data, &output_data, &exception_tag));
+    CHECK_RB(bs_input_to_output(handler, input_data, &output_data, &exception_tag));
   }
 
   SUCCEED(output_data);
@@ -312,7 +312,7 @@ retry:
   CLEANUP;
   stats.retry++;
   if (retry == 1) {
-    rb_raise(rb_eRuntimeError, "internal error in aot_compile_cache");
+    rb_raise(rb_eRuntimeError, "internal error in bootsnap");
     __builtin_unreachable();
   }
   retry = 1;
@@ -325,7 +325,7 @@ raise:
 }
 
 static int
-aotcc_fetch_data(int fd, size_t size, VALUE handler, VALUE * output_data, int * exception_tag)
+bs_fetch_data(int fd, size_t size, VALUE handler, VALUE * output_data, int * exception_tag)
 {
   int ret;
   ssize_t nbytes;
@@ -347,7 +347,7 @@ aotcc_fetch_data(int fd, size_t size, VALUE handler, VALUE * output_data, int * 
     goto done;
   }
   storage_data = rb_str_new(xattr_data, nbytes);
-  ret = aotcc_storage_to_output(handler, storage_data, output_data);
+  ret = bs_storage_to_output(handler, storage_data, output_data);
   if (ret != 0) {
     *exception_tag = ret;
     errno = 0;
@@ -358,7 +358,7 @@ done:
 }
 
 static int
-aotcc_update_key(int fd, uint32_t data_size, uint64_t current_mtime)
+bs_update_key(int fd, uint32_t data_size, uint64_t current_mtime)
 {
   struct xattr_key xattr_key;
 
@@ -378,7 +378,7 @@ aotcc_update_key(int fd, uint32_t data_size, uint64_t current_mtime)
  * Set +writable+ to indicate which mode was used.
  */
 static int
-aotcc_open(const char * path, bool * writable)
+bs_open(const char * path, bool * writable)
 {
   int fd;
 
@@ -402,7 +402,7 @@ aotcc_open(const char * path, bool * writable)
  *   -1: fgetxattr failed, errno is set
  */
 static int
-aotcc_get_cache(int fd, struct xattr_key * key)
+bs_get_cache(int fd, struct xattr_key * key)
 {
   ssize_t nbytes;
 
@@ -422,14 +422,14 @@ aotcc_get_cache(int fd, struct xattr_key * key)
  * contents must be freed with xfree() when done.
  */
 static size_t
-aotcc_read_contents(int fd, size_t size, char ** contents)
+bs_read_contents(int fd, size_t size, char ** contents)
 {
   *contents = ALLOC_N(char, size);
   return read(fd, *contents, size);
 }
 
 static int
-aotcc_close_and_unclobber_times(int * fd, const char * path, time_t atime, time_t mtime)
+bs_close_and_unclobber_times(int * fd, const char * path, time_t atime, time_t mtime)
 {
   struct utimbuf times = {
     .actime = atime,
@@ -462,7 +462,7 @@ prot_input_to_output(VALUE arg)
 }
 
 static void
-aotcc_input_to_output(VALUE handler, VALUE input_data, VALUE * output_data, int * exception_tag)
+bs_input_to_output(VALUE handler, VALUE input_data, VALUE * output_data, int * exception_tag)
 {
   struct i2o_data i2o_data = {
     .handler    = handler,
@@ -491,11 +491,11 @@ prot_input_to_storage(VALUE arg)
   return rb_rescue2(
       try_input_to_storage, (VALUE)data,
       rescue_input_to_storage, Qnil,
-      rb_eAOTCompileCache_Uncompilable, 0);
+      rb_eBootSnap_Uncompilable, 0);
 }
 
 static int
-aotcc_input_to_storage(VALUE handler, VALUE input_data, VALUE pathval, VALUE * storage_data)
+bs_input_to_storage(VALUE handler, VALUE input_data, VALUE pathval, VALUE * storage_data)
 {
   int state;
   struct i2s_data i2s_data = {
@@ -515,7 +515,7 @@ prot_storage_to_output(VALUE arg)
 }
 
 static int
-aotcc_storage_to_output(VALUE handler, VALUE storage_data, VALUE * output_data)
+bs_storage_to_output(VALUE handler, VALUE storage_data, VALUE * output_data)
 {
   int state;
   struct s2o_data s2o_data = {

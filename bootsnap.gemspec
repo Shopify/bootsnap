@@ -1,17 +1,17 @@
 # coding: utf-8
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'aot_compile_cache/version'
+require 'bootsnap/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = "aot_compile_cache"
-  spec.version       = AOTCompileCache::VERSION
+  spec.name          = "bootsnap"
+  spec.version       = BootSnap::VERSION
   spec.authors       = ["Burke Libbey"]
   spec.email         = ["burke@libbey.me"]
 
   spec.summary       = "wip"
   spec.description   = "wip."
-  spec.homepage      = "https://github.com/Shopify/aot_compile_cache"
+  spec.homepage      = "https://github.com/Shopify/bootsnap"
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the 'allowed_push_host'
   # to allow pushing to a single host or delete this section to allow pushing to any host.
@@ -28,7 +28,7 @@ Gem::Specification.new do |spec|
   spec.bindir        = "exe"
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
-  spec.extensions    = ["ext/aot_compile_cache/extconf.rb"]
+  spec.extensions    = ["ext/bootsnap/extconf.rb"]
 
   spec.add_development_dependency "bundler", "~> 1.14.a"
   spec.add_development_dependency "rake", "~> 10.0"

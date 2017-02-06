@@ -1,6 +1,6 @@
-require 'aot_compile_cache'
+require 'bootsnap'
 
-class AOTCompileCache
+class BootSnap
   module YAML
     class << self
       attr_accessor :msgpack_factory
@@ -40,14 +40,14 @@ class AOTCompileCache
       # see: https://github.com/msgpack/msgpack-ruby/pull/122
       factory = MessagePack::Factory.new
       factory.register_type(0x00, Symbol)
-      AOTCompileCache::YAML.msgpack_factory = factory
+      BootSnap::YAML.msgpack_factory = factory
 
       klass = class << ::YAML; self; end
       klass.send(:define_method, :load_file) do |path|
-        AOTCompileCache::Native.fetch(path.to_s, AOTCompileCache::YAML)
+        BootSnap::Native.fetch(path.to_s, BootSnap::YAML)
       end
     end
   end
 end
 
-AOTCompileCache::YAML.install!
+BootSnap::YAML.install!

@@ -1,4 +1,4 @@
-#include "aot_compile_cache.h"
+#include "bootsnap.h"
 
 #include <x86intrin.h>
 

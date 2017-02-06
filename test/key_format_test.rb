@@ -1,6 +1,6 @@
 require 'test_helper'
 
-require 'aot_compile_cache/iseq'
+require 'bootsnap/iseq'
 
 class KeyFormatTest < Minitest::Test
   include TmpdirHelper
@@ -15,7 +15,7 @@ class KeyFormatTest < Minitest::Test
 
   def setup
     @prev_dir = Dir.pwd
-    @tmp_dir = Dir.mktmpdir('aotcc-test')
+    @tmp_dir = Dir.mktmpdir('bootsnap-test')
     Dir.chdir(@tmp_dir)
   end
 

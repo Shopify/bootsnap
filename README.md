@@ -1,10 +1,10 @@
-# AOTCompileCache
+# BootSnap
 
 Ruby spends a lot of time compiling source to bytecode, and a lot of Rails apps
 spend quite a bit of time parsing yaml. The majority of that code and data
 stays the same across many boots.
 
-AOTCompileCache caches the results of those compilation (as a binary ISeq for
+BootSnap caches the results of those compilation (as a binary ISeq for
 ruby, and as MessagePack or Marshal for YAML) in extended filesystem attributes.
 
 This is what a successful cache hit looks like in strace/dtruss:
@@ -25,14 +25,14 @@ The data fetched from the xattr is the compiled bytecode/messagepack.
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'aot_compile_cache'
+gem 'bootsnap'
 ```
 
 Then, add, as early as possible in your application's boot process:
 
 ```ruby
-require 'aot_compile_cache/iseq'
-require 'aot_compile_cache/yaml'
+require 'bootsnap/iseq'
+require 'bootsnap/yaml'
 ```
 
 Usually the best place for this is immediately after `require 'bundler/setup'`.
