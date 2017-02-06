@@ -41,7 +41,7 @@ class BootSnap
       BootSnap::Native.compile_option_crc32 = crc
     end
 
-    def self.install!
+    def self.setup
       BootSnap::ISeq.compile_option_updated
       class << RubyVM::InstructionSequence
         prepend InstructionSequenceMixin
@@ -49,5 +49,3 @@ class BootSnap
     end
   end
 end
-
-BootSnap::ISeq.install!

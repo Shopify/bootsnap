@@ -31,7 +31,7 @@ class BootSnap
       ::YAML.load(data)
     end
 
-    def self.install!
+    def self.setup
       require 'yaml'
       require 'msgpack'
 
@@ -49,5 +49,3 @@ class BootSnap
     end
   end
 end
-
-BootSnap::YAML.install!

@@ -1,5 +1,5 @@
 up:
-  - ruby: 2.3.3
+  - ruby: 2.3-perf
 commands:
   build: gem build
   test: 'rake compile && bin/testunit'
