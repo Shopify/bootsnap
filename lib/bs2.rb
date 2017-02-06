@@ -37,7 +37,6 @@ module BS2
     @@retfalse = return_false
 
     if File.exist?('tmp/bs2.msgpack')
-      puts 'loading'
       @@omg = MessagePack.load(File.binread('tmp/bs2.msgpack'))
     else
       puts 'generating'
