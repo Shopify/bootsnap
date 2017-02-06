@@ -1,5 +1,17 @@
 # BootSnap
 
+BootSnap is a suite of hacks to make (large) ruby applications boot faster.
+
+There are two main features:
+
+1. Caching compiled Ruby and YAML to save load time on subsequent boots.
+2. Pre-scanning the `$LOAD_PATH` and intercepting calls to `require`,
+   subsituting the full path (eliminating frequent traversals of the full
+   `LOAD_PATH`) via the dependency on
+   [`bootscale`](https://github.com/byroot/bootscale).
+
+---
+
 Ruby spends a lot of time compiling source to bytecode, and a lot of Rails apps
 spend quite a bit of time parsing yaml. The majority of that code and data
 stays the same across many boots.
@@ -19,7 +31,6 @@ close(0x7)		 = 0 0
 
 The data fetched from the xattr is the compiled bytecode/messagepack.
 
-
 ## Installation
 
 Add this line to your application's Gemfile:
@@ -28,11 +39,28 @@ Add this line to your application's Gemfile:
 gem 'bootsnap'
 ```
 
-Then, add, as early as possible in your application's boot process:
+Then, immediatley after `require "bundler/setup"` in your `config/boot.rb` or
+whatever it is that initializes your application:
 
 ```ruby
-require 'bootsnap/iseq'
-require 'bootsnap/yaml'
+require 'bootsnap'
+BootSnap.setup(
+  cache_dir: File.expand_path('../../tmp', __FILE__),
+  development_mode: ENV['ENV'] != "production",
+)
 ```
 
-Usually the best place for this is immediately after `require 'bundler/setup'`.
+You can opt out of specific features by passing additional flags to `BootSnap.setup`. For example:
+
+```ruby
+require 'bootsnap'
+BootSnap.setup(
+  cache_dir: File.expand_path('../../tmp', __FILE__),
+  development_mode: ENV['ENV'] != "production",
+  iseq: false,
+  yaml: true,
+  require: false,
+  as_autoload: false,
+)
+```
+

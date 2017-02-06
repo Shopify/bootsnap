@@ -1,4 +1,4 @@
-require 'bootsnap'
+require_relative '../bootsnap'
 
 class BootSnap
   module YAML

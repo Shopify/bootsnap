@@ -1,5 +1,5 @@
-require 'bootsnap/version'
-require 'bootsnap/bootsnap' # BootSnap::Native
+require_relative 'bootsnap/version'
+require_relative 'bootsnap/bootsnap' # BootSnap::Native
 
 class BootSnap
   InvalidConfiguration = Class.new(StandardError)
@@ -10,18 +10,18 @@ class BootSnap
     end
 
     setup_iseq                                 if iseq
-    setup_yaml                                 if yaml
     setup_require(cache_dir, development_mode) if require
     setup_as_autoload(development_mode)        if as_autoload
+    setup_yaml                                 if yaml
   end
 
   def self.setup_iseq
-    require 'bootsnap/iseq'
+    require_relative 'bootsnap/iseq'
     BootSnap::ISeq.setup
   end
 
   def self.setup_yaml
-    require 'bootsnap/yaml'
+    require_relative 'bootsnap/yaml'
     BootSnap::YAML.setup
   end
 

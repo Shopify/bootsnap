@@ -1,5 +1,12 @@
-require 'bootsnap'
-require 'zlib'
+require_relative '../bootsnap'
+
+# We're running here after bundle setup but before we install bootscale.
+# Try as hard as possible not to traverse the LOAD_PATH.
+begin
+  require(RbConfig::CONFIG['rubyarchdir'] + "/zlib." + RbConfig::CONFIG['DLEXT'])
+rescue LoadError
+  require 'zlib'
+end
 
 class BootSnap
   module ISeq
