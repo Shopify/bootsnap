@@ -1,4 +1,8 @@
 require 'msgpack'
+begin
+  require 'yaml'
+rescue LoadError
+end
 require 'active_support/dependencies'
 
 module BS2AS
