@@ -26,12 +26,14 @@ class BootSnap
   end
 
   def self.setup_require(cache_dir, devmode)
-    require 'bootscale'
-    Bootscale.setup(cache_directory: cache_dir, development_mode: devmode)
+    require_relative 'bs2'
+    # Bootscale.setup(cache_directory: cache_dir, development_mode: devmode)
+    BS2.setup(return_false: [], guarantee_fail: [])
   end
 
   def self.setup_as_autoload(devmode)
-    require 'bootscale/active_support'
-    Bootscale::ActiveSupport.setup(development_mode: devmode)
+    require_relative 'bs2_as'
+    # Bootscale::ActiveSupport.setup(development_mode: devmode)
+    BS2AS.setup
   end
 end
