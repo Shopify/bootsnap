@@ -6,40 +6,40 @@ class Bootsnap
 
   def self.setup(
     cache_dir:, development_mode:,
-    iseq: true, yaml: true, require: true, as_autoload: true, no_trace: false
+    aot_ruby: true, aot_yaml: true, load_path_prescan: true, autoload_path_prescan: true, disable_trace: false
   )
-    if as_autoload && !require
+    if autoload_path_prescan && !load_path_prescan
       raise InvalidConfiguration, "feature 'as_autoload' depends on feature 'require'"
     end
 
-    setup_no_trace                             if no_trace
-    setup_iseq                                 if iseq
-    setup_require(cache_dir, development_mode) if require
-    setup_as_autoload(development_mode)        if as_autoload
-    setup_yaml                                 if yaml
+    setup_disable_trace         if disable_trace
+    setup_aot_ruby              if aot_ruby
+    setup_load_path_prescan     if load_path_prescan
+    setup_autoload_path_prescan if autoload_path_prescan
+    setup_aot_yaml              if aot_yaml
   end
 
-  def self.setup_no_trace
+  def self.setup_disable_trace
     RubyVM::InstructionSequence.compile_option = { trace_instruction: false }
   end
 
-  def self.setup_iseq
+  def self.setup_aot_ruby
     require_relative 'bootsnap/iseq'
     Bootsnap::ISeq.setup
   end
 
-  def self.setup_yaml
+  def self.setup_aot_yaml
     require_relative 'bootsnap/yaml'
     Bootsnap::YAML.setup
   end
 
-  def self.setup_require(cache_dir, devmode)
+  def self.setup_load_path_prescan
     require_relative 'bs2'
     # Bootscale.setup(cache_directory: cache_dir, development_mode: devmode)
     BS2.setup(return_false: [], guarantee_fail: [])
   end
 
-  def self.setup_as_autoload(devmode)
+  def self.setup_autoload_path_prescan
     require_relative 'bs2_as'
     # Bootscale::ActiveSupport.setup(development_mode: devmode)
     BS2AS.setup
