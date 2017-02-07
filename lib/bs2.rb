@@ -20,7 +20,7 @@ module BS2
     end
     if @@gfails.include?(feature)
       if ret
-        raise "hey, this exists but you claimed it shouldn't"
+        raise "hey, this exists but you claimed it shouldn't: #{feature}"
       else
         le = LoadError.new("cannot load such file -- #{feature}")
         le.singleton_class.send(:define_method, :path) { feature }
