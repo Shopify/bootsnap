@@ -6,15 +6,18 @@ class Bootsnap
 
   def self.setup(
     cache_dir:, development_mode:,
-    aot_ruby: true, aot_yaml: true, load_path_prescan: true, autoload_path_prescan: true, disable_trace: false
+    aot_ruby: true, aot_yaml: true, load_path_prescan: true, autoload_path_prescan: true, disable_trace: false,
+    guarantee_load_fail: []
   )
     if autoload_path_prescan && !load_path_prescan
       raise InvalidConfiguration, "feature 'as_autoload' depends on feature 'require'"
     end
 
+    gf = guarantee_load_fail
+
     setup_disable_trace         if disable_trace
     setup_aot_ruby              if aot_ruby
-    setup_load_path_prescan     if load_path_prescan
+    setup_load_path_prescan(gf) if load_path_prescan
     setup_autoload_path_prescan if autoload_path_prescan
     setup_aot_yaml              if aot_yaml
   end
@@ -33,10 +36,10 @@ class Bootsnap
     Bootsnap::YAML.setup
   end
 
-  def self.setup_load_path_prescan
+  def self.setup_load_path_prescan(gf)
     require_relative 'bs2'
     # Bootscale.setup(cache_directory: cache_dir, development_mode: devmode)
-    BS2.setup(return_false: [], guarantee_fail: [])
+    BS2.setup(return_false: [], guarantee_fail: gf)
   end
 
   def self.setup_autoload_path_prescan
