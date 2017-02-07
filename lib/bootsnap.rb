@@ -6,7 +6,7 @@ class BootSnap
 
   def self.setup(
     cache_dir:, development_mode:,
-    iseq: true, yaml: true, require: true, as_autoload: true, no_trace: true
+    iseq: true, yaml: true, require: true, as_autoload: true, no_trace: false
   )
     if as_autoload && !require
       raise InvalidConfiguration, "feature 'as_autoload' depends on feature 'require'"
