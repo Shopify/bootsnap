@@ -1,7 +1,7 @@
 require_relative 'bootsnap/version'
-require_relative 'bootsnap/bootsnap' # BootSnap::Native
+require_relative 'bootsnap/bootsnap' # Bootsnap::Native
 
-class BootSnap
+class Bootsnap
   InvalidConfiguration = Class.new(StandardError)
 
   def self.setup(
@@ -25,12 +25,12 @@ class BootSnap
 
   def self.setup_iseq
     require_relative 'bootsnap/iseq'
-    BootSnap::ISeq.setup
+    Bootsnap::ISeq.setup
   end
 
   def self.setup_yaml
     require_relative 'bootsnap/yaml'
-    BootSnap::YAML.setup
+    Bootsnap::YAML.setup
   end
 
   def self.setup_require(cache_dir, devmode)

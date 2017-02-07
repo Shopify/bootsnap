@@ -5,7 +5,7 @@ require 'bootsnap/version'
 
 Gem::Specification.new do |spec|
   spec.name          = "bootsnap"
-  spec.version       = BootSnap::VERSION
+  spec.version       = Bootsnap::VERSION
   spec.authors       = ["Burke Libbey"]
   spec.email         = ["burke@libbey.me"]
 

@@ -23,15 +23,15 @@ class HandlerErrorsTest < Minitest::Test
 
   def test_input_to_storage_unexpected_type
     path = set_file('a.rb', 'a = 3', 100)
-    BootSnap::ISeq.expects(:input_to_storage).returns(nil)
+    Bootsnap::ISeq.expects(:input_to_storage).returns(nil)
     # this could be made slightly more obvious though.
     assert_raises(TypeError) { load(path) }
   end
 
   def test_input_to_storage_invalid_instance_of_expected_type
     path = set_file('a.rb', 'a = 3', 100)
-    BootSnap::ISeq.expects(:input_to_storage).returns('broken')
-    BootSnap::ISeq.expects(:input_to_output).with('a = 3').returns('whatever')
+    Bootsnap::ISeq.expects(:input_to_storage).returns('broken')
+    Bootsnap::ISeq.expects(:input_to_output).with('a = 3').returns('whatever')
     _, err = capture_subprocess_io do
       load(path)
     end
@@ -41,13 +41,13 @@ class HandlerErrorsTest < Minitest::Test
   def test_input_to_storage_raises
     path = set_file('a.rb', 'a = 3', 100)
     klass = Class.new(StandardError)
-    BootSnap::ISeq.expects(:input_to_storage).raises(klass, 'oops')
+    Bootsnap::ISeq.expects(:input_to_storage).raises(klass, 'oops')
     assert_raises(klass) { load(path) }
   end
 
   def test_storage_to_output_unexpected_type
     path = set_file('a.rb', 'a = 3', 100)
-    BootSnap::ISeq.expects(:storage_to_output).returns(Object.new)
+    Bootsnap::ISeq.expects(:storage_to_output).returns(Object.new)
     # It seems like ruby doesn't really care.
     load(path)
   end
@@ -59,7 +59,7 @@ class HandlerErrorsTest < Minitest::Test
   def test_storage_to_output_raises
     path = set_file('a.rb', 'a = 3', 100)
     klass = Class.new(StandardError)
-    BootSnap::ISeq.expects(:storage_to_output).times(2).raises(klass, 'oops')
+    Bootsnap::ISeq.expects(:storage_to_output).times(2).raises(klass, 'oops')
     assert_raises(klass) { load(path) }
     # called from two paths; this tests the second.
     assert_raises(klass) { load(path) }
@@ -67,8 +67,8 @@ class HandlerErrorsTest < Minitest::Test
 
   def test_input_to_output_unexpected_type
     path = set_file('a.rb', 'a = 3', 100)
-    BootSnap::ISeq.expects(:input_to_storage).raises(BootSnap::Uncompilable)
-    BootSnap::ISeq.expects(:input_to_output).returns(Object.new)
+    Bootsnap::ISeq.expects(:input_to_storage).raises(Bootsnap::Uncompilable)
+    Bootsnap::ISeq.expects(:input_to_output).returns(Object.new)
     # It seems like ruby doesn't really care.
     load(path)
   end
@@ -80,8 +80,8 @@ class HandlerErrorsTest < Minitest::Test
   def test_input_to_output_raises
     path = set_file('a.rb', 'a = 3', 100)
     klass = Class.new(StandardError)
-    BootSnap::ISeq.expects(:input_to_storage).raises(BootSnap::Uncompilable)
-    BootSnap::ISeq.expects(:input_to_output).raises(klass, 'oops')
+    Bootsnap::ISeq.expects(:input_to_storage).raises(Bootsnap::Uncompilable)
+    Bootsnap::ISeq.expects(:input_to_output).raises(klass, 'oops')
     assert_raises(klass) { load(path) }
   end
 

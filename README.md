@@ -1,6 +1,6 @@
-# BootSnap
+# Bootsnap
 
-BootSnap is a suite of hacks to make (large) ruby applications boot faster.
+Bootsnap is a suite of hacks to make (large) ruby applications boot faster.
 
 There are two main features:
 
@@ -16,7 +16,7 @@ Ruby spends a lot of time compiling source to bytecode, and a lot of Rails apps
 spend quite a bit of time parsing yaml. The majority of that code and data
 stays the same across many boots.
 
-BootSnap caches the results of those compilation (as a binary ISeq for
+Bootsnap caches the results of those compilation (as a binary ISeq for
 ruby, and as MessagePack or Marshal for YAML) in extended filesystem attributes.
 
 This is what a successful cache hit looks like in strace/dtruss:
@@ -44,17 +44,17 @@ whatever it is that initializes your application:
 
 ```ruby
 require 'bootsnap'
-BootSnap.setup(
+Bootsnap.setup(
   cache_dir: File.expand_path('../../tmp', __FILE__),
   development_mode: ENV['ENV'] != "production",
 )
 ```
 
-You can opt out of specific features by passing additional flags to `BootSnap.setup`. For example:
+You can opt out of specific features by passing additional flags to `Bootsnap.setup`. For example:
 
 ```ruby
 require 'bootsnap'
-BootSnap.setup(
+Bootsnap.setup(
   cache_dir: File.expand_path('../../tmp', __FILE__),
   development_mode: ENV['ENV'] != "production",
   iseq: false,

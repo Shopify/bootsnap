@@ -1,3 +1,3 @@
-class BootSnap
+class Bootsnap
   VERSION = "0.1.0"
 end

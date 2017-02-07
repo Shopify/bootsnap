@@ -20,9 +20,9 @@
  * - source files over 4GB will likely break things (meh)
  */
 
-static VALUE rb_cBootSnap;
-static VALUE rb_cBootSnap_Native;
-static VALUE rb_eBootSnap_Uncompilable;
+static VALUE rb_cBootsnap;
+static VALUE rb_cBootsnap_Native;
+static VALUE rb_eBootsnap_Uncompilable;
 static uint32_t current_ruby_revision;
 static uint32_t current_compile_option_crc32 = 0;
 static ID uncompilable;
@@ -105,17 +105,17 @@ static VALUE bs_stats(VALUE self);
 void
 Init_bootsnap(void)
 {
-  rb_cBootSnap = rb_define_class("BootSnap", rb_cObject);
-  rb_cBootSnap_Native = rb_define_module_under(rb_cBootSnap, "Native");
+  rb_cBootsnap = rb_define_class("Bootsnap", rb_cObject);
+  rb_cBootsnap_Native = rb_define_module_under(rb_cBootsnap, "Native");
   current_ruby_revision = FIX2INT(rb_const_get(rb_cObject, rb_intern("RUBY_REVISION")));
 
-  rb_eBootSnap_Uncompilable = rb_define_class_under(rb_cBootSnap, "Uncompilable", rb_eStandardError);
+  rb_eBootsnap_Uncompilable = rb_define_class_under(rb_cBootsnap, "Uncompilable", rb_eStandardError);
 
   uncompilable = rb_intern("__bs_uncompilable__");
 
-  rb_define_module_function(rb_cBootSnap_Native, "fetch", bs_fetch, 2);
-  rb_define_module_function(rb_cBootSnap_Native, "stats", bs_stats, 0);
-  rb_define_module_function(rb_cBootSnap_Native, "compile_option_crc32=", bs_compile_option_crc32_set, 1);
+  rb_define_module_function(rb_cBootsnap_Native, "fetch", bs_fetch, 2);
+  rb_define_module_function(rb_cBootsnap_Native, "stats", bs_stats, 0);
+  rb_define_module_function(rb_cBootsnap_Native, "compile_option_crc32=", bs_compile_option_crc32_set, 1);
 }
 
 static VALUE
@@ -244,7 +244,7 @@ begin:
    * handler. */
   CHECK_RB(exception_tag = bs_input_to_storage(handler, input_data, pathval, &storage_data));
   if (storage_data == uncompilable) {
-    /* The handler can raise BootSnap::Uncompilable. When it does this,
+    /* The handler can raise Bootsnap::Uncompilable. When it does this,
      * we just call the input_to_output handler method, bypassing the storage format. */
     CHECK_RB(bs_input_to_output(handler, input_data, &output_data, &exception_tag));
     stats.uncompilable++;
@@ -491,7 +491,7 @@ prot_input_to_storage(VALUE arg)
   return rb_rescue2(
       try_input_to_storage, (VALUE)data,
       rescue_input_to_storage, Qnil,
-      rb_eBootSnap_Uncompilable, 0);
+      rb_eBootsnap_Uncompilable, 0);
 }
 
 static int

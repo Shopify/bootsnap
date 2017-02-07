@@ -8,7 +8,7 @@ rescue LoadError
   require 'zlib'
 end
 
-class BootSnap
+class Bootsnap
   module ISeq
     def self.input_to_storage(_, path)
       RubyVM::InstructionSequence.compile_file(path).to_binary
@@ -20,7 +20,7 @@ class BootSnap
       RubyVM::InstructionSequence.load_from_binary(binary)
     rescue RuntimeError => e
       if e.message == 'broken binary format'
-        STDERR.puts "[BootSnap] warning: rejecting broken binary"
+        STDERR.puts "[Bootsnap] warning: rejecting broken binary"
         return nil
       else
         raise
@@ -33,23 +33,23 @@ class BootSnap
 
     module InstructionSequenceMixin
       def load_iseq(path)
-        BootSnap::Native.fetch(path.to_s, BootSnap::ISeq)
+        Bootsnap::Native.fetch(path.to_s, Bootsnap::ISeq)
       end
 
       def compile_option=(hash)
         super(hash)
-        BootSnap::ISeq.compile_option_updated
+        Bootsnap::ISeq.compile_option_updated
       end
     end
 
     def self.compile_option_updated
       option = RubyVM::InstructionSequence.compile_option
       crc = Zlib.crc32(option.inspect)
-      BootSnap::Native.compile_option_crc32 = crc
+      Bootsnap::Native.compile_option_crc32 = crc
     end
 
     def self.setup
-      BootSnap::ISeq.compile_option_updated
+      Bootsnap::ISeq.compile_option_updated
       class << RubyVM::InstructionSequence
         prepend InstructionSequenceMixin
       end

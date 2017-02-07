@@ -1,6 +1,6 @@
 require_relative '../bootsnap'
 
-class BootSnap
+class Bootsnap
   module YAML
     class << self
       attr_accessor :msgpack_factory
@@ -40,11 +40,11 @@ class BootSnap
       # see: https://github.com/msgpack/msgpack-ruby/pull/122
       factory = MessagePack::Factory.new
       factory.register_type(0x00, Symbol)
-      BootSnap::YAML.msgpack_factory = factory
+      Bootsnap::YAML.msgpack_factory = factory
 
       klass = class << ::YAML; self; end
       klass.send(:define_method, :load_file) do |path|
-        BootSnap::Native.fetch(path.to_s, BootSnap::YAML)
+        Bootsnap::Native.fetch(path.to_s, Bootsnap::YAML)
       end
     end
   end
