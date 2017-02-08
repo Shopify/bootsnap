@@ -1,6 +1,6 @@
 require_relative '../bootsnap'
 
-class Bootsnap
+module Bootsnap
   module YAML
     class << self
       attr_accessor :msgpack_factory
@@ -21,7 +21,7 @@ class Bootsnap
       # about it. -- but a leading 0x04 would indicate the contents of the YAML
       # is a positive integer, which is rare, to say the least.
       if data[0] == 0x04.chr && data[1] == 0x08.chr
-        return Marshal.load(data)
+        Marshal.load(data)
       else
         msgpack_factory.unpacker.feed(data).read
       end
@@ -32,6 +32,8 @@ class Bootsnap
     end
 
     def self.setup
+      # we don't have to use ExplicitRequire here because LoadPathCache is
+      # already set up.
       require 'yaml'
       require 'msgpack'
 

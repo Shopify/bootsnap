@@ -1,14 +1,9 @@
 require_relative '../bootsnap'
+require_relative 'explicit_require'
 
-# We're running here after bundle setup but before we install bootscale.
-# Try as hard as possible not to traverse the LOAD_PATH.
-begin
-  require(RbConfig::CONFIG['rubyarchdir'] + "/zlib." + RbConfig::CONFIG['DLEXT'])
-rescue LoadError
-  require 'zlib'
-end
+Bootsnap::ExplicitRequire.from_archdir('zlib')
 
-class Bootsnap
+module Bootsnap
   module ISeq
     def self.input_to_storage(_, path)
       RubyVM::InstructionSequence.compile_file(path).to_binary
