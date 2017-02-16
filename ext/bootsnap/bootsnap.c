@@ -224,7 +224,7 @@ begin:
   CHECK_C(bs_read_contents(fd, statbuf.st_size, &contents), "read") /* contents must be xfree'd */
 
   /* we need to pass this char* to ruby-land */
-  input_data = rb_str_new(contents, statbuf.st_size);
+  input_data = rb_str_new_static(contents, statbuf.st_size);
 
   /* if we didn't have write permission to the file, bail now -- everything
    * that follows is about generating and writing the cache. Let's just convert
@@ -346,7 +346,7 @@ bs_fetch_data(int fd, size_t size, VALUE handler, VALUE * output_data, int * exc
     ret = -1;
     goto done;
   }
-  storage_data = rb_str_new(xattr_data, nbytes);
+  storage_data = rb_str_new_static(xattr_data, nbytes);
   ret = bs_storage_to_output(handler, storage_data, output_data);
   if (ret != 0) {
     *exception_tag = ret;
