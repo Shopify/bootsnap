@@ -1,8 +1,8 @@
 require 'test_helper'
 
-module BootLib
+module Bootsnap
   module LoadPathCache
-    class ChangeObserverTest < ActiveSupport::TestCase
+    class ChangeObserverTest < MiniTest::Test
       def setup
         @observer = Object.new
         @arr = []

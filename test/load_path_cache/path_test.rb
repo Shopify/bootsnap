@@ -1,9 +1,9 @@
 require 'test_helper'
-require 'boot_lib/load_path_cache'
+require 'bootsnap/load_path_cache'
 
-module BootLib
+module Bootsnap
   module LoadPathCache
-    class PathTest < ActiveSupport::TestCase
+    class PathTest < MiniTest::Test
       def setup
         @cache = Object.new
       end

@@ -4,6 +4,14 @@ module Bootsnap
     RUBYLIBDIR = RbConfig::CONFIG['rubylibdir']
     DLEXT      = RbConfig::CONFIG['DLEXT']
 
+    def self.from_self(feature)
+      require_relative "../#{feature}"
+    end
+
+    def self.from_rubylibdir(feature)
+      require(File.join(RUBYLIBDIR, "#{feature}.rb"))
+    end
+
     def self.from_archdir(feature)
       require(File.join(ARCHDIR, "#{feature}.#{DLEXT}"))
     end

@@ -1,4 +1,4 @@
-module BootLib
+module Bootsnap
   module LoadPathCache
     module ChangeObserver
       def self.register(observer, arr)
@@ -37,7 +37,7 @@ module BootLib
           reject! reverse! select! shuffle! shift slice! sort! sort_by!
         ).each do |meth|
           arr.define_singleton_method(meth) do |*|
-            raise NotImplementedError, "destructive method on $LOAD_PATH not supported by BootLib: #{meth}"
+            raise NotImplementedError, "destructive method on $LOAD_PATH not supported by Bootsnap: #{meth}"
           end
         end
       end

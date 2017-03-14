@@ -1,6 +1,6 @@
-module BootLib
+module Bootsnap
   module LoadPathCache
-    class PathScannerTest < ActiveSupport::TestCase
+    class PathScannerTest < MiniTest::Test
       DLEXT = RbConfig::CONFIG['DLEXT']
       OTHER_DLEXT = DLEXT == 'bundle' ? 'so' : 'bundle'
 

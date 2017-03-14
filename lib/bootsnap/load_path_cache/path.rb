@@ -1,17 +1,21 @@
-require_relative '../../boot_lib'
-require_relative '../load_path_cache'
+require_relative 'path_scanner'
 
-module BootLib
+module Bootsnap
   module LoadPathCache
     class Path
       # A path is considered 'stable' if it is part of a Gem.path or the ruby
       # distribution. When adding or removing files in these paths, the cache
       # must be cleared before the change will be noticed.
-      def stable?;   stability == STABLE;   end
+      def stable?
+        stability == STABLE
+      end
+
       # A path is considered volatile if it doesn't live under a Gem.path or
       # the ruby distribution root. These paths are scanned for new additions
       # more frequently.
-      def volatile?; stability == VOLATILE; end
+      def volatile?
+        stability == VOLATILE
+      end
 
       attr_reader :path
 
@@ -71,9 +75,7 @@ module BootLib
 
       def stability
         @stability ||= begin
-          if path.start_with?(BootLib::ROOT)
-            VOLATILE
-          elsif Gem.path.detect { |p| path.start_with?(p) }
+          if Gem.path.detect { |p| path.start_with?(p) }
             STABLE
           elsif path.start_with?(RUBY_PREFIX)
             STABLE

@@ -1,13 +1,14 @@
 require_relative '../load_path_cache'
-require 'thread'
+require_relative '../explicit_require'
+Bootsnap::ExplicitRequire.from_archdir('thread')
 
-module BootLib
+module Bootsnap
   module LoadPathCache
     class Cache
       AGE_THRESHOLD = 30
 
-      def initialize(store, path_obj, devmode: false)
-        @devmode = devmode
+      def initialize(store, path_obj, development_mode: false)
+        @development_mode = development_mode
         @cache = store
         @mutex = ::Thread::Mutex.new
         @path_obj = path_obj
@@ -73,7 +74,7 @@ module BootLib
       end
 
       def stale?
-        @devmode && @generated_at + AGE_THRESHOLD < now
+        @development_mode && @generated_at + AGE_THRESHOLD < now
       end
 
       def now

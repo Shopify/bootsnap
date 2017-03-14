@@ -1,8 +1,8 @@
 require 'test_helper'
 
-module BootLib
+module Bootsnap
   module LoadPathCache
-    class CacheTest < ActiveSupport::TestCase
+    class CacheTest < MiniTest::Test
       def setup
         @dir1 = Dir.mktmpdir
         @dir2 = Dir.mktmpdir
@@ -58,12 +58,12 @@ module BootLib
         assert_equal("#{@dir1}/both#{DLEXT}", cache.find("both#{DLEXT}"))
       end
 
-      def test_devmode
+      def test_development_mode
         time = Process.clock_gettime(Process::CLOCK_MONOTONIC).to_i
 
-        # without devmode, no refresh
-        dev_no_cache = Cache.new(NullCache, [@dir1], devmode: false)
-        dev_yes_cache = Cache.new(NullCache, [@dir1], devmode: true)
+        # without development_mode, no refresh
+        dev_no_cache = Cache.new(NullCache, [@dir1], development_mode: false)
+        dev_yes_cache = Cache.new(NullCache, [@dir1], development_mode: true)
 
         FileUtils.touch("#{@dir1}/new.rb")
 

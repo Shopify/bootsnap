@@ -1,6 +1,6 @@
-require 'boot_lib/load_path_cache'
+require 'bootsnap/load_path_cache'
 
-module BootLib
-  class LoadPathCacheTest < ActiveSupport::TestCase
+module Bootsnap
+  class LoadPathCacheTest < MiniTest::Test
   end
 end

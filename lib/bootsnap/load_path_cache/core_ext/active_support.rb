@@ -1,5 +1,3 @@
-require 'active_support/dependencies'
-
 module ActiveSupport
   module Dependencies
     alias_method :search_for_file_without_cache, :search_for_file
@@ -8,15 +6,15 @@ module ActiveSupport
         search_for_file_without_cache(path)
       else
         begin
-          BootLib::LoadPathCache.autoload_paths_cache.find(path)
-        rescue BootLib::LoadPathCache::ReturnFalse
+          Bootsnap::LoadPathCache.autoload_paths_cache.find(path)
+        rescue Bootsnap::LoadPathCache::ReturnFalse
           nil # doesn't really apply here
         end
       end
     end
 
     def autoloadable_module?(path_suffix)
-      BootLib::LoadPathCache.autoload_paths_cache.has_dir?(path_suffix)
+      Bootsnap::LoadPathCache.autoload_paths_cache.has_dir?(path_suffix)
     end
 
     alias_method :load_missing_constant_without_cache, :load_missing_constant

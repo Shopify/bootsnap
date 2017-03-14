@@ -1,9 +1,15 @@
 require_relative '../load_path_cache'
 
-module BootLib
+module Bootsnap
   module LoadPathCache
     module PathScanner
       RelativePathNotSupported = Class.new(StandardError)
+
+      REQUIRABLES_AND_DIRS = "/**/*{#{DOT_RB},#{DL_EXTENSIONS.join(',')},/}"
+      IS_DIR = %r{(.*)/\z}
+      NORMALIZE_NATIVE_EXTENSIONS = !DL_EXTENSIONS.include?(LoadPathCache::DOT_SO)
+      ALTERNATIVE_NATIVE_EXTENSIONS_PATTERN = /\.(o|bundle|dylib)\z/
+      BUNDLE_PATH = (Bundler.bundle_path.cleanpath.to_s << LoadPathCache::SLASH).freeze
 
       def self.call(path)
         raise RelativePathNotSupported unless path.start_with?(SLASH)
@@ -26,14 +32,6 @@ module BootLib
         end
         [requirables, dirs]
       end
-
-      private
-
-      REQUIRABLES_AND_DIRS = "/**/*{#{DOT_RB},#{DL_EXTENSIONS.join(',')},/}"
-      IS_DIR = %r{(.*)/\z}
-      NORMALIZE_NATIVE_EXTENSIONS = !DL_EXTENSIONS.include?(LoadPathCache::DOT_SO)
-      ALTERNATIVE_NATIVE_EXTENSIONS_PATTERN = /\.(o|bundle|dylib)\z/
-      BUNDLE_PATH = (Bundler.bundle_path.cleanpath.to_s << LoadPathCache::SLASH).freeze
     end
   end
 end

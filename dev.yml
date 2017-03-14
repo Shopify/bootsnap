@@ -1,2 +1,5 @@
 up:
-  - ruby: 2.3-perf
+  - ruby: 2.3.3
+  - bundler
+commands:
+  test: bin/testunit

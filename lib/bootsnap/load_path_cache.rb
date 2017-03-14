@@ -1,9 +1,8 @@
-require_relative '../boot_lib'
-require 'lmdb_cache'
+require_relative 'lmdb_cache'
 
-module BootLib
+module Bootsnap
   module LoadPathCache
-    ReturnFalse = ::Class.new(::StandardError)
+    ReturnFalse = Class.new(StandardError)
 
     DOT_RB = '.rb'
     DOT_SO = '.so'
@@ -20,23 +19,29 @@ module BootLib
     class << self
       attr_reader :load_path_cache, :autoload_paths_cache
 
-      def setup(cache_path)
-        store = ::LMDBCache::Store.new(cache_path)
+      def setup(cache_path:, development_mode:, active_support: true)
+        store = Bootsnap::LMDBCache::Store.new(cache_path)
 
-        @load_path_cache = start_cache(store, $LOAD_PATH)
+        @load_path_cache = start_cache(store, $LOAD_PATH, development_mode: development_mode)
         require_relative 'load_path_cache/core_ext/kernel_require'
 
-        # this should happen after setting up the initial cache because it
-        # loads a lot of code. It's better to do after +require+ is optimized.
-        require 'active_support/dependencies'
-        @autoload_paths_cache = start_cache(store, ::ActiveSupport::Dependencies.autoload_paths)
-        require_relative 'load_path_cache/core_ext/active_support'
+        if active_support
+          # this should happen after setting up the initial cache because it
+          # loads a lot of code. It's better to do after +require+ is optimized.
+          require 'active_support/dependencies'
+          @autoload_paths_cache = start_cache(
+            store,
+            ::ActiveSupport::Dependencies.autoload_paths,
+            development_mode: development_mode
+          )
+          require_relative 'load_path_cache/core_ext/active_support'
+        end
       end
 
       private
 
-      def start_cache(store, obj)
-        c = Cache.new(store, obj, devmode: BootLib::RAILS_ENV == 'development')
+      def start_cache(store, obj, development_mode:)
+        c = Cache.new(store, obj, development_mode: development_mode)
         ChangeObserver.register(c, obj)
         c
       end
