@@ -517,7 +517,7 @@ Metrics/LineLength:
   - https
   IgnoreCopDirectives: false
   IgnoredPatterns:
-  - '\A\s*test\s.*(do|->)\Z'
+  - '\A\s*test(_\w+)?\s.*(do|->)(\s|\Z)'
 
 Metrics/ParameterLists:
   Max: 5
