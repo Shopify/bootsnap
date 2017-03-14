@@ -120,4 +120,16 @@ module Bootsnap
       create_db
     end
   end
+
+  class StringCache < LMDBCache
+    private
+
+    def load_value(v)
+      Snappy.inflate(v)
+    end
+
+    def dump_value(v)
+      Snappy.deflate(v)
+    end
+  end
 end

@@ -1,5 +1,6 @@
 require_relative 'bootsnap/version'
 require_relative 'bootsnap/load_path_cache'
+require_relative 'bootsnap/compile_cache'
 
 module Bootsnap
   InvalidConfiguration = Class.new(StandardError)
@@ -20,15 +21,18 @@ module Bootsnap
     end
 
     setup_disable_trace if disable_trace
-    setup_ruby_compile_cache if ruby_compile_cache
+
+    Bootsnap::CompileCache.setup(
+      cache_path: cache_dir + '/bootsnap-compile-cache',
+      ruby:       ruby_compile_cache,
+      yaml:       yaml_compile_cache
+    ) if ruby_compile_cache || yaml_compile_cache
 
     Bootsnap::LoadPathCache.setup(
-      cache_path: cache_dir + '/load-path-cache-lmdb',
+      cache_path:       cache_dir + '/bootsnap-load-path-cache',
       development_mode: development_mode,
-      active_support: autoload_paths_cache
+      active_support:   autoload_paths_cache
     ) if load_path_cache
-
-    setup_yaml_compile_cache if yaml_compile_cache
   end
 
   def self.setup_disable_trace

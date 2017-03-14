@@ -75,18 +75,6 @@ module Bootsnap
         dev_yes_cache.stubs(:now).returns(time + 31)
         assert dev_yes_cache.find('new')
       end
-
-      module NullCache
-        def self.get(*)
-        end
-
-        def self.set(*)
-        end
-
-        def self.fetch(*)
-          yield
-        end
-      end
     end
   end
 end
