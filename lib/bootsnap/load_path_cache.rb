@@ -22,7 +22,7 @@ module Bootsnap
       def setup(cache_path:, development_mode:, active_support: true)
         store = Bootsnap::LMDBCache.new(cache_path)
         at_exit { store.close unless store.closed? }
- 
+
         @load_path_cache = start_cache(store, $LOAD_PATH, development_mode: development_mode)
         require_relative 'load_path_cache/core_ext/kernel_require'
 
