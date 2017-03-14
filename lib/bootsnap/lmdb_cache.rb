@@ -1,21 +1,45 @@
 require_relative 'explicit_require'
 
-Bootsnap::ExplicitRequire.with_gems('lmdb')   { require 'lmdb' }
-Bootsnap::ExplicitRequire.with_gems('snappy') { require 'snappy' }
+Bootsnap::ExplicitRequire.with_gems('lmdb')    { require 'lmdb' }
+Bootsnap::ExplicitRequire.with_gems('snappy')  { require 'snappy' }
+Bootsnap::ExplicitRequire.with_gems('msgpack') { require 'msgpack' }
 
 Bootsnap::ExplicitRequire.from_rubylibdir('fileutils')
 
 module Bootsnap
   class LMDBCache
+    module SnappyMessagePackMode
+      def load_value(v)
+        MessagePack.load(Snappy.inflate(v))
+      end
+
+      def dump_value(v)
+        Snappy.deflate(MessagePack.dump(v))
+      end
+    end
+
+    module SnappyMode
+      def load_value(v)
+        Snappy.inflate(v)
+      end
+
+      def dump_value(v)
+        Snappy.deflate(v)
+      end
+    end
+
     attr_reader :env, :db
 
     def size
       db.size
     end
 
-    def initialize(path)
+    def initialize(path, msgpack:)
       @path = path
       create_db
+
+      mode = msgpack ? SnappyMessagePackMode : SnappyMode
+      singleton_class.include(mode)
 
       # The LMDB Gem has a bug where the Environment garbage collection
       # handler will crash sometimes if the environment wasn't closed
@@ -53,10 +77,12 @@ module Bootsnap
       value
     end
 
+    def transaction(readonly = false)
+      env.transaction(readonly) { yield }
+    end
+
     def get(key)
-      value = env.transaction do
-        db.get(key)
-      end
+      value = db.get(key)
       value && load_value(value)
     rescue Snappy::Error, LMDB::Error::CORRUPTED => error
       recover(error)
@@ -64,9 +90,7 @@ module Bootsnap
 
     def set(key, value)
       value = dump_value(value)
-      env.transaction do
-        db.put(key, value)
-      end
+      db.put(key, value)
     rescue LMDB::Error::CORRUPTED => error
       recover(error)
     end
@@ -84,15 +108,15 @@ module Bootsnap
     private
 
     def load_value(v)
-      Marshal.load(Snappy.inflate(v))
+      MessagePack.load(Snappy.inflate(v))
     end
 
     def dump_value(v)
-      Snappy.deflate(Marshal.dump(v))
+      Snappy.deflate(MessagePack.dump(v))
     end
 
     def recover(error)
-      puts "[LMDBCache] #{error.class.name}: #{error.message}, resetting the cache"
+      puts "[Bootsnap::LMDBCache] #{error.class.name}: #{error.message}, resetting the cache"
       reset_db
       nil
     end
@@ -118,18 +142,6 @@ module Bootsnap
       end
       FileUtils.rm_rf(@path) if File.exist?(@path)
       create_db
-    end
-  end
-
-  class StringCache < LMDBCache
-    private
-
-    def load_value(v)
-      Snappy.inflate(v)
-    end
-
-    def dump_value(v)
-      Snappy.deflate(v)
     end
   end
 end

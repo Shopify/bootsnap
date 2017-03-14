@@ -20,7 +20,7 @@ module Bootsnap
       attr_reader :load_path_cache, :autoload_paths_cache
 
       def setup(cache_path:, development_mode:, active_support: true)
-        store = Bootsnap::LMDBCache.new(cache_path)
+        store = Bootsnap::LMDBCache.new(cache_path, msgpack: true)
         at_exit { store.close unless store.closed? }
 
         @load_path_cache = start_cache(store, $LOAD_PATH, development_mode: development_mode)

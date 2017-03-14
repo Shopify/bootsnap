@@ -4,7 +4,7 @@ module Bootsnap
       attr_reader :ruby_compile_cache, :yaml_compile_cache
 
       def setup(cache_path:, ruby: true, yaml: true)
-        store = Bootsnap::StringCache.new(cache_path)
+        store = Bootsnap::LMDBCache.new(cache_path, msgpack: false)
         at_exit { store.close unless store.closed? }
 
         start_ruby_cache(store) if ruby

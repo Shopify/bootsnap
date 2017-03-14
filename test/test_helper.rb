@@ -12,6 +12,10 @@ module NullCache
   def self.set(*)
   end
 
+  def self.transaction(*)
+    yield
+  end
+
   def self.fetch(*)
     yield
   end

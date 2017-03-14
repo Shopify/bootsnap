@@ -45,20 +45,26 @@ module Bootsnap
         return Marshal.dump(obj)
       end
 
-      def fetch(path) # TODO: do this in a transaction
-        cache_key = @cache.get("k:#{path}")
+      def fetch(path)
         mtime = File.mtime(path).to_i
         want_key = [VERSION, RUBY_REVISION, mtime].join(':')
 
-        if cache_key == want_key
-          value = @cache.get("v:#{path}")
-          return storage_to_output(value)
+        @cache.transaction(true) do
+          cache_key = @cache.get("k:#{path}")
+
+          if cache_key == want_key
+            value = @cache.get("v:#{path}")
+            return storage_to_output(value)
+          end
         end
 
         loaded = ::YAML.load(File.read(path))
         storage = loaded_to_storage(loaded)
-        @cache.set("k:#{path}", want_key)
-        @cache.set("v:#{path}", storage)
+
+        @cache.transaction(false) do
+          @cache.set("k:#{path}", want_key)
+          @cache.set("v:#{path}", storage)
+        end
 
         loaded
       end

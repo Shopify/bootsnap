@@ -4,7 +4,7 @@ module Bootsnap
   class LMDBCacheTest < MiniTest::Test
     def setup
       @dir = Dir.mktmpdir
-      @store = LMDBCache.new(@dir)
+      @store = LMDBCache.new(@dir, msgpack: true)
     end
 
     def teardown
@@ -12,7 +12,7 @@ module Bootsnap
     end
 
     def test_accessible_by_multiple_instances
-      clone = LMDBCache.new(@dir)
+      clone = LMDBCache.new(@dir, msgpack: true)
       @store.set('a', 1)
       assert_equal 1, clone.get('a')
       @store.set('a', 2)
