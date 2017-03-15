@@ -30,11 +30,14 @@ module Bootsnap
         # Rails calls `uniq!` on the load path, and we don't prevent it. It's mostly
         # harmless as far as our accounting goes.
 
+        # Bundler calls `reject!`, so we don't blacklist that, because we sometimes
+        # reload bundler in tests.
+
         # #+ is not inherently destructive, but the most common use is for #+=,
         # which defeats our hooks.
         %w(
           + collect! map! compact! delete delete_at delete_if fill flatten! insert map!
-          reject! reverse! select! shuffle! shift slice! sort! sort_by!
+          reverse! select! shuffle! shift slice! sort! sort_by!
         ).each do |meth|
           arr.define_singleton_method(meth) do |*|
             raise NotImplementedError, "destructive method on $LOAD_PATH not supported by Bootsnap: #{meth}"
