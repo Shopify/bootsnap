@@ -42,6 +42,12 @@ module Bootsnap
         @mutex.synchronize { push_paths_locked(*paths) }
       end
 
+      def each_requirable
+        @index.each do |rel, entry|
+          yield "#{entry}/#{rel}"
+        end
+      end
+
       private
 
       def reinitialize
