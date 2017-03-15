@@ -16,7 +16,7 @@ module Bootsnap
           Thread.current[:dependencies_try_harder] = prev
         end
 
-        module InstanceMethods
+        module ClassMethods
           def search_for_file(path)
             return super if Thread.current[:dependencies_try_harder]
             begin
@@ -37,9 +37,7 @@ module Bootsnap
           def load_missing_constant(from_mod, const_name)
             CoreExt::ActiveSupport.with_bootsnap_fallback(NameError) { super }
           end
-        end
 
-        module ClassMethods
           def depend_on(file_name, message = "No such file to load -- %s.rb")
             CoreExt::ActiveSupport.with_bootsnap_fallback(LoadError) { super }
           end
@@ -50,8 +48,9 @@ module Bootsnap
 end
 
 module ActiveSupport
-  prepend Bootsnap::LoadPathCache::CoreExt::ActiveSupport::InstanceMethods
-  class << self
-    prepend Bootsnap::LoadPathCache::CoreExt::ActiveSupport::ClassMethods
+  module Dependencies
+    class << self
+      prepend Bootsnap::LoadPathCache::CoreExt::ActiveSupport::ClassMethods
+    end
   end
 end
