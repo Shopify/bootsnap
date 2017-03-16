@@ -24,7 +24,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "minitest", "~> 5.0"
   spec.add_development_dependency "mocha", "~> 1.2"
 
-  spec.add_runtime_dependency "lmdb", ">= 0.4.8"
   spec.add_runtime_dependency "msgpack", ">= 1.0.2"
   spec.add_runtime_dependency "snappy", ">= 0.0.15"
 end
