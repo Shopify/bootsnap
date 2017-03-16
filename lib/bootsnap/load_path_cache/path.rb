@@ -25,21 +25,21 @@ module Bootsnap
 
       # Return a list of all the requirable files and all of the subdirectories
       # of this +Path+.
-      def entries_and_dirs(cache)
+      def entries_and_dirs(store)
         if stable?
           # the cached_mtime field is unused for 'stable' paths, but is
           # set to zero anyway, just in case we change the stability heuristics.
-          return cache.fetch(path) { [0, *scan!] }[1..2]
+          return store.fetch(path) { [0, *scan!] }[1..2]
         end
 
-        cached_mtime, entries, dirs = cache.get(path)
+        cached_mtime, entries, dirs = store.get(path)
 
         current_mtime = latest_mtime(path, dirs || [])
         return [[], []]        if current_mtime == -1 # path does not exist
         return [entries, dirs] if cached_mtime == current_mtime
 
         entries, dirs = scan!
-        cache.set(path, [current_mtime, entries, dirs])
+        store.set(path, [current_mtime, entries, dirs])
         [entries, dirs]
       end
 

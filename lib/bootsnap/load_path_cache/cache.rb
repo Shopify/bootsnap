@@ -9,7 +9,7 @@ module Bootsnap
 
       def initialize(store, path_obj, development_mode: false)
         @development_mode = development_mode
-        @cache = store
+        @store = store
         @mutex = ::Thread::Mutex.new
         @path_obj = path_obj
         reinitialize
@@ -60,22 +60,26 @@ module Bootsnap
       end
 
       def push_paths_locked(*paths)
-        paths.each do |path|
-          p = Path.new(path)
-          entries, dirs = p.entries_and_dirs(@cache)
-          # push -> low precedence -> set only if unset
-          dirs.each    { |dir| @dirs[dir]  ||= true }
-          entries.each { |rel| @index[rel] ||= path }
+        @store.transaction do
+          paths.each do |path|
+            p = Path.new(path)
+            entries, dirs = p.entries_and_dirs(@store)
+            # push -> low precedence -> set only if unset
+            dirs.each    { |dir| @dirs[dir]  ||= true }
+            entries.each { |rel| @index[rel] ||= path }
+          end
         end
       end
 
       def unshift_paths_locked(*paths)
-        paths.reverse.each do |path|
-          p = Path.new(path)
-          entries, dirs = p.entries_and_dirs(@cache)
-          # unshift -> high precedence -> unconditional set
-          dirs.each    { |dir| @dirs[dir]  = true }
-          entries.each { |rel| @index[rel] = path }
+        @store.transaction do
+          paths.reverse.each do |path|
+            p = Path.new(path)
+            entries, dirs = p.entries_and_dirs(@store)
+            # unshift -> high precedence -> unconditional set
+            dirs.each    { |dir| @dirs[dir]  = true }
+            entries.each { |rel| @index[rel] = path }
+          end
         end
       end
 
@@ -99,7 +103,7 @@ module Bootsnap
 
       def try_index(f)
         if p = @index[f]
-          return p + '/' + f
+          p + '/' + f
         end
       end
     end
