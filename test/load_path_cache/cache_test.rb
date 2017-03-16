@@ -22,23 +22,26 @@ module Bootsnap
       end
 
       def test_simple
-        cache = Cache.new(NullCache, [@dir1])
+        po = [@dir1]
+        cache = Cache.new(NullCache, po)
         assert_equal("#{@dir1}/a.rb", cache.find('a'))
-        cache.push_paths(@dir2)
+        cache.push_paths(po, @dir2)
         assert_equal("#{@dir2}/b.rb", cache.find('b'))
       end
 
       def test_unshifted_paths_have_higher_precedence
-        cache = Cache.new(NullCache, [@dir1])
+        po = [@dir1]
+        cache = Cache.new(NullCache, po)
         assert_equal("#{@dir1}/conflict.rb", cache.find('conflict'))
-        cache.unshift_paths(@dir2)
+        cache.unshift_paths(po, @dir2)
         assert_equal("#{@dir2}/conflict.rb", cache.find('conflict'))
       end
 
       def test_pushed_paths_have_lower_precedence
-        cache = Cache.new(NullCache, [@dir1])
+        po = [@dir1]
+        cache = Cache.new(NullCache, po)
         assert_equal("#{@dir1}/conflict.rb", cache.find('conflict'))
-        cache.push_paths(@dir2)
+        cache.push_paths(po, @dir2)
         assert_equal("#{@dir1}/conflict.rb", cache.find('conflict'))
       end
 

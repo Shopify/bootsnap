@@ -1,6 +1,8 @@
-require 'msgpack'
-require 'fileutils'
-require 'snappy'
+require_relative '../explicit_require'
+
+Bootsnap::ExplicitRequire.with_gems('snappy')  { require 'snappy' }
+Bootsnap::ExplicitRequire.with_gems('msgpack') { require 'msgpack' }
+Bootsnap::ExplicitRequire.from_rubylibdir('fileutils')
 
 module Bootsnap
   module LoadPathCache
@@ -33,7 +35,6 @@ module Bootsnap
         if value != @data[key]
           @dirty = true
           @data[key] = value
-
         end
       end
 

@@ -34,11 +34,13 @@ module Bootsnap
         end
       end
 
-      def unshift_paths(*paths)
+      def unshift_paths(sender, *paths)
+        return unless sender == @path_obj
         @mutex.synchronize { unshift_paths_locked(*paths) }
       end
 
-      def push_paths(*paths)
+      def push_paths(sender, *paths)
+        return unless sender == @path_obj
         @mutex.synchronize { push_paths_locked(*paths) }
       end
 
@@ -48,16 +50,20 @@ module Bootsnap
         end
       end
 
-      private
-
-      def reinitialize
+      def reinitialize(path_obj = @path_obj)
         @mutex.synchronize do
+          if @path_obj != path_obj
+            @path_obj = path_obj
+            ChangeObserver.register(self, @path_obj)
+          end
           @index = {}
           @dirs = Hash.new(false)
           @generated_at = now
           push_paths_locked(*@path_obj)
         end
       end
+
+      private
 
       def push_paths_locked(*paths)
         @store.transaction do

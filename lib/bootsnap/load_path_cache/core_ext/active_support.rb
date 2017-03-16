@@ -17,6 +17,12 @@ module Bootsnap
         end
 
         module ClassMethods
+          def autoload_paths=(o)
+            r = super
+            Bootsnap::LoadPathCache.autoload_paths_cache.reinitialize(o)
+            r
+          end
+
           def search_for_file(path)
             return super if Thread.current[:dependencies_try_harder]
             begin

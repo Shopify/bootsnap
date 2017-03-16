@@ -1,3 +1,5 @@
+require_relative 'lmdb_cache'
+
 module Bootsnap
   module CompileCache
     class << self

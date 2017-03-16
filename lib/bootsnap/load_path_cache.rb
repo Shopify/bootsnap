@@ -1,5 +1,3 @@
-require_relative 'lmdb_cache'
-
 module Bootsnap
   module LoadPathCache
     ReturnFalse = Class.new(StandardError)
@@ -22,28 +20,20 @@ module Bootsnap
       def setup(cache_path:, development_mode:, active_support: true)
         store = Store.new(cache_path)
 
-        @load_path_cache = start_cache(store, $LOAD_PATH, development_mode: development_mode)
+        @load_path_cache = Cache.new(store, $LOAD_PATH, development_mode: development_mode)
         require_relative 'load_path_cache/core_ext/kernel_require'
 
         if active_support
           # this should happen after setting up the initial cache because it
           # loads a lot of code. It's better to do after +require+ is optimized.
           require 'active_support/dependencies'
-          @autoload_paths_cache = start_cache(
+          @autoload_paths_cache = Cache.new(
             store,
             ::ActiveSupport::Dependencies.autoload_paths,
             development_mode: development_mode
           )
           require_relative 'load_path_cache/core_ext/active_support'
         end
-      end
-
-      private
-
-      def start_cache(store, obj, development_mode:)
-        c = Cache.new(store, obj, development_mode: development_mode)
-        ChangeObserver.register(c, obj)
-        c
       end
     end
   end
