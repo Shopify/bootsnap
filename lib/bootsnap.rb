@@ -1,5 +1,6 @@
 require_relative 'bootsnap/version'
 require_relative 'bootsnap/load_path_cache'
+require_relative 'bootsnap/compile_cache'
 
 module Bootsnap
   InvalidConfiguration = Class.new(StandardError)
@@ -9,9 +10,9 @@ module Bootsnap
     development_mode: true,
     load_path_cache: true,
     autoload_paths_cache: true,
-    disable_trace: false
-    # guarantee_load_fail: [],
-    # return_false: []
+    disable_trace: false,
+    compile_cache_iseq: true,
+    compile_cache_yaml: true
   )
     if autoload_paths_cache && !load_path_cache
       raise InvalidConfiguration, "feature 'autoload_paths_cache' depends on feature 'load_path_cache'"
@@ -24,6 +25,11 @@ module Bootsnap
       development_mode: development_mode,
       active_support:   autoload_paths_cache
     ) if load_path_cache
+
+    Bootsnap::CompileCache.setup(
+      iseq: compile_cache_iseq,
+      yaml: compile_cache_yaml
+    )
   end
 
   def self.setup_disable_trace
