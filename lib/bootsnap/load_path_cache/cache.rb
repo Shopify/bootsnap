@@ -5,7 +5,7 @@ Bootsnap::ExplicitRequire.from_archdir('thread')
 module Bootsnap
   module LoadPathCache
     class Cache
-      AGE_THRESHOLD = 30
+      AGE_THRESHOLD = 30 # seconds
 
       def initialize(store, path_obj, development_mode: false)
         @development_mode = development_mode
@@ -27,9 +27,9 @@ module Bootsnap
       # loadpath
       def find(feature)
         reinitialize if stale?
+        feature = feature.to_s
+        return feature if feature.start_with?(SLASH)
         @mutex.synchronize do
-          feature = feature.to_s
-          return feature if feature.start_with?(SLASH)
           search_index(feature)
         end
       end
@@ -45,8 +45,10 @@ module Bootsnap
       end
 
       def each_requirable
-        @index.each do |rel, entry|
-          yield "#{entry}/#{rel}"
+        @mutex.synchronize do
+          @index.each do |rel, entry|
+            yield "#{entry}/#{rel}"
+          end
         end
       end
 
@@ -113,4 +115,3 @@ module Bootsnap
     end
   end
 end
-

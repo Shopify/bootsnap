@@ -5,15 +5,15 @@ module Bootsnap
         def self.with_bootsnap_fallback(error)
           yield
         rescue error
-          bootsnap_slow_path { yield }
+          without_bootsnap_cache { yield }
         end
 
-        def self.bootsnap_slow_path
-          prev = Thread.current[:dependencies_try_harder] || false
-          Thread.current[:dependencies_try_harder] = true
+        def self.without_bootsnap_cache
+          prev = Thread.current[:without_bootsnap_cache] || false
+          Thread.current[:without_bootsnap_cache] = true
           yield
         ensure
-          Thread.current[:dependencies_try_harder] = prev
+          Thread.current[:without_bootsnap_cache] = prev
         end
 
         module ClassMethods
@@ -24,7 +24,7 @@ module Bootsnap
           end
 
           def search_for_file(path)
-            return super if Thread.current[:dependencies_try_harder]
+            return super if Thread.current[:without_bootsnap_cache]
             begin
               Bootsnap::LoadPathCache.autoload_paths_cache.find(path)
             rescue Bootsnap::LoadPathCache::ReturnFalse
@@ -37,9 +37,15 @@ module Bootsnap
           end
 
           def remove_constant(const)
-            CoreExt::ActiveSupport.bootsnap_slow_path { super }
+            CoreExt::ActiveSupport.without_bootsnap_cache { super }
           end
 
+          # If we can't find a constant using the patched implementation of
+          # search_for_file, try again with the default implementation.
+          #
+          # These methods call search_for_file, and we want to modify its
+          # behaviour.  The gymnastics here are a bit awkward, but it prevents
+          # 200+ lines of monkeypatches.
           def load_missing_constant(from_mod, const_name)
             CoreExt::ActiveSupport.with_bootsnap_fallback(NameError) { super }
           end

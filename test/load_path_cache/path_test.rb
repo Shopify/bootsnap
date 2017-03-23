@@ -73,7 +73,7 @@ module Bootsnap
 
           # It's unfortunate that we're stubbing the impl of #fetch here.
           PathScanner.expects(:call).never
-          @cache.expects(:fetch).with(dir).returns([100, entries, dirs])
+          @cache.expects(:get).with(dir).returns([100, entries, dirs])
 
           path.entries_and_dirs(@cache)
         end

@@ -15,6 +15,13 @@ module Bootsnap
         raise RelativePathNotSupported unless path.start_with?(SLASH)
 
         relative_slice = (path.size + 1)..-1
+        # If the bundle path is a descendent of this path, we do additional
+        # checks to prevent recursing into the bundle path as we recurse
+        # through this path. We don't want to scan the bundle path because
+        # anything useful in it will be present on other load path items.
+        #
+        # This can happen if, for example, the user adds '.' to the load path,
+        # and the bundle path is '.bundle'.
         contains_bundle_path = BUNDLE_PATH.start_with?(path)
 
         dirs = []

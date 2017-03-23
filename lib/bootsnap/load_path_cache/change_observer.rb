@@ -2,8 +2,13 @@ module Bootsnap
   module LoadPathCache
     module ChangeObserver
       def self.register(observer, arr)
+        # Re-overriding these methods on an array that already has them would
+        # cause StackOverflowErrors
         return if arr.respond_to?(:push_without_lpc)
 
+        # For each method that adds items to one end or another of the array
+        # (<<, push, unshift, concat), override that method to also notify the
+        # observer of the change.
         sc = arr.singleton_class
         sc.send(:alias_method, :shovel_without_lpc, :<<)
         arr.define_singleton_method(:<<) do |entry|
@@ -29,11 +34,12 @@ module Bootsnap
           concat_without_lpc(entries)
         end
 
-        # Rails calls `uniq!` on the load path, and we don't prevent it. It's mostly
-        # harmless as far as our accounting goes.
-
-        # #+ is not inherently destructive, but the most common use is for #+=,
-        # which defeats our hooks.
+        # For each method that modifies the array more aggressively, override
+        # the method to also have the observer completely reconstruct its state
+        # after the modification. Many of these could be made to modify the
+        # internal state of the LoadPathCache::Cache more efficiently, but the
+        # accounting cost would be greater than the hit from these, since we
+        # actively discourage calling them.
         %i(
           collect! compact! delete delete_at delete_if fill flatten! insert map!
           reject! reverse! select! shuffle! shift slice! sort! sort_by!

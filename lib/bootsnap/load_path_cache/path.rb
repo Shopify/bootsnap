@@ -29,7 +29,11 @@ module Bootsnap
         if stable?
           # the cached_mtime field is unused for 'stable' paths, but is
           # set to zero anyway, just in case we change the stability heuristics.
-          return store.fetch(path) { [0, *scan!] }[1..2]
+          _, entries, dirs = store.get(path)
+          return [entries, dirs] if entries # cache hit
+          entries, dirs = scan!
+          store.set(path, [0, entries, dirs])
+          return [entries, dirs]
         end
 
         cached_mtime, entries, dirs = store.get(path)

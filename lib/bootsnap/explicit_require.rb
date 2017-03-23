@@ -16,6 +16,12 @@ module Bootsnap
       require(File.join(ARCHDIR, "#{feature}.#{DLEXT}"))
     end
 
+    # Given a set of gems, run a block with the LOAD_PATH narrowed to include
+    # only core ruby source paths and these gems -- that is, roughly,
+    # temporarily remove all gems not listed in this call from the LOAD_PATH.
+    #
+    # This is useful before bootsnap is fully-initialized to load gems that it
+    # depends on, without forcing full LOAD_PATH traversals.
     def self.with_gems(*gems)
       orig = $LOAD_PATH.dup
       $LOAD_PATH.clear
