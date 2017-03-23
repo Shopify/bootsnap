@@ -24,13 +24,46 @@ module Bootsnap
       end
 
       # Try to resolve this feature to an absolute path without traversing the
-      # loadpath
+      # loadpath.
       def find(feature)
         reinitialize if stale?
         feature = feature.to_s
         return feature if feature.start_with?(SLASH)
+        return File.expand_path(feature) if feature.start_with?('./')
         @mutex.synchronize do
-          search_index(feature)
+          x = search_index(feature)
+          return x if x
+
+          # The feature wasn't found on our preliminary search through the index.
+          # We resolve this differently depending on what the extension was.
+          case File.extname(feature)
+          # If the extension was one of the ones we explicitly cache (.rb and the
+          # native dynamic extension, e.g. .bundle or .so), we know it was a
+          # failure and there's nothing more we can do to find the file.
+          when *CACHED_EXTENSIONS # .rb, .bundle or .so
+            nil
+          # If no extension was specified, it's the same situation, since we
+          # try appending both cachable extensions in search_index. However,
+          # there's a special-case for 'enumerator'. Before ruby 1.9, you had
+          # to `require 'enumerator'` to use it. In 1.9+, it's pre-loaded, but
+          # doesn't correspond to any entry on the filesystem. Ruby lies. So we
+          # lie too, forcing our monkeypatch to return false like ruby would.
+          when ""
+            raise LoadPathCache::ReturnFalse if feature == 'enumerator'
+            nil
+          # Ruby allows specifying native extensions as '.so' even when DLEXT
+          # is '.bundle'. This is where we handle that case.
+          when DOT_SO
+            x = search_index(feature[0..-4] + DLEXT)
+            return x if x
+            if DLEXT2
+              search_index(feature[0..-4] + DLEXT2)
+            end
+          else
+            # other, unknown extension. For example, `.rake`. Since we haven't
+            # cached these, we legitimately need to run the load path search.
+            raise LoadPathCache::FallbackScan
+          end
         end
       end
 

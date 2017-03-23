@@ -1,6 +1,7 @@
 module Bootsnap
   module LoadPathCache
     ReturnFalse = Class.new(StandardError)
+    FallbackScan = Class.new(StandardError)
 
     DOT_RB = '.rb'
     DOT_SO = '.so'
@@ -12,7 +13,12 @@ module Bootsnap
       .map    { |ext| ".#{ext}" }
       .freeze
     DLEXT = DL_EXTENSIONS[0]
+    # This is nil on linux and darwin, but I think it's '.o' on some other
+    # platform.  I'm not really sure which, but it seems better to replicate
+    # ruby's semantics as faithfully as possible.
     DLEXT2 = DL_EXTENSIONS[1]
+
+    CACHED_EXTENSIONS = DLEXT2 ? [DOT_RB, DLEXT, DLEXT2] : [DOT_RB, DLEXT]
 
     class << self
       attr_reader :load_path_cache, :autoload_paths_cache
