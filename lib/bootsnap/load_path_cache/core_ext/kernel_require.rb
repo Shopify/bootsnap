@@ -30,7 +30,8 @@ module Kernel
       load_without_cache(resolved, wrap)
     else
       # load also allows relative paths from pwd even when not in $:
-      if relative = File.exist?(File.expand_path(path))
+      relative = File.expand_path(path)
+      if File.exist?(File.expand_path(path))
         return load_without_cache(relative, wrap)
       end
       raise Bootsnap::LoadPathCache::CoreExt.make_load_error(path)
