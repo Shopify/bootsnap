@@ -31,7 +31,7 @@ Add `bootsnap` to your `Gemfile`:
 gem 'bootsnap'
 ```
 
-Next, add this to your boot setup after `require 'bundler/setup'` but before the end.
+Next, add this to your boot setup right after `require 'bundler/setup'`, to maximize the benefits of the optimizations.
 
 ```ruby
 require 'bootsnap'
