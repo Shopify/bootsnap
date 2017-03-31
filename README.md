@@ -1,6 +1,6 @@
 # Bootsnap
 
-> Beta version
+**Beta-quality. See the last section of this README.**
 
 Bootsnap is a library that overrides `Kernel#require`, `Kernel#load`, `Module#autoload` and in the case that `ActiveSupport` is used a number of `ActiveSupport` methods, with a fast cache that increases boot performance.
 
@@ -47,3 +47,21 @@ Bootsnap.setup(
 ```
 
 **Protip:** You can replace `require 'bootsnap'` with `BootLib::Require.from_gem('bootsnap', 'bootsnap')` using [this trick](https://github.com/Shopify/bootsnap/wiki/Bootlib::Require). This will help optimize boot time.
+
+### How likely is this to work?
+
+We use the `*_path_cache` features in production and haven't experienced any issues in a long time.
+
+The `compile_cache_*` features work well for us in development on macOS, but probably don't work on
+linux at all.
+
+`disable_trace` should be completely safe, but we don't really use it because some people like to
+use tools that make use of `trace` instructions.
+
+| feature | where we're using it |
+|-|-|
+| `load_path_cache` | everywhere |
+| `autoload_path_cache` | everywhere |
+| `disable_trace` | nowhere, but it's safe unless you need tracing |
+| `compile_cache_iseq` | development |
+| `compile_cache_yaml` | development |
