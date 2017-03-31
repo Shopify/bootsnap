@@ -14,3 +14,4 @@
 *.gem
 *.db
 mkmf.log
+.rubocop-*
