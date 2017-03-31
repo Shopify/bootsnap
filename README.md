@@ -61,7 +61,7 @@ Bootsnap classifies path entries into two categories: stable and volatile. Volat
 scanned each time the application boots, and their caches are only valid for 30 seconds. Stable
 entries do not expire -- once their contents has been scanned, it is assumed to never change.
 
-The only directories considered "stable" are things under the ruby install prefix
+The only directories considered "stable" are things under the Ruby install prefix
 (`RbConfig::CONFIG['prefix']`, e.g. `/usr/local/ruby` or `~/.rubies/x.y.z`), and things under the
 `Gem.path` (e.g. `~/.gem/ruby/x.y.z`). Everything else is considered "volatile".
 
@@ -80,16 +80,16 @@ result too, raising a `LoadError` without touching the filesystem at all.
 
 *(A simpler implementation of this concept can be found in [yomikomu](https://github.com/ko1/yomikomu)).*
 
-Ruby has complex grammar, an parsing it is not a particularly cheap operation. Since 1.9, ruby has
-translated ruby source to an internal bytecode format, which is then executed by the ruby VM. Since
-2.2, ruby [exposes an API](https://ruby-doc.org/core-2.3.0/RubyVM/InstructionSequence.html) that
+Ruby has complex grammar and parsing it is not a particularly cheap operation. Since 1.9, Ruby has
+translated ruby source to an internal bytecode format, which is then executed by the Ruby VM. Since
+2.2, Ruby [exposes an API](https://ruby-doc.org/core-2.3.0/RubyVM/InstructionSequence.html) that
 allows caching that bytecode. This allows us to bypass the relatively-expensive compilation step on
 subsequent loads of the same file.
 
 We also noticed that we spend a lot of time loading YAML documents during our application boot, and
 that MessagePack and Marshal are *much* faster at deserialization than YAML, even with a fast
 implementation. We use the same strategy of compilation caching for YAML documents, with the
-equivalent of ruby's "bytecode" format being a MessagePack document (or, in the case of YAML
+equivalent of Ruby's "bytecode" format being a MessagePack document (or, in the case of YAML
 documents with types unsupported by MessagePack, a Marshal stream).
 
 These compilation results are stored using `xattr`s on the source files. This is likely to change in
@@ -132,13 +132,13 @@ The key includes several fields:
 * `compile_option`, which changes with `RubyVM::InstructionSequence.compile_option` does;
 * `data_size`, the number of bytes in `user.aotcc.value`, which we need to read it into a buffer
   using `fgetxattr(2)`;
-* `ruby_revision`, the version of ruby this was compiled with; and
+* `ruby_revision`, the version of Ruby this was compiled with; and
 * `mtime`, the last-modification timestamp of the source file when it was compiled.
 
 If the key is valid, the result is loaded from the value. Otherwise, it is regenerated and clobbers
 the current cache.
 
-This diagram may help elucidate things:
+This diagram may help illustrate how it works:
 
 ![Compilation Caching](https://burkelibbey.s3.amazonaws.com/bootsnap-compile-cache.png)
 
@@ -160,7 +160,7 @@ And this `$LOAD_PATH`:
 ["/a", "/b", "/c"]
 ```
 
-When we call `require 'foo'` without bootsnap, ruby would generate this sequence of syscalls:
+When we call `require 'foo'` without bootsnap, Ruby would generate this sequence of syscalls:
 
 
 ```
