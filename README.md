@@ -2,7 +2,7 @@
 
 > Beta version
 
-Bootsnap is a library that overrides `Kernel#require`, `Kernel#load`, `Module#autoload` and in the case that `ActiveSupport` is used, it will also override a number of `ActiveSupport` methods.
+Bootsnap is a library that overrides `Kernel#require`, `Kernel#load`, `Module#autoload` and in the case that `ActiveSupport` is used a number of `ActiveSupport` methods, with a fast cache that increases boot performance.
 
 Bootsnap creates 2 kinds of caches, a stable, long lived cache out of Ruby and Gem directories. These are assumed to never change and so we can cache more aggresively. Application code is expected to change frequently, so it is cached with little aggression (short lived bursts that should last only as long as the app takes to boot). This is the “volatile” cache.
 
