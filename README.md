@@ -93,7 +93,7 @@ equivalent of ruby's "bytecode" format being a MessagePack document (or, in the 
 documents with types unsupported by MessagePack, a Marshal stream).
 
 These compilation results are stored using `xattr`s on the source files. This is likely to change in
-the future, as it has some limitations (notably precluding linux support except where the user feels
+the future, as it has some limitations (notably precluding Linux support except where the user feels
 like changing mount flags). However, this is a very performant implementation. 
 
 Whereas before, the sequence of syscalls generated to `require` a file would look like:
@@ -240,7 +240,7 @@ will help optimize boot time further if you have an extremely large `$LOAD_PATH`
 We use the `*_path_cache` features in production and haven't experienced any issues in a long time.
 
 The `compile_cache_*` features work well for us in development on macOS, but probably don't work on
-linux at all.
+Linux at all.
 
 `disable_trace` should be completely safe, but we don't really use it because some people like to
 use tools that make use of `trace` instructions.
@@ -250,5 +250,5 @@ use tools that make use of `trace` instructions.
 | `load_path_cache` | everywhere |
 | `autoload_path_cache` | everywhere |
 | `disable_trace` | nowhere, but it's safe unless you need tracing |
-| `compile_cache_iseq` | development, unlikely to work on linux |
-| `compile_cache_yaml` | development, unlikely to work on linux |
+| `compile_cache_iseq` | development, unlikely to work on Linux |
+| `compile_cache_yaml` | development, unlikely to work on Linux |
