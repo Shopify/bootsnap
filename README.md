@@ -2,8 +2,8 @@
 
 **Beta-quality. See [the last section of this README](#trustworthiness).**
 
-Bootsnap is a library that plugs into a number of ruby and (optionally) `ActiveSuport` and `YAML`
-methods. These methods are modified to cache results of expensive computation, and can be grouped
+Bootsnap is a library that plugs into a number of ruby and (optionally) `ActiveSupport` and `YAML`
+methods. These methods are modified to cache results of expensive computations, and can be grouped
 into two broad categories:
 
 * [Path Pre-Scanning](#path-pre-scanning)
