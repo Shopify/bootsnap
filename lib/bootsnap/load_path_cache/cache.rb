@@ -48,7 +48,7 @@ module Bootsnap
           # doesn't correspond to any entry on the filesystem. Ruby lies. So we
           # lie too, forcing our monkeypatch to return false like ruby would.
           when ""
-            raise LoadPathCache::ReturnFalse if feature == 'enumerator'
+            raise LoadPathCache::ReturnFalse if feature == 'enumerator' || feature == 'thread'
             nil
           # Ruby allows specifying native extensions as '.so' even when DLEXT
           # is '.bundle'. This is where we handle that case.
