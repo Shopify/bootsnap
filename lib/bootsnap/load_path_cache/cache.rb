@@ -1,6 +1,5 @@
 require_relative '../load_path_cache'
 require_relative '../explicit_require'
-Bootsnap::ExplicitRequire.from_archdir('thread')
 
 module Bootsnap
   module LoadPathCache
