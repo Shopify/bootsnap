@@ -1,66 +1,34 @@
-#include "ruby.h"
 #include <stdint.h>
+#include "ruby.h"
+
+#define GET_THREAD() \
+  (RTYPEDDATA_DATA(rb_funcall(rb_cThread, rb_intern("current"), 0)))
 
 #define GENSYM2(a, b) a ## b
 #define GENSYM1(a, b) GENSYM2(a, b)
 #define GENSYM(a)     GENSYM1(a, __COUNTER__)
 #define SKIP_BYTES(n) uint8_t GENSYM(_a)[(n)]
 
-#define GET_THREAD() \
-  (RTYPEDDATA_DATA(rb_funcall(rb_cThread, rb_intern("current"), 0)))
-
 /* Ruby 2.3.3 */
+#define SIZEOF_CFP 64
+
+struct rb_trace_arg_struct {
+  SKIP_BYTES(1 * sizeof(void *));
+  void *th;
+  void *cfp;
+  SKIP_BYTES(1 * sizeof(ID) + 3 * sizeof(VALUE) + sizeof(int));
+  int lineno;
+  VALUE path;
+};
+
+#include "ruby/debug.h"
+
 typedef struct rb_thread_struct {
-  SKIP_BYTES(16);
-  VALUE self;
-  SKIP_BYTES(8);
+  SKIP_BYTES(32);
   VALUE *stack;
   size_t stack_size;
-  struct rb_control_frame_struct {
-    const VALUE *pc;
-    SKIP_BYTES(8);
-    const struct rb_iseq_struct {
-      SKIP_BYTES(16);
-      struct rb_iseq_constant_body {
-        SKIP_BYTES(13);
-        const VALUE *iseq_encoded;
-        SKIP_BYTES(46);
-        struct rb_iseq_location_struct {
-          VALUE path;
-          SKIP_BYTES(24);
-          VALUE first_lineno;
-        } location;
-        const struct iseq_line_info_entry {
-          unsigned int position;
-          unsigned int line_no;
-        } *line_info_table;
-        SKIP_BYTES(80);
-        unsigned int line_info_size;
-      } *body;
-    } *iseq;
-    SKIP_BYTES(40);
-  } *cfp;
+  void *cfp;
 } rb_thread_t;
-
-typedef struct rb_control_frame_struct rb_control_frame_t;
-typedef struct rb_iseq_struct rb_iseq_t;
-
-static unsigned int
-get_line_no(const rb_iseq_t *iseq, size_t pos)
-{
-  size_t i = 0, size = iseq->body->line_info_size;
-  const struct iseq_line_info_entry *table = iseq->body->line_info_table;
-
-  if (pos > 0)   pos--;
-  if (size == 0) return 0;
-  if (size == 1) return (&table[0])->line_no;
-
-  for (i = 1; i < size; i++) {
-    if (table[i].position == pos) return (&table[i])->line_no;
-    if (table[i].position > pos)  return (&table[i-1])->line_no;
-  }
-  return (&table[i-1])->line_no;
-}
 
 VALUE
 lol(VALUE self, VALUE depth_v)
@@ -70,18 +38,17 @@ lol(VALUE self, VALUE depth_v)
 
   rb_thread_t *th = GET_THREAD();
 
-  rb_control_frame_t *oldest_cfp = ((rb_control_frame_t *)((th)->stack + (th)->stack_size)) - 2;
-  rb_control_frame_t *newest_cfp = th->cfp;
-  rb_control_frame_t *cfp = newest_cfp + depth;
+  void * target_cfp = th->cfp + depth * SIZEOF_CFP;
+  void * oldest_cfp = (void *)(th->stack + th->stack_size) - 2;
 
-  VALUE path   = Qnil;
-  VALUE lineno = INT2NUM(0);
+  if (target_cfp > oldest_cfp) rb_raise(rb_eArgError, "out of bounds");
 
-  if (cfp > oldest_cfp) rb_raise(rb_eArgError, "out of bounds");
-  if (cfp->iseq && cfp->pc) {
-    const rb_iseq_t *iseq = cfp->iseq;
-    path = iseq->body->location.path;
-    lineno = INT2NUM(get_line_no(iseq, cfp->pc - iseq->body->iseq_encoded));
-  }
-  return rb_ary_new3(2, path, lineno);
+  rb_trace_arg_t ta = {
+    .path = Qundef,
+    .th   = th,
+    .cfp  = target_cfp,
+  };
+  rb_tracearg_path(&ta);
+
+  return rb_ary_new3(2, ta.path, INT2NUM(ta.lineno));
 }
