@@ -1,4 +1,5 @@
 #include "ruby.h"
+#include <stdint.h>
 
 #define GENSYM_CONCAT(name, salt) name ## salt
 #define GENSYM2(name, salt)       GENSYM_CONCAT(name, salt)
