@@ -1,10 +1,10 @@
 #include "ruby.h"
 #include <stdint.h>
 
-#define GENSYM_CONCAT(name, salt) name ## salt
-#define GENSYM2(name, salt)       GENSYM_CONCAT(name, salt)
-#define GENSYM(name)              GENSYM2(name, __LINE__)
-#define SKIP_BYTES(n)             uint8_t GENSYM(_a)[(n)]
+#define GENSYM2(a, b) a ## b
+#define GENSYM1(a, b) GENSYM2(a, b)
+#define GENSYM(a)     GENSYM1(a, __COUNTER__)
+#define SKIP_BYTES(n) uint8_t GENSYM(_a)[(n)]
 
 typedef struct rb_iseq_location_struct {
   VALUE path;
