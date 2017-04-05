@@ -9,47 +9,41 @@
 #define GET_THREAD() \
   (RTYPEDDATA_DATA(rb_funcall(rb_cThread, rb_intern("current"), 0)))
 
-typedef struct rb_iseq_location_struct {
-  VALUE path;
-  SKIP_BYTES(24);
-  VALUE first_lineno;
-} rb_iseq_location_t;
-
-struct iseq_line_info_entry {
-  unsigned int position;
-  unsigned int line_no;
-};
-
-struct rb_iseq_constant_body {
-  SKIP_BYTES(13);
-  const VALUE *iseq_encoded;
-  SKIP_BYTES(46);
-  rb_iseq_location_t location;
-  const struct iseq_line_info_entry *line_info_table;
-  SKIP_BYTES(80);
-  unsigned int line_info_size;
-};
-
-typedef struct rb_iseq_struct {
-  SKIP_BYTES(16);
-  struct rb_iseq_constant_body *body;
-} rb_iseq_t; /* truncated */
-
-typedef struct rb_control_frame_struct {
-  const VALUE *pc;
-  SKIP_BYTES(8);
-  const void *iseq;
-  SKIP_BYTES(40);
-} rb_control_frame_t; /* can't truncate because we need size */
-
+/* Ruby 2.3.3 */
 typedef struct rb_thread_struct {
   SKIP_BYTES(16);
   VALUE self;
   SKIP_BYTES(8);
   VALUE *stack;
   size_t stack_size;
-  rb_control_frame_t *cfp;
-} rb_thread_t; /* truncated */
+  struct rb_control_frame_struct {
+    const VALUE *pc;
+    SKIP_BYTES(8);
+    const struct rb_iseq_struct {
+      SKIP_BYTES(16);
+      struct rb_iseq_constant_body {
+        SKIP_BYTES(13);
+        const VALUE *iseq_encoded;
+        SKIP_BYTES(46);
+        struct rb_iseq_location_struct {
+          VALUE path;
+          SKIP_BYTES(24);
+          VALUE first_lineno;
+        } location;
+        const struct iseq_line_info_entry {
+          unsigned int position;
+          unsigned int line_no;
+        } *line_info_table;
+        SKIP_BYTES(80);
+        unsigned int line_info_size;
+      } *body;
+    } *iseq;
+    SKIP_BYTES(40);
+  } *cfp;
+} rb_thread_t;
+
+typedef struct rb_control_frame_struct rb_control_frame_t;
+typedef struct rb_iseq_struct rb_iseq_t;
 
 static unsigned int
 get_line_no(const rb_iseq_t *iseq, size_t pos)
@@ -62,12 +56,8 @@ get_line_no(const rb_iseq_t *iseq, size_t pos)
   if (size == 1) return (&table[0])->line_no;
 
   for (i = 1; i < size; i++) {
-    if (table[i].position == pos) {
-      return (&table[i])->line_no;
-    }
-    if (table[i].position > pos) {
-      return (&table[i-1])->line_no;
-    }
+    if (table[i].position == pos) return (&table[i])->line_no;
+    if (table[i].position > pos)  return (&table[i-1])->line_no;
   }
   return (&table[i-1])->line_no;
 }
