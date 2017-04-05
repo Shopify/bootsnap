@@ -5,10 +5,11 @@ class CompileCacheKeyFormatTest < Minitest::Test
 
   R = {
     version: 0..0,
-    compile_option: 1..4,
-    data_size: 5..8,
-    ruby_revision: 9..12,
-    mtime: 13..20,
+    os_version: 1..1,
+    compile_option: 2..5,
+    data_size: 6..9,
+    ruby_revision: 10..13,
+    mtime: 14..21
   }
 
   def setup
@@ -24,12 +25,12 @@ class CompileCacheKeyFormatTest < Minitest::Test
 
   def test_key_size
     key, = attrs_for_contents('a = 3')
-    assert_equal(8 + 4 + 4 + 4 + 1, key.size)
+    assert_equal(8 + 4 + 4 + 4 + 1 + 1, key.size)
   end
 
   def test_key_version
     key, = attrs_for_contents('a = 3')
-    assert_equal(10.chr, key[R[:version]])
+    assert_equal(11.chr, key[R[:version]])
   end
 
   def test_key_compile_option_stable

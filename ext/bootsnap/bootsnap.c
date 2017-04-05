@@ -9,6 +9,8 @@
 #include <utime.h>
 
 #ifdef __APPLE__
+// Used for the OS Directives to define the os_version constant
+#include <Availability.h>
 #define _ENOATTR ENOATTR
 #else
 #define _ENOATTR ENODATA
@@ -47,6 +49,7 @@ static struct stats stats = {
 
 struct xattr_key {
   uint8_t  version;
+  uint8_t  os_version;
   uint32_t compile_option;
   uint32_t data_size;
   uint32_t ruby_revision;
@@ -69,10 +72,24 @@ struct s2o_data {
   VALUE storage_data;
 };
 
-static const uint8_t current_version = 10;
+static const uint8_t current_version = 11;
 static const char * xattr_key_name = "user.aotcc.key";
 static const char * xattr_data_name = "user.aotcc.value";
 static const size_t xattr_key_size = sizeof (struct xattr_key);
+
+#ifdef __MAC_10_15 // Mac OS 10.15 (future)
+static const int os_version = 15;
+#elif __MAC_10_14 // Mac OS 10.14 (future)
+static const int os_version = 14;
+#elif __MAC_10_13 // Mac OS 10.13 (future)
+static const int os_version = 13;
+#elif __MAC_10_12 // Mac OS X Sierra
+static const int os_version = 12;
+#elif __MAC_10_11 // Mac OS X El Capitan
+static const int os_version = 11;
+# else
+static const int os_version = 0;
+#endif
 
 #ifdef __APPLE__
 #define GETXATTR_TRAILER ,0,0
@@ -365,6 +382,7 @@ bs_update_key(int fd, uint32_t data_size, uint64_t current_mtime)
 
   xattr_key = (struct xattr_key){
     .version        = current_version,
+    .os_version     = os_version,
     .data_size      = data_size,
     .compile_option = current_compile_option_crc32,
     .ruby_revision  = current_ruby_revision,
@@ -414,6 +432,7 @@ bs_get_cache(int fd, struct xattr_key * key)
 
   return (nbytes == (ssize_t)xattr_key_size && \
       key->version == current_version && \
+      key->os_version == os_version && \
       key->compile_option == current_compile_option_crc32 && \
       key->ruby_revision == current_ruby_revision);
 }

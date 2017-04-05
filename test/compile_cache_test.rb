@@ -10,7 +10,7 @@ class CompileCacheTest < Minitest::Test
 
   def test_no_write_permission
     path = set_file('a.rb', 'a = 3', 100)
-    FileUtils.chmod(0400, 'a.rb')
+    FileUtils.chmod(0400, path)
     Bootsnap::CompileCache::ISeq.expects(:input_to_storage).never
     Bootsnap::CompileCache::ISeq.expects(:input_to_output).times(2).returns('whatever')
     _, err = capture_subprocess_io do
