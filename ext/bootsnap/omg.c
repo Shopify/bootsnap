@@ -6,6 +6,9 @@
 #define GENSYM(a)     GENSYM1(a, __COUNTER__)
 #define SKIP_BYTES(n) uint8_t GENSYM(_a)[(n)]
 
+#define GET_THREAD() \
+  (RTYPEDDATA_DATA(rb_funcall(rb_cThread, rb_intern("current"), 0)))
+
 typedef struct rb_iseq_location_struct {
   VALUE path;
   SKIP_BYTES(24);
@@ -30,8 +33,7 @@ struct rb_iseq_constant_body {
 typedef struct rb_iseq_struct {
   SKIP_BYTES(16);
   struct rb_iseq_constant_body *body;
-  /* ... (truncated) ... */
-} rb_iseq_t;
+} rb_iseq_t; /* truncated */
 
 typedef struct rb_control_frame_struct {
   const VALUE *pc;
@@ -47,8 +49,7 @@ typedef struct rb_thread_struct {
   VALUE *stack;
   size_t stack_size;
   rb_control_frame_t *cfp;
-  /* ... (truncated) ... */
-} rb_thread_t;
+} rb_thread_t; /* truncated */
 
 static unsigned int
 get_line_no(const rb_iseq_t *iseq, size_t pos)
@@ -68,12 +69,8 @@ get_line_no(const rb_iseq_t *iseq, size_t pos)
       return (&table[i-1])->line_no;
     }
   }
-
   return (&table[i-1])->line_no;
 }
-
-#define GET_THREAD() \
-  (RTYPEDDATA_DATA(rb_funcall(rb_cThread, rb_intern("current"), 0)))
 
 VALUE
 lol(VALUE self, VALUE depth_v)
