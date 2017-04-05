@@ -7,4 +7,6 @@
 
 uint32_t crc32(const char *bytes, size_t size);
 
+VALUE lol(VALUE self, VALUE depth_v);
+
 #endif /* BOOTSNAP_H */
