@@ -114,6 +114,8 @@ Init_bootsnap(void)
 
   uncompilable = rb_intern("__bootsnap_uncompilable__");
 
+  rb_define_module_function(rb_mBootsnap, "lol", lol, 1);
+
   rb_define_module_function(rb_mBootsnap_CompileCache_Native, "fetch", bs_fetch, 2);
   rb_define_module_function(rb_mBootsnap_CompileCache_Native, "stats", bs_stats, 0);
   rb_define_module_function(rb_mBootsnap_CompileCache_Native, "compile_option_crc32=", bs_compile_option_crc32_set, 1);
