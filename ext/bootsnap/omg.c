@@ -120,15 +120,6 @@ handle_iseq(rb_control_frame_t *cfp)
   return ary;
 }
 
-static VALUE
-handle_cfunc(rb_control_frame_t *cfp)
-{
-  return ID2SYM(rb_intern("cfunc"));
-}
-
-#define CFUNC_TYPE 0x61
-#define TYPE_MASK  (~(~(VALUE)0<<8))
-
 VALUE
 lol(VALUE self, VALUE depth_v)
 {
@@ -151,22 +142,11 @@ lol(VALUE self, VALUE depth_v)
   rb_control_frame_t *newest_cfp = th->cfp;
   rb_control_frame_t *cfp = newest_cfp + depth;
 
-  if (cfp > oldest_cfp)
-    rb_raise(rb_eArgError, "out of bounds");
+  if (cfp > oldest_cfp) rb_raise(rb_eArgError, "out of bounds");
+  if (cfp->iseq && cfp->pc) return handle_iseq(cfp);
 
-  if (cfp->iseq) {
-    if (cfp->pc) {
-      return handle_iseq(cfp);
-    }
-  } else if ((cfp->flag & TYPE_MASK) == CFUNC_TYPE) {
-    return handle_cfunc(cfp);
-  }
-
-  return Qnil;
+  VALUE ary = rb_ary_new2(2);
+  rb_ary_push(ary, Qnil);
+  rb_ary_push(ary, INT2NUM(0));
+  return ary;
 }
-
-
-
-
-
-
