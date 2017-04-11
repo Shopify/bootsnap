@@ -12,25 +12,25 @@ module Bootsnap
         sc = arr.singleton_class
         sc.send(:alias_method, :shovel_without_lpc, :<<)
         arr.define_singleton_method(:<<) do |entry|
-          observer.push_paths(self, entry)
+          observer.push_paths(self, entry.to_s)
           shovel_without_lpc(entry)
         end
 
         sc.send(:alias_method, :push_without_lpc, :push)
         arr.define_singleton_method(:push) do |*entries|
-          observer.push_paths(self, *entries)
+          observer.push_paths(self, *entries.map(&:to_s))
           push_without_lpc(*entries)
         end
 
         sc.send(:alias_method, :unshift_without_lpc, :unshift)
         arr.define_singleton_method(:unshift) do |*entries|
-          observer.unshift_paths(self, *entries)
+          observer.unshift_paths(self, *entries.map(&:to_s))
           unshift_without_lpc(*entries)
         end
 
         sc.send(:alias_method, :concat_without_lpc, :concat)
         arr.define_singleton_method(:concat) do |entries|
-          observer.push_paths(self, *entries)
+          observer.push_paths(self, *entries.map(&:to_s))
           concat_without_lpc(entries)
         end
 
