@@ -79,7 +79,7 @@ module Bootsnap
 
       def stability
         @stability ||= begin
-          if Gem.path.detect { |p| path.start_with?(p) }
+          if Gem.path.detect { |p| path.to_s.start_with?(p) }
             STABLE
           elsif path.start_with?(RUBY_PREFIX)
             STABLE
