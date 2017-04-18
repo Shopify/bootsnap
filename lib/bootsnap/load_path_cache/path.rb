@@ -75,13 +75,16 @@ module Bootsnap
       STABLE   = :stable
       VOLATILE = :volatile
 
+      # Built-in ruby lib stuff doesn't change, but things can occasionally be
+      # installed into sitedir, which often lives under prefix.
       RUBY_PREFIX = RbConfig::CONFIG['prefix']
+      SITE_DIR    = RbConfig::CONFIG['sitedir']
 
       def stability
         @stability ||= begin
           if Gem.path.detect { |p| path.to_s.start_with?(p) }
             STABLE
-          elsif path.start_with?(RUBY_PREFIX)
+          elsif path.start_with?(RUBY_PREFIX) && !path.start_with?(SITE_DIR)
             STABLE
           else
             VOLATILE
