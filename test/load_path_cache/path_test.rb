@@ -10,9 +10,11 @@ module Bootsnap
 
       def test_stability
         bundler_file = Bundler.method(:setup).source_location[0]
-        volatile = Path.new(__FILE__)
-        stable   = Path.new(bundler_file)
-        unknown  = Path.new('/who/knows')
+        volatile     = Path.new(__FILE__)
+        stable       = Path.new(bundler_file)
+        unknown      = Path.new('/who/knows')
+        prefix       = Path.new(RbConfig::CONFIG['prefix']  + '/a')
+        site         = Path.new(RbConfig::CONFIG['sitedir'] + '/b')
 
         assert stable.stable?
         refute stable.volatile?
@@ -20,6 +22,9 @@ module Bootsnap
         refute volatile.stable?
         assert unknown.volatile?
         refute unknown.stable?
+
+        assert prefix.stable?
+        refute site.stable?
       end
 
       def test_volatile_cache_valid_when_mtime_has_not_changed
