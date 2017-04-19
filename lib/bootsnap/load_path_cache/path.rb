@@ -20,7 +20,7 @@ module Bootsnap
       attr_reader :path
 
       def initialize(path)
-        @path = path
+        @path = path.to_s
       end
 
       # Return a list of all the requirable files and all of the subdirectories
@@ -79,9 +79,9 @@ module Bootsnap
 
       def stability
         @stability ||= begin
-          if Gem.path.detect { |p| path.to_s.start_with?(p) }
+          if Gem.path.detect { |p| path.start_with?(p.to_s) }
             STABLE
-          elsif path.to_s.start_with?(RUBY_PREFIX)
+          elsif path.start_with?(RUBY_PREFIX)
             STABLE
           else
             VOLATILE

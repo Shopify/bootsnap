@@ -12,7 +12,8 @@ module Bootsnap
       BUNDLE_PATH = (Bundler.bundle_path.cleanpath.to_s << LoadPathCache::SLASH).freeze
 
       def self.call(path)
-        raise RelativePathNotSupported unless path.to_s.start_with?(SLASH)
+        path = path.to_s
+        raise RelativePathNotSupported unless path.start_with?(SLASH)
 
         relative_slice = (path.size + 1)..-1
         # If the bundle path is a descendent of this path, we do additional
