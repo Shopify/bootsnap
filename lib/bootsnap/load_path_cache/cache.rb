@@ -99,7 +99,7 @@ module Bootsnap
 
       def push_paths_locked(*paths)
         @store.transaction do
-          paths.each do |path|
+          paths.map(&:to_s).each do |path|
             p = Path.new(path)
             entries, dirs = p.entries_and_dirs(@store)
             # push -> low precedence -> set only if unset
@@ -111,7 +111,7 @@ module Bootsnap
 
       def unshift_paths_locked(*paths)
         @store.transaction do
-          paths.reverse.each do |path|
+          paths.map(&:to_s).reverse.each do |path|
             p = Path.new(path)
             entries, dirs = p.entries_and_dirs(@store)
             # unshift -> high precedence -> unconditional set
