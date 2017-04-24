@@ -22,6 +22,12 @@ module Bootsnap
         @mutex.synchronize { @dirs[dir] }
       end
 
+      BUILTIN_FEATURES = {
+        'enumerator' => nil,
+        'thread'     => nil,
+        'thread.rb'  => nil
+      }.freeze
+
       # Try to resolve this feature to an absolute path without traversing the
       # loadpath.
       def find(feature)
@@ -48,7 +54,7 @@ module Bootsnap
           # doesn't correspond to any entry on the filesystem. Ruby lies. So we
           # lie too, forcing our monkeypatch to return false like ruby would.
           when ""
-            raise LoadPathCache::ReturnFalse if feature == 'enumerator' || feature == 'thread'
+            raise LoadPathCache::ReturnFalse if BUILTIN_FEATURES.key?(feature)
             nil
           # Ruby allows specifying native extensions as '.so' even when DLEXT
           # is '.bundle'. This is where we handle that case.
