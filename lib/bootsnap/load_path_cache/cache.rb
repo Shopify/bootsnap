@@ -54,22 +54,20 @@ module Bootsnap
           x = search_index(feature)
           return x if x
 
+          # Ruby has some built-in features that require lies about.
+          # For example, 'enumerator' is built in. If you require it, ruby
+          # returns false as if it were already loaded; however, there is no
+          # file to find on disk. We've pre-built a list of these, and we
+          # return false if any of them is loaded.
+          raise LoadPathCache::ReturnFalse if BUILTIN_FEATURES.key?(feature)
+
           # The feature wasn't found on our preliminary search through the index.
           # We resolve this differently depending on what the extension was.
           case File.extname(feature)
           # If the extension was one of the ones we explicitly cache (.rb and the
           # native dynamic extension, e.g. .bundle or .so), we know it was a
           # failure and there's nothing more we can do to find the file.
-          when *CACHED_EXTENSIONS # .rb, .bundle or .so
-            nil
-          # If no extension was specified, it's the same situation, since we
-          # try appending both cachable extensions in search_index. However,
-          # there's a special-case for 'enumerator'. Before ruby 1.9, you had
-          # to `require 'enumerator'` to use it. In 1.9+, it's pre-loaded, but
-          # doesn't correspond to any entry on the filesystem. Ruby lies. So we
-          # lie too, forcing our monkeypatch to return false like ruby would.
-          when ""
-            raise LoadPathCache::ReturnFalse if BUILTIN_FEATURES.key?(feature)
+          when '', *CACHED_EXTENSIONS # no extension, .rb, (.bundle or .so)
             nil
           # Ruby allows specifying native extensions as '.so' even when DLEXT
           # is '.bundle'. This is where we handle that case.

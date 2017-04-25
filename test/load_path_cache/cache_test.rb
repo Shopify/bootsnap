@@ -24,15 +24,16 @@ module Bootsnap
       # dev.yml specifies 2.3.3 and this test assumes it. Failures on other
       # versions aren't a big deal, but feel free to fix the test.
       def test_builtin_features
-        assert Cache::BUILTIN_FEATURES.key?('enumerator')
-        assert Cache::BUILTIN_FEATURES.key?('enumerator.so')
-        assert Cache::BUILTIN_FEATURES.key?('enumerator.bundle')
-        assert Cache::BUILTIN_FEATURES.key?('thread')
-        assert Cache::BUILTIN_FEATURES.key?('thread.rb')
+        cache = Cache.new(NullCache, [])
+        assert_raises(ReturnFalse) { cache.find('thread') }
+        assert_raises(ReturnFalse) { cache.find('thread.rb') }
+        assert_raises(ReturnFalse) { cache.find('enumerator') }
+        assert_raises(ReturnFalse) { cache.find('enumerator.so') }
+        assert_raises(ReturnFalse) { cache.find('enumerator.bundle') }
 
-        refute Cache::BUILTIN_FEATURES.key?('thread.bundle')
-        refute Cache::BUILTIN_FEATURES.key?('enumerator.rb')
-        refute Cache::BUILTIN_FEATURES.key?('encdb.bundle')
+        refute(cache.find('thread.bundle'))
+        refute(cache.find('enumerator.rb'))
+        refute(cache.find('encdb.bundle'))
       end
 
       def test_simple
