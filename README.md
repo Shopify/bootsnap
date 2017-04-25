@@ -2,7 +2,40 @@
 
 **Beta-quality. See [the last section of this README](#trustworthiness).**
 
-Bootsnap is a library that plugs into a number of ruby and (optionally) `ActiveSupport` and `YAML`
+Bootsnap is a library that plugs into a number of Ruby and (optionally) `ActiveSupport` and `YAML`
+methods to optimize and cache expensive computations. See [the How Does This Work section](#how-does-this-work) for more information.
+
+## Usage
+
+Add `bootsnap` to your `Gemfile`:
+
+```ruby
+gem 'bootsnap'
+```
+
+Next, add this to your boot setup immediately after `require 'bundler/setup'` (i.e. as early as
+possible: the sooner this is loaded, the sooner it can start optimizing things)
+
+```ruby
+require 'bootsnap'
+Bootsnap.setup(
+  cache_dir:            'tmp/cache', # Path to your cache
+  development_mode:     ENV['MY_ENV'] == 'development',
+  load_path_cache:      true,        # Should we optimize the LOAD_PATH with a cache?
+  autoload_paths_cache: true,        # Should we optimize ActiveSupport autoloads with cache?
+  disable_trace:        false,       # Sets `RubyVM::InstructionSequence.compile_option = { trace_instruction: false }`
+  compile_cache_iseq:   true,        # Should compile Ruby code into ISeq cache?
+  compile_cache_yaml:   true         # Should compile YAML into a cache?
+)
+```
+
+**Protip:** You can replace `require 'bootsnap'` with `BootLib::Require.from_gem('bootsnap',
+'bootsnap')` using [this trick](https://github.com/Shopify/bootsnap/wiki/Bootlib::Require). This
+will help optimize boot time further if you have an extremely large `$LOAD_PATH`.
+
+## How does this work?
+
+Bootsnap is a library that plugs into a number of Ruby and (optionally) `ActiveSupport` and `YAML`
 methods. These methods are modified to cache results of expensive computations, and can be grouped
 into two broad categories:
 
@@ -206,34 +239,6 @@ open    /c/nope.bundle -> -1
 ```
 # (nothing!)
 ```
-
-## Usage
-
-Add `bootsnap` to your `Gemfile`:
-
-```ruby
-gem 'bootsnap'
-```
-
-Next, add this to your boot setup immediately after `require 'bundler/setup'` (i.e. as early as
-possible: the sooner this is loaded, the sooner it can start optimizing things)
-
-```ruby
-require 'bootsnap'
-Bootsnap.setup(
-  cache_dir:            'tmp/cache', # Path to your cache
-  development_mode:     ENV['MY_ENV'] == 'development',
-  load_path_cache:      true,        # Should we optimize the LOAD_PATH with a cache?
-  autoload_paths_cache: true,        # Should we optimize ActiveSupport autoloads with cache?
-  disable_trace:        false,       # Sets `RubyVM::InstructionSequence.compile_option = { trace_instruction: false }`
-  compile_cache_iseq:   true,        # Should compile Ruby code into ISeq cache?
-  compile_cache_yaml:   true         # Should compile YAML into a cache?
-)
-```
-
-**Protip:** You can replace `require 'bootsnap'` with `BootLib::Require.from_gem('bootsnap',
-'bootsnap')` using [this trick](https://github.com/Shopify/bootsnap/wiki/Bootlib::Require). This
-will help optimize boot time further if you have an extremely large `$LOAD_PATH`.
 
 ## Trustworthiness
 
