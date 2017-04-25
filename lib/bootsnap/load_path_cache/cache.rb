@@ -22,11 +22,26 @@ module Bootsnap
         @mutex.synchronize { @dirs[dir] }
       end
 
-      BUILTIN_FEATURES = {
-        'enumerator' => nil,
-        'thread'     => nil,
-        'thread.rb'  => nil
-      }.freeze
+      # { 'enumerator' => nil, 'enumerator.so' => nil, ... }
+      BUILTIN_FEATURES = $LOADED_FEATURES.reduce({}) do |acc, feat|
+        # Builtin features are of the form 'enumerator.so'.
+        # All others include paths.
+        next acc unless feat.size < 20 && !feat.include?('/')
+
+        base = File.basename(feat, '.*') # enumerator.so -> enumerator
+        ext  = File.extname(feat) # .so
+
+        acc[feat] = nil # enumerator.so
+        acc[base] = nil # enumerator
+
+        if [DOT_SO, *DL_EXTENSIONS].include?(ext)
+          DL_EXTENSIONS.each do |ext|
+            acc["#{base}#{ext}"] = nil # enumerator.bundle
+          end
+        end
+
+        acc
+      end.freeze
 
       # Try to resolve this feature to an absolute path without traversing the
       # loadpath.
