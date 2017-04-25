@@ -102,7 +102,8 @@ In addition to the [`Bootsnap::LoadPathCache::Cache`
 source](https://github.com/Shopify/bootsnap/blob/master/lib/bootsnap/load_path_cache/cache.rb),
 this diagram may help clarify how entry resolution works:
 
-![How path searching works](https://cloud.githubusercontent.com/assets/3074765/24532143/18278cd6-158c-11e7-8250-78d831df70db.png)
+![How path searching works](https://cloud.githubusercontent.com/assets/3074765/25388270/670b5652-299b-11e7-87fb-975647f68981.png)
+
 
 It's also important to note how expensive `LoadError`s can be. If ruby invokes
 `require 'something'`, but that file isn't on `$LOAD_PATH`, it takes `2 *
