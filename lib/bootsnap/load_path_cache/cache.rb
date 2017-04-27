@@ -120,6 +120,7 @@ module Bootsnap
         @store.transaction do
           paths.map(&:to_s).each do |path|
             p = Path.new(path)
+            next if p.non_directory?
             entries, dirs = p.entries_and_dirs(@store)
             # push -> low precedence -> set only if unset
             dirs.each    { |dir| @dirs[dir]  ||= true }
@@ -132,6 +133,7 @@ module Bootsnap
         @store.transaction do
           paths.map(&:to_s).reverse.each do |path|
             p = Path.new(path)
+            next if p.non_directory?
             entries, dirs = p.entries_and_dirs(@store)
             # unshift -> high precedence -> unconditional set
             dirs.each    { |dir| @dirs[dir]  = true }

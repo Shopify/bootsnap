@@ -27,6 +27,13 @@ module Bootsnap
         refute site.stable?
       end
 
+      def test_non_directory?
+        refute Path.new('/dev').non_directory?
+        refute Path.new('/nope').non_directory?
+        assert Path.new('/dev/null').non_directory?
+        assert Path.new('/etc/hosts').non_directory?
+      end
+
       def test_volatile_cache_valid_when_mtime_has_not_changed
         with_caching_fixtures do |dir, a, a_b, a_b_c|
           entries, dirs = PathScanner.call(dir)

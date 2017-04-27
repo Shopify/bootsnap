@@ -23,6 +23,13 @@ module Bootsnap
         @path = path.to_s
       end
 
+      # True if the path exists, but represents a non-directory object
+      def non_directory?
+        !File.stat(path).directory?
+      rescue Errno::ENOENT
+        false
+      end
+
       # Return a list of all the requirable files and all of the subdirectories
       # of this +Path+.
       def entries_and_dirs(store)
