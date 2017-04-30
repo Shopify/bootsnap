@@ -85,7 +85,8 @@ class CompileCacheTest < Minitest::Test
     Bootsnap::CompileCache::ISeq.expects(:input_to_storage).times(2).returns(storage)
     Bootsnap::CompileCache::ISeq.expects(:storage_to_output).times(2).returns(output)
     load(path)
-    `xattr -d user.aotcc.value #{path}`
+    xattr = Xattr.new(path)
+    xattr.remove('user.aotcc.value')
     load(path)
   end
 
