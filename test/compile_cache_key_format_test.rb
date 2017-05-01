@@ -84,7 +84,8 @@ class CompileCacheKeyFormatTest < Minitest::Test
   end
 
   def get_attr(name, path)
-    loadhex(`xattr -p #{name} #{path}`.chomp)
+    xattr = Xattr.new(path)
+    xattr[name]
   end
 
   def loadhex(str)
