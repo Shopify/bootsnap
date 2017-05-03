@@ -121,7 +121,11 @@ module Bootsnap
           paths.map(&:to_s).each do |path|
             p = Path.new(path)
             next if p.non_directory?
-            entries, dirs = p.entries_and_dirs(@store)
+            begin
+              entries, dirs = p.entries_and_dirs(@store)
+            rescue PathScanner::RelativePathNotSupported
+              next
+            end
             # push -> low precedence -> set only if unset
             dirs.each    { |dir| @dirs[dir]  ||= true }
             entries.each { |rel| @index[rel] ||= path }
@@ -134,7 +138,11 @@ module Bootsnap
           paths.map(&:to_s).reverse.each do |path|
             p = Path.new(path)
             next if p.non_directory?
-            entries, dirs = p.entries_and_dirs(@store)
+            begin
+              entries, dirs = p.entries_and_dirs(@store)
+            rescue PathScanner::RelativePathNotSupported
+              next
+            end
             # unshift -> high precedence -> unconditional set
             dirs.each    { |dir| @dirs[dir]  = true }
             entries.each { |rel| @index[rel] = path }
