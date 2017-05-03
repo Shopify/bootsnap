@@ -21,17 +21,11 @@ Gem::Specification.new do |spec|
   spec.bindir        = "exe"
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
-  spec.extensions    = ['ext/bootsnap/extconf.rb']
 
   spec.required_ruby_version = '>= 2.3.0'
 
   spec.add_development_dependency "bundler", '~> 1'
   spec.add_development_dependency 'rake', '~> 10.0'
-  spec.add_development_dependency 'rake-compiler', '~> 0'
   spec.add_development_dependency "minitest", "~> 5.0"
   spec.add_development_dependency "mocha", "~> 1.2"
-  spec.add_development_dependency "ffi-xattr", "~> 0.1.2"
-
-  spec.add_runtime_dependency "msgpack", "~> 1.0"
-  spec.add_runtime_dependency "snappy", "~> 0.0.15"
 end

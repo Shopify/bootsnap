@@ -2,52 +2,40 @@ module Bootsnap
   module CompileCache
     module YAML
       class << self
-        attr_accessor :msgpack_factory
+        attr_accessor :cache,
+          :cache_key,
+          :file_key
       end
 
-      def self.input_to_storage(contents, _)
-        obj = ::YAML.load(contents)
-        msgpack_factory.packer.write(obj).to_s
-      rescue NoMethodError, RangeError
-        # if the object included things that we can't serialize, fall back to
-        # Marshal. It's a bit slower, but can encode anything yaml can.
-        # NoMethodError is unexpected types; RangeError is Bignums
-        return Marshal.dump(obj)
+      self.cache_key = proc do |path|
+        require 'digest'
+        Digest::MD5.hexdigest(path)
       end
 
-      def self.storage_to_output(data)
-        # This could have a meaning in messagepack, and we're being a little lazy
-        # about it. -- but a leading 0x04 would indicate the contents of the YAML
-        # is a positive integer, which is rare, to say the least.
-        if data[0] == 0x04.chr && data[1] == 0x08.chr
-          Marshal.load(data)
-        else
-          msgpack_factory.unpacker.feed(data).read
+      self.file_key = proc do |path|
+        require 'digest'
+        Digest::MD5.hexdigest [
+          path,
+          File.mtime(path).to_i,
+          Bootsnap::VERSION
+        ].join
+      end
+
+      def load_file(path)
+        key = YAML.cache_key.call(path)
+        yaml, cached_file_key = YAML.cache.get(key)
+        file_key = YAML.file_key.call(path)
+        unless file_key == cached_file_key
+          yaml = super(path)
+          YAML.cache.set(key, [yaml, file_key])
         end
+        yaml
       end
 
-      def self.input_to_output(data)
-        ::YAML.load(data)
-      end
-
-      def self.install!
+      def self.install!(cache)
+        YAML.cache = cache
         require 'yaml'
-        require 'msgpack'
-
-        # MessagePack serializes symbols as strings by default.
-        # We want them to roundtrip cleanly, so we use a custom factory.
-        # see: https://github.com/msgpack/msgpack-ruby/pull/122
-        factory = MessagePack::Factory.new
-        factory.register_type(0x00, Symbol)
-        Bootsnap::CompileCache::YAML.msgpack_factory = factory
-
-        klass = class << ::YAML; self; end
-        klass.send(:define_method, :load_file) do |path|
-          Bootsnap::CompileCache::Native.fetch(
-            path.to_s,
-            Bootsnap::CompileCache::YAML
-          )
-        end
+        ::YAML.singleton_class.prepend Bootsnap::CompileCache::YAML
       end
     end
   end
