@@ -1,17 +1,24 @@
 require_relative '../explicit_require'
 
 Bootsnap::ExplicitRequire.with_gems('msgpack') { require 'msgpack' }
+Bootsnap::ExplicitRequire.with_gems('snappy') { require 'snappy' }
 Bootsnap::ExplicitRequire.from_rubylibdir('fileutils')
+
+# Fix method signature in Snappy::Reader to ignore arguments passed to #read.
+module SnappyReaderPatch
+  def read(*_)
+    super()
+  end
+end
+Snappy::Reader.prepend SnappyReaderPatch
 
 module Bootsnap
   module LoadPathCache
     class Store
-      NestedTransactionError = Class.new(StandardError)
-      SetOutsideTransactionNotAllowed = Class.new(StandardError)
-
       def initialize(store_path)
         @store_path = store_path
         load_data
+        at_exit {dump_data if @dirty}
       end
 
       def get(key)
@@ -19,7 +26,6 @@ module Bootsnap
       end
 
       def fetch(key)
-        raise SetOutsideTransactionNotAllowed unless @in_txn
         v = get(key)
         unless v
           @dirty = true
@@ -30,7 +36,6 @@ module Bootsnap
       end
 
       def set(key, value)
-        raise SetOutsideTransactionNotAllowed unless @in_txn
         if value != @data[key]
           @dirty = true
           @data[key] = value
@@ -38,26 +43,15 @@ module Bootsnap
       end
 
       def transaction
-        raise NestedTransactionError if @in_txn
-        @in_txn = true
         yield
-      ensure
-        commit_transaction
-        @in_txn = false
       end
 
       private
 
-      def commit_transaction
-        if @dirty
-          dump_data
-          @dirty = false
-        end
-      end
-
       def load_data
         @data = begin
-          MessagePack.load(File.binread(@store_path))
+          store_file = File.new(@store_path, 'r')
+          MessagePack.load(Snappy::Reader.new(store_file))
         # handle malformed data due to upgrade incompatability
         rescue Errno::ENOENT, MessagePack::MalformedFormatError, MessagePack::UnknownExtTypeError, EOFError
           {}
@@ -69,7 +63,9 @@ module Bootsnap
         # caches if they read at an inopportune time.
         tmp = "#{@store_path}.#{(rand * 100000).to_i}.tmp"
         FileUtils.mkpath(File.dirname(tmp))
-        File.binwrite(tmp, MessagePack.dump(@data))
+        Snappy::Writer.new(File.new(tmp, 'w')) do |w|
+          MessagePack.dump(@data, w)
+        end
         FileUtils.mv(tmp, @store_path)
       end
     end

@@ -23,8 +23,8 @@ module Bootsnap
     class << self
       attr_reader :load_path_cache, :autoload_paths_cache
 
-      def setup(cache_path:, development_mode:, active_support: true)
-        store = Store.new(cache_path)
+      def setup(cache:, development_mode:, active_support: true)
+        store = cache
 
         @load_path_cache = Cache.new(store, $LOAD_PATH, development_mode: development_mode)
         require_relative 'load_path_cache/core_ext/kernel_require'
@@ -48,5 +48,4 @@ end
 require_relative 'load_path_cache/path_scanner'
 require_relative 'load_path_cache/path'
 require_relative 'load_path_cache/cache'
-require_relative 'load_path_cache/store'
 require_relative 'load_path_cache/change_observer'
