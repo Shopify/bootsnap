@@ -5,6 +5,11 @@
 Bootsnap is a library that plugs into a number of Ruby and (optionally) `ActiveSupport` and `YAML`
 methods to optimize and cache expensive computations. See [the How Does This Work section](#how-does-this-work) for more information.
 
+#### Quick Performance Overview
+- [Discourse](https://github.com/discourse/discourse) reports a boot time reduction of approximately 50%, from roughly 6 to 3 seconds on one machine;
+- One of our smaller internal apps also sees a reduction of 50%, from 3.6 to 1.8 seconds;
+- The core Shopify platform -- a rather large monolithic application -- boots about 75% faster, dropping from around 25s to 6.5s.
+
 ## Usage
 
 Add `bootsnap` to your `Gemfile`:
