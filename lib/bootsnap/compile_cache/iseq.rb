@@ -1,74 +1,48 @@
-require 'bootsnap/bootsnap'
-require 'zlib'
-
 module Bootsnap
   module CompileCache
     module ISeq
-      def self.input_to_storage(_, path)
-        RubyVM::InstructionSequence.compile_file(path).to_binary
-      rescue SyntaxError
-        raise Uncompilable, 'syntax error'
+      class << self
+        attr_accessor :cache,
+          :cache_key,
+          :file_key
       end
 
-      def self.storage_to_output(binary)
-        RubyVM::InstructionSequence.load_from_binary(binary)
-      rescue RuntimeError => e
-        if e.message == 'broken binary format'
-          STDERR.puts "[Bootsnap::CompileCache] warning: rejecting broken binary"
-          return nil
+      self.cache_key = proc do |path|
+        require 'digest'
+        Digest::MD5.hexdigest(path)
+      end
+
+      self.file_key = proc do |path|
+        require 'digest'
+        Digest::MD5.hexdigest [
+          path,
+          File.mtime(path).to_i,
+          RubyVM::InstructionSequence.compile_option,
+          RUBY_VERSION,
+          Bootsnap::VERSION
+        ].join
+      end
+
+      def load_iseq(path)
+        key = ISeq.cache_key.call(path).to_s
+        binary, cached_file_key = ISeq.cache.get(key)
+        file_key = ISeq.file_key.call(path)
+        if file_key == cached_file_key
+          RubyVM::InstructionSequence.load_from_binary(binary)
         else
-          raise
-        end
-      end
-
-      def self.input_to_output(_)
-        nil # ruby handles this
-      end
-
-      module InstructionSequenceMixin
-        def load_iseq(path)
-          Bootsnap::CompileCache::Native.fetch(
-            path.to_s,
-            Bootsnap::CompileCache::ISeq
-          )
-        rescue RuntimeError => e
-          if e.message =~ /unmatched platform/
-            puts "unmatched platform for file #{path}"
+          RubyVM::InstructionSequence.compile_file(path).tap do |iseq|
+            ISeq.cache.set(key, [iseq.to_binary, file_key])
           end
-          raise
-        rescue Errno::ERANGE
-          STDERR.puts <<~EOF
-            \x1b[31mError loading ISeq from cache for \x1b[1;34m#{path}\x1b[0;31m!
-            You can likely fix this by running:
-              \x1b[1;32mxattr -c #{path}
-            \x1b[0;31m...but, first, please make sure \x1b[1;34m@burke\x1b[0;31m knows you ran into this bug!
-            He will want to see the results of:
-              \x1b[1;32m/bin/ls -l@ #{path}
-            \x1b[0;31mand:
-              \x1b[1;32mxattr -p user.aotcc.key #{path}\x1b[0m
-          EOF
-          raise
         end
-
-        def compile_option=(hash)
-          super(hash)
-          Bootsnap::CompileCache::ISeq.compile_option_updated
-        end
+      rescue => e
+        STDERR.puts "[Bootsnap::CompileCache] couldn't load: #{path}, #{e}"
+        nil
       end
 
-      def self.compile_option_updated
-        option = RubyVM::InstructionSequence.compile_option
-        crc = Zlib.crc32(option.inspect)
-        Bootsnap::CompileCache::Native.compile_option_crc32 = crc
-      end
-
-      def self.install!
-        Bootsnap::CompileCache::ISeq.compile_option_updated
-        class << RubyVM::InstructionSequence
-          prepend InstructionSequenceMixin
-        end
+      def self.install!(cache)
+        self.cache = cache
+        RubyVM::InstructionSequence.singleton_class.prepend Bootsnap::CompileCache::ISeq
       end
     end
   end
 end
-

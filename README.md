@@ -22,15 +22,18 @@ Next, add this to your boot setup immediately after `require 'bundler/setup'` (i
 possible: the sooner this is loaded, the sooner it can start optimizing things)
 
 ```ruby
+cache = ActiveSupport::Cache::FileStore.new('tmp/cache')
+# or plug in your favorite cache store, e.g.:
+# cache = Moneta.new(:File, dir: 'tmp/cache')
+
 require 'bootsnap'
 Bootsnap.setup(
-  cache_dir:            'tmp/cache', # Path to your cache
   development_mode:     ENV['MY_ENV'] == 'development',
-  load_path_cache:      true,        # Should we optimize the LOAD_PATH with a cache?
-  autoload_paths_cache: true,        # Should we optimize ActiveSupport autoloads with cache?
+  load_path_cache:      cache,        # Optimize the LOAD_PATH with the provided cache
+  autoload_paths_cache: true,        # Should we also optimize ActiveSupport autoloads?
   disable_trace:        false,       # Sets `RubyVM::InstructionSequence.compile_option = { trace_instruction: false }`
-  compile_cache_iseq:   true,        # Should compile Ruby code into ISeq cache?
-  compile_cache_yaml:   true         # Should compile YAML into a cache?
+  compile_cache_iseq:   cache,        # Compile Ruby code to provided cache
+  compile_cache_yaml:   cache         # Compile YAML to provided cache
 )
 ```
 
@@ -51,8 +54,7 @@ into two broad categories:
 * [Compilation caching](#compilation-caching)
     * `RubyVM::InstructionSequence.load_iseq` is implemented to cache the result of ruby bytecode
       compilation.
-    * `YAML.load_file` is modified to cache the result of loading a YAML object in MessagePack format
-      (or Marshal, if the message uses types unsupported by MessagePack).
+    * `YAML.load_file` is modified to cache the result of loading a YAML object.
 
 ### Path Pre-Scanning
 
@@ -117,7 +119,7 @@ result too, raising a `LoadError` without touching the filesystem at all.
 
 ### Compilation Caching
 
-*(A simpler implementation of this concept can be found in [yomikomu](https://github.com/ko1/yomikomu)).*
+*(Another implementation of this concept can be found in [yomikomu](https://github.com/ko1/yomikomu)).*
 
 Ruby has complex grammar and parsing it is not a particularly cheap operation. Since 1.9, Ruby has
 translated ruby source to an internal bytecode format, which is then executed by the Ruby VM. Since
@@ -128,58 +130,17 @@ subsequent loads of the same file.
 We also noticed that we spend a lot of time loading YAML documents during our application boot, and
 that MessagePack and Marshal are *much* faster at deserialization than YAML, even with a fast
 implementation. We use the same strategy of compilation caching for YAML documents, with the
-equivalent of Ruby's "bytecode" format being a MessagePack document (or, in the case of YAML
-documents with types unsupported by MessagePack, a Marshal stream).
+parsed YAML contents cached in a binary format that loads more quickly.
 
-These compilation results are stored using `xattr`s on the source files. This is likely to change in
-the future, as it has some limitations (notably precluding Linux support except where the user feels
-like changing mount flags). However, this is a very performant implementation. 
+The cache key includes several fields:
 
-Whereas before, the sequence of syscalls generated to `require` a file would look like:
+* The file's absolute path;
+* The last-modification timestamp of the source file when it was compiled;
+* `RubyVM::InstructionSequence.compile_option` (skipped for YAML);
+* The version of Ruby this was compiled with (skipped for YAML); and
+* Current bootsnap version.
 
-```
-open    /c/foo.rb -> m
-fstat64 m
-close   m
-open    /c/foo.rb -> o
-fstat64 o
-fstat64 o
-read    o
-read    o
-...
-close   o
-```
-
-With bootsnap, we get:
-
-```
-open      /c/foo.rb -> n
-fstat64   n
-fgetxattr n
-fgetxattr n
-close     n
-```
-
-Bootsnap writes two `xattrs` attached to each file read:
-
-* `user.aotcc.value`, the binary compilation result; and
-* `user.aotcc.key`, a cache key to determine whether `user.aotcc.value` is still valid.
-
-The key includes several fields:
-
-* `version`, hardcoded in bootsnap. Essentially a schema version;
-* `compile_option`, which changes with `RubyVM::InstructionSequence.compile_option` does;
-* `data_size`, the number of bytes in `user.aotcc.value`, which we need to read it into a buffer
-  using `fgetxattr(2)`;
-* `ruby_revision`, the version of Ruby this was compiled with; and
-* `mtime`, the last-modification timestamp of the source file when it was compiled.
-
-If the key is valid, the result is loaded from the value. Otherwise, it is regenerated and clobbers
-the current cache.
-
-This diagram may help illustrate how it works:
-
-![Compilation Caching](https://burkelibbey.s3.amazonaws.com/bootsnap-compile-cache.png)
+If the key is valid, the result is loaded from the value. Otherwise, it is regenerated and the new value is written to the cache.
 
 ### Putting it all together
 
@@ -250,8 +211,7 @@ open    /c/nope.bundle -> -1
 
 We use the `*_path_cache` features in production and haven't experienced any issues in a long time.
 
-The `compile_cache_*` features work well for us in development on macOS, but probably don't work on
-Linux at all.
+The `compile_cache_*` features work well for us in development on macOS and Linux, depending on the provided cache implementation.
 
 `disable_trace` should be completely safe, but we don't really use it because some people like to
 use tools that make use of `trace` instructions.
@@ -261,5 +221,5 @@ use tools that make use of `trace` instructions.
 | `load_path_cache` | everywhere |
 | `autoload_path_cache` | everywhere |
 | `disable_trace` | nowhere, but it's safe unless you need tracing |
-| `compile_cache_iseq` | development, unlikely to work on Linux |
-| `compile_cache_yaml` | development, unlikely to work on Linux |
+| `compile_cache_iseq` | development |
+| `compile_cache_yaml` | development |
