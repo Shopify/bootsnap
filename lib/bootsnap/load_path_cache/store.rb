@@ -1,6 +1,5 @@
 require_relative '../explicit_require'
 
-Bootsnap::ExplicitRequire.with_gems('snappy')  { require 'snappy' }
 Bootsnap::ExplicitRequire.with_gems('msgpack') { require 'msgpack' }
 Bootsnap::ExplicitRequire.from_rubylibdir('fileutils')
 
@@ -58,8 +57,8 @@ module Bootsnap
 
       def load_data
         @data = begin
-          MessagePack.load(Snappy.inflate(File.binread(@store_path)))
-        rescue Errno::ENOENT, Snappy::Error
+          MessagePack.load(File.binread(@store_path))
+        rescue Errno::ENOENT, MessagePack::MalformedFormatError
           {}
         end
       end
@@ -69,7 +68,7 @@ module Bootsnap
         # caches if they read at an inopportune time.
         tmp = "#{@store_path}.#{(rand * 100000).to_i}.tmp"
         FileUtils.mkpath(File.dirname(tmp))
-        File.binwrite(tmp, Snappy.deflate(MessagePack.dump(@data)))
+        File.binwrite(tmp, MessagePack.dump(@data))
         FileUtils.mv(tmp, @store_path)
       end
     end
