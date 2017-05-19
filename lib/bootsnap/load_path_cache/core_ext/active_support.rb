@@ -50,8 +50,14 @@ module Bootsnap
             CoreExt::ActiveSupport.with_bootsnap_fallback(NameError) { super }
           end
 
-          def depend_on(file_name, message = "No such file to load -- %s.rb")
-            CoreExt::ActiveSupport.with_bootsnap_fallback(LoadError) { super }
+          if ::ActiveSupport::VERSION::MAJOR > 3
+            def depend_on(file_name, message = "No such file to load -- %s.rb")
+              CoreExt::ActiveSupport.with_bootsnap_fallback(LoadError) { super }
+            end
+          else
+            def depend_on(file_name, swallow_load_errors = false, message = "No such file to load -- %s.rb")
+              CoreExt::ActiveSupport.with_bootsnap_fallback(LoadError) { super }
+            end
           end
         end
       end
