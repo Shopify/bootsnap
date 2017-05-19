@@ -1,3 +1,4 @@
+require 'digest'
 module Bootsnap
   module CompileCache
     module ISeq
@@ -8,12 +9,10 @@ module Bootsnap
       end
 
       self.cache_key = proc do |path|
-        require 'digest'
         Digest::MD5.hexdigest(path)
       end
 
       self.file_key = proc do |path|
-        require 'digest'
         Digest::MD5.hexdigest [
           path,
           File.mtime(path).to_i,
