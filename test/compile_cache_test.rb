@@ -9,6 +9,7 @@ class CompileCacheTest < Minitest::Test
   end
 
   def test_no_write_permission
+    ENV['OPT_AOT_LOG'] = '1'
     path = set_file('a.rb', 'a = 3', 100)
     FileUtils.chmod(0400, path)
     Bootsnap::CompileCache::ISeq.expects(:input_to_storage).never
