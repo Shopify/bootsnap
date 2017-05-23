@@ -1,0 +1,5 @@
+os: osx
+language: ruby
+rvm: ruby-2.4.0
+before_script: rake
+script: bin/testunit
