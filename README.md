@@ -2,6 +2,9 @@
 
 **Beta-quality. See [the last section of this README](#trustworthiness).**
 
+**`compile_cache_*` features are only supported on MacOS (extremely likely to error on Linux;
+won't even compile on other platforms)**
+
 Bootsnap is a library that plugs into a number of Ruby and (optionally) `ActiveSupport` and `YAML`
 methods to optimize and cache expensive computations. See [the How Does This Work section](#how-does-this-work) for more information.
 
