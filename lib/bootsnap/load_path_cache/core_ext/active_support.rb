@@ -4,7 +4,10 @@ module Bootsnap
       module ActiveSupport
         def self.with_bootsnap_fallback(error)
           yield
-        rescue error
+        rescue error => e
+          # NoMethodError is a NameError, but we only want to handle actual
+          # NameError instances.
+          raise unless e.class == error
           without_bootsnap_cache { yield }
         end
 
