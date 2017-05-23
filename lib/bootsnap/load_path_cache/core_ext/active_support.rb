@@ -53,14 +53,10 @@ module Bootsnap
             CoreExt::ActiveSupport.with_bootsnap_fallback(NameError) { super }
           end
 
-          if defined?(::ActiveSupport::VERSION::MAJOR) && ::ActiveSupport::VERSION::MAJOR > 3
-            def depend_on(file_name, message = "No such file to load -- %s.rb")
-              CoreExt::ActiveSupport.with_bootsnap_fallback(LoadError) { super }
-            end
-          else
-            def depend_on(file_name, swallow_load_errors = false, message = "No such file to load -- %s.rb")
-              CoreExt::ActiveSupport.with_bootsnap_fallback(LoadError) { super }
-            end
+          # Signature has changed a few times over the years; easiest to not
+          # reiterate it with version polymorphism here...
+          def depend_on(*)
+            CoreExt::ActiveSupport.with_bootsnap_fallback(LoadError) { super }
           end
         end
       end
