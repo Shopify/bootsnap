@@ -30,7 +30,7 @@ module Bootsnap
         ::YAML.load(data)
       end
 
-      def self.install!
+      def self.install!(cache_dir)
         require 'yaml'
         require 'msgpack'
 
@@ -44,6 +44,7 @@ module Bootsnap
         klass = class << ::YAML; self; end
         klass.send(:define_method, :load_file) do |path|
           Bootsnap::CompileCache::Native.fetch(
+            cache_dir,
             path.to_s,
             Bootsnap::CompileCache::YAML
           )

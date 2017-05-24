@@ -27,6 +27,7 @@ module Bootsnap
     ) if load_path_cache
 
     Bootsnap::CompileCache.setup(
+      cache_dir: cache_dir + '/bootsnap-compile-cache',
       iseq: compile_cache_iseq,
       yaml: compile_cache_yaml
     )

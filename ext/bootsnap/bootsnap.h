@@ -1,8 +1,6 @@
 #ifndef BOOTSNAP_H
 #define BOOTSNAP_H 1
 
-#include <stdint.h>
-#include <sys/types.h>
-#include "ruby.h"
+/* doesn't expose anything */
 
 #endif /* BOOTSNAP_H */
