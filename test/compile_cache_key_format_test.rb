@@ -1,43 +1,32 @@
 require 'test_helper'
+require 'tempfile'
+require 'tmpdir'
+require 'fileutils'
 
 class CompileCacheKeyFormatTest < Minitest::Test
   include TmpdirHelper
 
   R = {
-    version: 0..0,
-    os_version: 1..1,
-    compile_option: 2..5,
-    data_size: 6..9,
-    ruby_revision: 10..13,
-    mtime: 14..21
+    version:        0...4,
+    os_version:     4...8,
+    compile_option: 8...12,
+    ruby_revision:  12...16,
+    size:           16...24,
+    mtime:          24...32,
+    data_size:      32...40,
   }
 
-  def setup
-    @prev_dir = Dir.pwd
-    @tmp_dir = Dir.mktmpdir('aotcc-test')
-    Dir.chdir(@tmp_dir)
-  end
-
-  def teardown
-    Dir.chdir(@prev_dir)
-    FileUtils.remove_entry(@tmp_dir)
-  end
-
-  def test_key_size
-    key, = attrs_for_contents('a = 3')
-    assert_equal(8 + 4 + 4 + 4 + 1 + 1, key.size)
-  end
-
   def test_key_version
-    key, = attrs_for_contents('a = 3')
-    assert_equal(11.chr, key[R[:version]])
+    key = cache_key_for_file(__FILE__)
+    exp = [2].pack("L")
+    assert_equal(exp, key[R[:version]])
   end
 
   def test_key_compile_option_stable
-    k1, = attrs_for_contents('a = 3')
-    k2, = attrs_for_contents('a = 3')
+    k1 = cache_key_for_file(__FILE__)
+    k2 = cache_key_for_file(__FILE__)
     RubyVM::InstructionSequence.compile_option = { tailcall_optimization: true }
-    k3, = attrs_for_contents('a = 3')
+    k3 = cache_key_for_file(__FILE__)
     assert_equal(k1[R[:compile_option]], k2[R[:compile_option]])
     refute_equal(k1[R[:compile_option]], k3[R[:compile_option]])
   ensure
@@ -45,50 +34,39 @@ class CompileCacheKeyFormatTest < Minitest::Test
   end
 
   def test_key_ruby_revision
-    key, = attrs_for_contents('a = 3')
+    key = cache_key_for_file(__FILE__)
     exp = [RUBY_REVISION].pack("L")
     assert_equal(exp, key[R[:ruby_revision]])
   end
 
-  def test_key_data_size
-    exp_size = begin
-      path = File.expand_path('./12345.rb')
-      File.write(path, 'a = 3')
-      RubyVM::InstructionSequence.compile_file(path).to_binary.size
-    end
-
-    act_size = begin
-      key, _ = attrs_for_contents('a = 3')
-      key[R[:data_size]].unpack("L")[0]
-    end
-
-    assert_equal(exp_size, act_size)
+  def test_key_size
+    key = cache_key_for_file(__FILE__)
+    exp = File.size(__FILE__)
+    act = key[R[:size]].unpack("Q")[0]
+    assert_equal(exp, act)
   end
 
   def test_key_mtime
-    key, = attrs_for_contents('a = 3')
-    exp = Time.now.to_i
+    key = cache_key_for_file(__FILE__)
+    exp = File.mtime(__FILE__).to_i
     act = key[R[:mtime]].unpack("Q")[0]
-    assert_in_delta(exp, act, 1)
+    assert_equal(exp, act)
+  end
+
+  def test_fetch
+    actual = Bootsnap::CompileCache::Native.fetch(@tmp_dir, '/dev/null', TestHandler)
+    assert_equal('NEATO /DEV/NULL', actual)
+    data = File.read("#{@tmp_dir}/8c/d2d180bbd995df")
+    assert_match(%r{.{64}neato /dev/null}, data.force_encoding(Encoding::BINARY))
+    actual = Bootsnap::CompileCache::Native.fetch(@tmp_dir, '/dev/null', TestHandler)
+    assert_equal('NEATO /DEV/NULL', actual)
   end
 
   private
 
-  def attrs_for_contents(contents)
-    path = format("./%05d.rb", (rand * 100000).to_i)
-    File.write(path, contents)
-    require(path)
-    key = get_attr("user.aotcc.key", path)
-    cache = get_attr("user.aotcc.value", path)
-    [key, cache, path]
-  end
-
-  def get_attr(name, path)
-    xattr = Xattr.new(path)
-    xattr[name]
-  end
-
-  def loadhex(str)
-    [str.gsub(/\s/, '')].pack("H*")
+  def cache_key_for_file(file)
+    Bootsnap::CompileCache::Native.fetch(@tmp_dir, file, TestHandler)
+    data = File.read(Help.cache_path(@tmp_dir, file))
+    Help.binary(data[0..31])
   end
 end

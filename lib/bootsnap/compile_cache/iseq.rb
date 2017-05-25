@@ -4,6 +4,10 @@ require 'zlib'
 module Bootsnap
   module CompileCache
     module ISeq
+      class << self
+        attr_accessor :cache_dir
+      end
+
       def self.input_to_storage(_, path)
         RubyVM::InstructionSequence.compile_file(path).to_binary
       rescue SyntaxError
@@ -28,6 +32,7 @@ module Bootsnap
       module InstructionSequenceMixin
         def load_iseq(path)
           Bootsnap::CompileCache::Native.fetch(
+            Bootsnap::CompileCache::ISeq.cache_dir,
             path.to_s,
             Bootsnap::CompileCache::ISeq
           )
@@ -62,7 +67,8 @@ module Bootsnap
         Bootsnap::CompileCache::Native.compile_option_crc32 = crc
       end
 
-      def self.install!
+      def self.install!(cache_dir)
+        Bootsnap::CompileCache::ISeq.cache_dir = cache_dir
         Bootsnap::CompileCache::ISeq.compile_option_updated
         class << RubyVM::InstructionSequence
           prepend InstructionSequenceMixin

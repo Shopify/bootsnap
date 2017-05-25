@@ -1,125 +1,127 @@
-#include "bootsnap.h"
-#include <sys/types.h>
-#include <sys/xattr.h>
-#include <sys/stat.h>
-#include <errno.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <stdbool.h>
-#include <utime.h>
-
-#ifdef __APPLE__
-// Used for the OS Directives to define the os_version constant
-#include <Availability.h>
-#define _ENOATTR ENOATTR
-#else
-#define _ENOATTR ENODATA
-#endif
-
-/* 
- * TODO:
- * - test on linux or reject on non-darwin
- * - source files over 4GB will likely break things (meh)
+/*
+ * Suggested reading order:
+ * 1. Skim Init_bootsnap
+ * 2. Skim bs_fetch
+ * 3. The rest of everything
+ *
+ * Init_bootsnap sets up the ruby objects and binds bs_fetch to
+ * Bootsnap::CompileCache::Native.fetch.
+ *
+ * bs_fetch is the ultimate caller for for just about every other function in
+ * here.
  */
 
+#include "bootsnap.h"
+#include "ruby.h"
+#include <stdint.h>
+#include <sys/types.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+
+/* get_os_version has different strategies depending on platform */
+#ifdef __linux__
+#include <gnu/libc-version.h>
+#else
+#include <sys/sysctl.h>
+#endif
+
+/* 1000 is an arbitrary limit; FNV64 plus some slashes brings the cap down to
+ * 981 for the cache dir */
+#define MAX_CACHEPATH_SIZE 1000
+#define MAX_CACHEDIR_SIZE  981
+
+#define KEY_SIZE 64
+
+/*
+ * An instance of this key is written as the first 64 bytes of each cache file.
+ * The mtime and size members track whether the file contents have changed, and
+ * the version, os_version, compile_option, and ruby_revision members track
+ * changes to the environment that could invalidate compile results without
+ * file contents having changed. The data_size member is not truly part of the
+ * "key". Really, this could be called a "header" with the first six members
+ * being an embedded "key" struct and an additional data_size member.
+ *
+ * The data_size indicates the remaining number of bytes in the cache file
+ * after the header (the size of the cached artifact).
+ *
+ * After data_size, the struct is padded to 64 bytes.
+ */
+struct bs_cache_key {
+  uint32_t version;
+  uint32_t os_version;
+  uint32_t compile_option;
+  uint32_t ruby_revision;
+  uint64_t size;
+  uint64_t mtime;
+  uint64_t data_size; /* not used for equality */
+  uint8_t  pad[24];
+} __attribute__((packed));
+
+/*
+ * If the struct padding isn't correct to pad the key to 64 bytes, refuse to
+ * compile.
+ */
+#define STATIC_ASSERT(X)            STATIC_ASSERT2(X,__LINE__)
+#define STATIC_ASSERT2(X,L)         STATIC_ASSERT3(X,L)
+#define STATIC_ASSERT3(X,L)         STATIC_ASSERT_MSG(X,at_line_##L)
+#define STATIC_ASSERT_MSG(COND,MSG) typedef char static_assertion_##MSG[(!!(COND))*2-1]
+STATIC_ASSERT(sizeof(struct bs_cache_key) == KEY_SIZE);
+
+/* Effectively a schema version. Bumping invalidates all previous caches */
+static const uint32_t current_version = 2;
+
+/* Derived from kernel or libc version; intended to roughly correspond to when
+ * ABIs have changed, requiring recompilation of native gems. */
+static uint32_t current_os_version;
+/* Invalidates cache when switching ruby versions */
+static uint32_t current_ruby_revision;
+/* Invalidates cache when RubyVM::InstructionSequence.compile_option changes */
+static uint32_t current_compile_option_crc32 = 0;
+
+/* Bootsnap::CompileCache::{Native, Uncompilable} */
 static VALUE rb_mBootsnap;
 static VALUE rb_mBootsnap_CompileCache;
 static VALUE rb_mBootsnap_CompileCache_Native;
 static VALUE rb_eBootsnap_CompileCache_Uncompilable;
-static uint32_t current_ruby_revision;
-static uint32_t current_compile_option_crc32 = 0;
 static ID uncompilable;
 
-struct stats {
-  uint64_t hit;
-  uint64_t unwritable;
-  uint64_t uncompilable;
-  uint64_t miss;
-  uint64_t fail;
-  uint64_t retry;
-};
-static struct stats stats = {
-  .hit = 0,
-  .unwritable = 0,
-  .uncompilable = 0,
-  .miss = 0,
-  .fail = 0,
-  .retry = 0,
-};
+/* Functions exposed as module functions on Bootsnap::CompileCache::Native */
+static VALUE bs_compile_option_crc32_set(VALUE self, VALUE crc32_v);
+static VALUE bs_rb_fetch(VALUE self, VALUE cachedir_v, VALUE path_v, VALUE handler);
 
-struct xattr_key {
-  uint8_t  version;
-  uint8_t  os_version;
-  uint32_t compile_option;
-  uint32_t data_size;
-  uint32_t ruby_revision;
-  uint64_t mtime;
-} __attribute__((packed));
-
-struct i2o_data {
-  VALUE handler;
-  VALUE input_data;
-};
-
-struct i2s_data {
-  VALUE handler;
-  VALUE input_data;
-  VALUE pathval;
-};
-
-struct s2o_data {
-  VALUE handler;
-  VALUE storage_data;
-};
-
-static const uint8_t current_version = 11;
-static const char * xattr_key_name = "user.aotcc.key";
-static const char * xattr_data_name = "user.aotcc.value";
-static const size_t xattr_key_size = sizeof (struct xattr_key);
-
-#ifdef __MAC_10_15 // Mac OS 10.15 (future)
-static const int os_version = 15;
-#elif __MAC_10_14 // Mac OS 10.14 (future)
-static const int os_version = 14;
-#elif __MAC_10_13 // Mac OS 10.13 (future)
-static const int os_version = 13;
-#elif __MAC_10_12 // Mac OS X Sierra
-static const int os_version = 12;
-#elif __MAC_10_11 // Mac OS X El Capitan
-static const int os_version = 11;
-# else
-static const int os_version = 0;
-#endif
-
-#ifdef __APPLE__
-#define GETXATTR_TRAILER ,0,0
-#define SETXATTR_TRAILER ,0
-#define REMOVEXATTR_TRAILER ,0
-#else
-#define GETXATTR_TRAILER
-#define SETXATTR_TRAILER
-#define REMOVEXATTR_TRAILER
-#endif
-
-/* forward declarations */
-static int bs_fetch_data(int fd, size_t size, VALUE handler, VALUE * storage_data, int * exception_tag);
-static int bs_update_key(int fd, uint32_t data_size, uint64_t current_mtime);
-static int bs_open(const char * path, bool * writable);
-static int bs_get_cache(int fd, struct xattr_key * key);
-static size_t bs_read_contents(int fd, size_t size, char ** contents);
-static int bs_close_and_unclobber_times(int * fd, const char * path, time_t atime, time_t mtime);
-static VALUE bs_fetch(VALUE self, VALUE pathval, VALUE handler);
-static VALUE bs_compile_option_crc32_set(VALUE self, VALUE crc32val);
+/* Helpers */
+static uint64_t fnv_64a(const char *str);
+static void bs_cache_path(const char * cachedir, const char * path, char ** cache_path);
+static int bs_read_key(int fd, struct bs_cache_key * key);
+static int cache_key_equal(struct bs_cache_key * k1, struct bs_cache_key * k2);
+static VALUE bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler);
+static int open_current_file(char * path, struct bs_cache_key * key);
+static int fetch_cached_data(int fd, ssize_t data_size, VALUE handler, VALUE * output_data, int * exception_tag);
 static VALUE prot_exception_for_errno(VALUE err);
+static uint32_t get_os_version(void);
+
+/*
+ * Helper functions to call ruby methods on handler object without crashing on
+ * exception.
+ */
+static int bs_storage_to_output(VALUE handler, VALUE storage_data, VALUE * output_data);
+static VALUE prot_storage_to_output(VALUE arg);
 static VALUE prot_input_to_output(VALUE arg);
 static void bs_input_to_output(VALUE handler, VALUE input_data, VALUE * output_data, int * exception_tag);
 static VALUE prot_input_to_storage(VALUE arg);
 static int bs_input_to_storage(VALUE handler, VALUE input_data, VALUE pathval, VALUE * storage_data);
-static VALUE prot_storage_to_output(VALUE arg);
-static int bs_storage_to_output(VALUE handler, VALUE storage_data, VALUE * output_data);
-static int logging_enabled();
-static VALUE bs_stats(VALUE self);
+struct s2o_data;
+struct i2o_data;
+struct i2s_data;
 
+/*
+ * Ruby C extensions are initialized by calling Init_<extname>.
+ *
+ * This sets up the module hierarchy and attaches functions as methods.
+ *
+ * We also populate some semi-static information about the current OS and so on.
+ */
 void
 Init_bootsnap(void)
 {
@@ -127,341 +129,350 @@ Init_bootsnap(void)
   rb_mBootsnap_CompileCache = rb_define_module_under(rb_mBootsnap, "CompileCache");
   rb_mBootsnap_CompileCache_Native = rb_define_module_under(rb_mBootsnap_CompileCache, "Native");
   rb_eBootsnap_CompileCache_Uncompilable = rb_define_class_under(rb_mBootsnap_CompileCache, "Uncompilable", rb_eStandardError);
+
   current_ruby_revision = FIX2INT(rb_const_get(rb_cObject, rb_intern("RUBY_REVISION")));
+  current_os_version = get_os_version();
 
   uncompilable = rb_intern("__bootsnap_uncompilable__");
 
-  rb_define_module_function(rb_mBootsnap_CompileCache_Native, "fetch", bs_fetch, 2);
-  rb_define_module_function(rb_mBootsnap_CompileCache_Native, "stats", bs_stats, 0);
+  rb_define_module_function(rb_mBootsnap_CompileCache_Native, "fetch", bs_rb_fetch, 3);
   rb_define_module_function(rb_mBootsnap_CompileCache_Native, "compile_option_crc32=", bs_compile_option_crc32_set, 1);
 }
 
+/*
+ * Bootsnap's ruby code registers a hook that notifies us via this function
+ * when compile_option changes. These changes invalidate all existing caches.
+ */
 static VALUE
-bs_stats(VALUE self)
+bs_compile_option_crc32_set(VALUE self, VALUE crc32_v)
 {
-  VALUE ret = rb_hash_new();
-  rb_hash_aset(ret, ID2SYM(rb_intern("hit")), INT2NUM(stats.hit));
-  rb_hash_aset(ret, ID2SYM(rb_intern("miss")), INT2NUM(stats.miss));
-  rb_hash_aset(ret, ID2SYM(rb_intern("unwritable")), INT2NUM(stats.unwritable));
-  rb_hash_aset(ret, ID2SYM(rb_intern("uncompilable")), INT2NUM(stats.uncompilable));
-  rb_hash_aset(ret, ID2SYM(rb_intern("fail")), INT2NUM(stats.fail));
-  rb_hash_aset(ret, ID2SYM(rb_intern("retry")), INT2NUM(stats.retry));
-  return ret;
-}
-
-static VALUE
-bs_compile_option_crc32_set(VALUE self, VALUE crc32val)
-{
-  Check_Type(crc32val, T_FIXNUM);
-  current_compile_option_crc32 = FIX2UINT(crc32val);
+  Check_Type(crc32_v, T_FIXNUM);
+  current_compile_option_crc32 = FIX2UINT(crc32_v);
   return Qnil;
 }
 
-#define CHECK_C(ret, func) \
-  do { if ((int)(ret) == -1) FAIL((func), errno); } while(0);
-
-#define FAIL(func, err) \
-  do { \
-    int state; \
-    exception = rb_protect(prot_exception_for_errno, INT2FIX(err), &state); \
-    if (state) exception = rb_eStandardError; \
-    goto fail; \
-  } while(0);
-
-#define CHECK_RB0() \
-  do { if (exception_tag != 0) goto raise; } while (0);
-
-#define CHECK_RB(body) \
-  do { (body); CHECK_RB0(); } while (0);
-
-#define SUCCEED(final) \
-  do { \
-    output_data = final; \
-    goto cleanup; \
-  } while(0);
-
-static VALUE
-bs_fetch(VALUE self, VALUE pathval, VALUE handler)
+/*
+ * We use FNV1a-64 to derive cache paths. The choice is somewhat arbitrary but
+ * it has several nice properties:
+ *
+ *   - Tiny implementation
+ *   - No external dependency
+ *   - Solid performance
+ *   - Solid randomness
+ *   - 32 bits doesn't feel collision-resistant enough; 64 is nice.
+ */
+static uint64_t
+fnv_64a(const char *str)
 {
-  const char * path;
+  unsigned char *s = (unsigned char *)str;
+  uint64_t h = ((uint64_t)0xcbf29ce484222325ULL);
 
-  VALUE exception;
-  int exception_tag;
-
-  int fd, ret, retry;
-  bool valid_cache;
-  bool writable;
-  uint32_t data_size;
-  struct xattr_key cache_key;
-  struct stat statbuf;
-  char * contents;
-
-  VALUE input_data;   /* data read from source file, e.g. YAML or ruby source */
-  VALUE storage_data; /* compiled data, e.g. msgpack / binary iseq */
-  VALUE output_data;  /* return data, e.g. ruby hash or loaded iseq */
-
-  /* don't leak memory */
-#define return   error!
-#define rb_raise error!
-
-  retry = 0;
-begin:
-  output_data = Qnil;
-  contents = 0;
-
-  /* Blow up if we can't turn our argument into a char* */
-  Check_Type(pathval, T_STRING);
-  path = RSTRING_PTR(pathval);
-
-  /* open the file, get its mtime and read the cache key xattr */
-  CHECK_C(fd          = bs_open(path, &writable),     "open");
-  CHECK_C(              fstat(fd, &statbuf),             "fstat");
-  CHECK_C(valid_cache = bs_get_cache(fd, &cache_key), "fgetxattr");
-
-  /* `valid_cache` is true if the cache key isn't trivially invalid, e.g. built
-   * with a different RUBY_REVISION */
-  if (valid_cache && cache_key.mtime == (uint64_t)statbuf.st_mtime) {
-    /* if the mtimes match, assume the cache is valid. fetch the cached data. */
-    ret = bs_fetch_data(fd, (size_t)cache_key.data_size, handler, &output_data, &exception_tag);
-    if (ret == -1 && errno == _ENOATTR) {
-      /* the key was present, but the data was missing. remove the key, and
-       * start over */
-      CHECK_C(fremovexattr(fd, xattr_key_name REMOVEXATTR_TRAILER), "fremovexattr");
-      goto retry;
-    }
-    CHECK_RB0();
-    CHECK_C(ret, "fgetxattr/fetch-data");
-    if (!NIL_P(output_data)) {
-      stats.hit++;
-      SUCCEED(output_data); /* this is the fast-path to shoot for */
-    }
-    valid_cache = false; /* invalid cache; we'll want to regenerate it */
+  while (*s) {
+    h ^= (uint64_t)*s++;
+    h += (h << 1) + (h << 4) + (h << 5) + (h << 7) + (h << 8) + (h << 40);
   }
 
-  /* read the contents of the file and crc32 it to compare with the cache key */
-  CHECK_C(bs_read_contents(fd, statbuf.st_size, &contents), "read") /* contents must be xfree'd */
-
-  /* we need to pass this char* to ruby-land */
-  input_data = rb_str_new_static(contents, statbuf.st_size);
-
-  /* if we didn't have write permission to the file, bail now -- everything
-   * that follows is about generating and writing the cache. Let's just convert
-   * the input format to the output format and return */
-  if (!writable) {
-    stats.unwritable++;
-    CHECK_RB(bs_input_to_output(handler, input_data, &output_data, &exception_tag));
-    SUCCEED(output_data);
-  }
-
-  /* Now, we know we have write permission, and can update the xattrs.
-   * Additionally, we know the cache is currently missing or absent, and needs
-   * to be updated. */
-  stats.miss++;
-
-  /* First, convert the input format to the storage format by calling into the
-   * handler. */
-  CHECK_RB(exception_tag = bs_input_to_storage(handler, input_data, pathval, &storage_data));
-  if (storage_data == uncompilable) {
-    /* The handler can raise Bootsnap::CompileCache::Uncompilable. When it does this,
-     * we just call the input_to_output handler method, bypassing the storage format. */
-    CHECK_RB(bs_input_to_output(handler, input_data, &output_data, &exception_tag));
-    stats.uncompilable++;
-    SUCCEED(output_data);
-  }
-
-  /* we can only really write strings to xattrs */
-  if (!RB_TYPE_P(storage_data, T_STRING)) {
-    goto invalid_type_storage_data;
-  }
-
-  /* xattrs can't exceed 64MB */
-  if (RB_TYPE_P(storage_data, T_STRING) && RSTRING_LEN(storage_data) > 64 * 1024 * 1024) {
-    if (logging_enabled()) {
-      fprintf(stderr, "[OPT_AOT_LOG] warning: compiled artifact is over 64MB, which is too large to store in an xattr.%s\n", path);
-    }
-    CHECK_RB(bs_input_to_output(handler, input_data, &output_data, &exception_tag));
-    SUCCEED(output_data);
-  }
-
-  data_size = (uint32_t)RSTRING_LEN(storage_data);
-
-  /* update the cache, but don't leave it in an invalid state even briefly: remove the key first. */
-  fremovexattr(fd, xattr_key_name REMOVEXATTR_TRAILER);
-  CHECK_C(fsetxattr(fd, xattr_data_name, RSTRING_PTR(storage_data), (size_t)data_size, 0 SETXATTR_TRAILER), "fsetxattr");
-  CHECK_C(bs_update_key(fd, data_size, statbuf.st_mtime), "fsetxattr");
-
-  /* updating xattrs bumps mtime, so we set them back after */
-  CHECK_C(bs_close_and_unclobber_times(&fd, path, statbuf.st_atime, statbuf.st_mtime), "close/utime");
-
-  /* convert the data we just stored into the output format */
-  CHECK_RB(exception_tag = bs_storage_to_output(handler, storage_data, &output_data));
-
-  /* if the storage data was broken, remove the cache and run input_to_output */
-  if (output_data == Qnil) {
-    /* deletion here is best effort; no need to fail if it does */
-    fremovexattr(fd, xattr_key_name REMOVEXATTR_TRAILER);
-    fremovexattr(fd, xattr_data_name REMOVEXATTR_TRAILER);
-    CHECK_RB(bs_input_to_output(handler, input_data, &output_data, &exception_tag));
-  }
-
-  SUCCEED(output_data);
-
-#undef return
-#undef rb_raise
-#define CLEANUP \
-  if (contents != 0) xfree(contents); \
-  if (fd > 0) close(fd);
-
-  __builtin_unreachable();
-cleanup:
-  CLEANUP;
-  return output_data;
-fail:
-  CLEANUP;
-  stats.fail++;
-  rb_exc_raise(exception);
-  __builtin_unreachable();
-invalid_type_storage_data:
-  CLEANUP;
-  stats.fail++;
-  Check_Type(storage_data, T_STRING);
-  __builtin_unreachable();
-retry:
-  CLEANUP;
-  stats.retry++;
-  if (retry == 1) {
-    rb_raise(rb_eRuntimeError, "internal error in bootsnap");
-    __builtin_unreachable();
-  }
-  retry = 1;
-  goto begin;
-raise:
-  CLEANUP;
-  stats.fail++;
-  rb_jump_tag(exception_tag);
-  __builtin_unreachable();
-}
-
-static int
-bs_fetch_data(int fd, size_t size, VALUE handler, VALUE * output_data, int * exception_tag)
-{
-  int ret;
-  ssize_t nbytes;
-  void * xattr_data;
-  VALUE storage_data;
-
-  *output_data = Qnil;
-  *exception_tag = 0;
-
-  xattr_data = ALLOC_N(uint8_t, size);
-  nbytes = fgetxattr(fd, xattr_data_name, xattr_data, size GETXATTR_TRAILER);
-  if (nbytes == -1) {
-    ret = -1;
-    goto done;
-  }
-  if (nbytes != (ssize_t)size) {
-    errno = EIO; /* lies but whatever */
-    ret = -1;
-    goto done;
-  }
-  storage_data = rb_str_new_static(xattr_data, nbytes);
-  ret = bs_storage_to_output(handler, storage_data, output_data);
-  if (ret != 0) {
-    *exception_tag = ret;
-    errno = 0;
-  }
-done:
-  xfree(xattr_data);
-  return ret;
-}
-
-static int
-bs_update_key(int fd, uint32_t data_size, uint64_t current_mtime)
-{
-  struct xattr_key xattr_key;
-
-  xattr_key = (struct xattr_key){
-    .version        = current_version,
-    .os_version     = os_version,
-    .data_size      = data_size,
-    .compile_option = current_compile_option_crc32,
-    .ruby_revision  = current_ruby_revision,
-    .mtime          = current_mtime,
-  };
-
-  return fsetxattr(fd, xattr_key_name, &xattr_key, (size_t)xattr_key_size, 0 SETXATTR_TRAILER);
+  return h;
 }
 
 /*
- * Open the file O_RDWR if possible, or O_RDONLY if that throws EACCES.
- * Set +writable+ to indicate which mode was used.
+ * The idea here is that we want a cache key member that changes when the OS
+ * changes in such a way as to make existing compiled ISeqs unloadable.
+ *
+ * On Darwin and FreeBSD, this is the kernel version, since that tends to vary
+ * with whole-system upgrades. What we probably care about more is the libc
+ * version, which is what we explicitly ask for on linux.
+ * (and KERN_OSRELEASE came back empty for me one one linux box, so...?)
+ *
+ * I'm kind of guessing about the important factors here. We could probably do
+ * this better.
+ */
+static uint32_t
+get_os_version(void)
+{
+  size_t len;
+  uint64_t hash;
+#ifdef __linux__
+  const char * version;
+  version = gnu_get_libc_version();
+  hash = fnv_64a(version);
+#else
+  char * version;
+  int mib[2] = {CTL_KERN, KERN_OSRELEASE};
+  if (sysctl(mib, 2, NULL, &len, NULL, 0) < 0) return 0;
+  version = ALLOC_N(char, len);
+  if (sysctl(mib, 2, version, &len, NULL, 0) < 0) return 0;
+  hash = fnv_64a(version);
+  xfree(version);
+#endif
+  return (uint32_t)(hash >> 32);
+}
+
+/*
+ * Given a cache root directory and the full path to a file being cached,
+ * generate a path under the cache directory at which the cached artifact will
+ * be stored.
+ *
+ * The path will look something like: <cachedir>/12/34567890abcdef
+ */
+static void
+bs_cache_path(const char * cachedir, const char * path, char ** cache_path)
+{
+  uint64_t hash = fnv_64a(path);
+
+  uint8_t first_byte = (hash >> (64 - 8));
+  uint64_t remainder = hash & 0x00ffffffffffffff;
+
+  sprintf(*cache_path, "%s/%02x/%014llx", cachedir, first_byte, remainder);
+}
+
+/*
+ * Test whether a newly-generated cache key based on the file as it exists on
+ * disk matches the one that was generated when the file was cached (or really
+ * compare any two keys).
+ *
+ * The data_size member is not compared, as it serves more of a "header"
+ * function.
  */
 static int
-bs_open(const char * path, bool * writable)
+cache_key_equal(struct bs_cache_key * k1, struct bs_cache_key * k2)
 {
+  return (
+    k1->version        == k2->version        &&
+    k1->os_version     == k2->os_version     &&
+    k1->compile_option == k2->compile_option &&
+    k1->ruby_revision  == k2->ruby_revision  &&
+    k1->size           == k2->size           &&
+    k1->mtime          == k2->mtime
+  );
+}
+
+/*
+ * Entrypoint for Bootsnap::CompileCache::Native.fetch. The real work is done
+ * in bs_fetch; this function just performs some basic typechecks and
+ * conversions on the ruby VALUE arguments before passing them along.
+ */
+static VALUE
+bs_rb_fetch(VALUE self, VALUE cachedir_v, VALUE path_v, VALUE handler)
+{
+  Check_Type(cachedir_v, T_STRING);
+  Check_Type(path_v, T_STRING);
+
+  if (RSTRING_LEN(cachedir_v) > MAX_CACHEDIR_SIZE) {
+    rb_raise(rb_eArgError, "cachedir too long");
+  }
+
+  char * cachedir = RSTRING_PTR(cachedir_v);
+  char * path     = RSTRING_PTR(path_v);
+  char cache_path[MAX_CACHEPATH_SIZE];
+
+  { /* generate cache path to cache_path */
+    char * tmp = (char *)&cache_path;
+    bs_cache_path(cachedir, path, &tmp);
+  }
+
+  return bs_fetch(path, path_v, cache_path, handler);
+}
+
+/*
+ * Open the file we want to load/cache and generate a cache key for it if it
+ * was loaded.
+ */
+static int
+open_current_file(char * path, struct bs_cache_key * key)
+{
+  struct stat statbuf;
   int fd;
 
-  *writable = true;
-  fd = open(path, O_RDWR);
-  if (fd == -1 && errno == EACCES) {
-    *writable = false;
-    if (logging_enabled()) {
-      fprintf(stderr, "[OPT_AOT_LOG] warning: unable to cache because no write permission to %s\n", path);
-    }
-    fd = open(path, O_RDONLY);
+  fd = open(path, O_RDONLY);
+  if (fd < 0) return fd;
+
+  if (fstat(fd, &statbuf) < 0) {
+    close(fd);
+    return -1;
   }
+
+  key->version        = current_version;
+  key->os_version     = current_os_version;
+  key->compile_option = current_compile_option_crc32;
+  key->ruby_revision  = current_ruby_revision;
+  key->size           = (uint64_t)statbuf.st_size;
+  key->mtime          = (uint64_t)statbuf.st_mtime;
+
+  return fd;
+}
+
+#define ERROR_WITH_ERRNO -1
+#define CACHE_MISSING_OR_INVALID -2
+
+/*
+ * Read the cache key from the given fd, which must have position 0 (e.g.
+ * freshly opened file).
+ *
+ * Possible return values:
+ *   - 0 (OK, key was loaded)
+ *   - CACHE_MISSING_OR_INVALID (-2)
+ *   - ERROR_WITH_ERRNO (-1, errno is set)
+ */
+static int
+bs_read_key(int fd, struct bs_cache_key * key)
+{
+  ssize_t nread = read(fd, key, KEY_SIZE);
+  if (nread < 0)        return ERROR_WITH_ERRNO;
+  if (nread < KEY_SIZE) return CACHE_MISSING_OR_INVALID;
+  return 0;
+}
+
+/*
+ * Open the cache file at a given path, if it exists, and read its key into the
+ * struct.
+ *
+ * Possible return values:
+ *   - 0 (OK, key was loaded)
+ *   - CACHE_MISSING_OR_INVALID (-2)
+ *   - ERROR_WITH_ERRNO (-1, errno is set)
+ */
+static int
+open_cache_file(const char * path, struct bs_cache_key * key)
+{
+  int fd, res;
+
+  fd = open(path, O_RDWR, 0644);
+  if (fd < 0) {
+    if (errno == ENOENT) return CACHE_MISSING_OR_INVALID;
+    return ERROR_WITH_ERRNO;
+  }
+
+  res = bs_read_key(fd, key);
+  if (res < 0) {
+    close(fd);
+    return res;
+  }
+
   return fd;
 }
 
 /*
- * Fetch the cache key from the relevant xattr into +key+.
- * Returns:
- *   0:  invalid/no cache
- *   1:  valid cache
- *   -1: fgetxattr failed, errno is set
+ * The cache file is laid out like:
+ *   0...64 : bs_cache_key
+ *   64..-1 : cached artifact
+ *
+ * This function takes a file descriptor whose position is pre-set to 64, and
+ * the data_size (corresponding to the remaining number of bytes) listed in the
+ * cache header.
+ *
+ * We load the text from this file into a buffer, and pass it to the ruby-land
+ * handler with exception handling via the exception_tag param.
+ *
+ * Data is returned via the output_data parameter, which, if there's no error
+ * or exception, will be the final data returnable to the user.
  */
 static int
-bs_get_cache(int fd, struct xattr_key * key)
+fetch_cached_data(int fd, ssize_t data_size, VALUE handler, VALUE * output_data, int * exception_tag)
 {
-  ssize_t nbytes;
+  char * data = NULL;
+  ssize_t nread;
+  int ret;
 
-  nbytes = fgetxattr(fd, xattr_key_name, (void *)key, xattr_key_size GETXATTR_TRAILER);
-  if (nbytes == -1 && errno != _ENOATTR) {
-    return -1;
+  VALUE storage_data;
+
+  if (data_size > 100000000000) {
+    errno = EINVAL; /* because wtf? */
+    ret = -1;
+    goto done;
+  }
+  data = ALLOC_N(char, data_size);
+  nread = read(fd, data, data_size);
+  if (nread < 0) {
+    ret = -1;
+    goto done;
+  }
+  if (nread != data_size) {
+    ret = CACHE_MISSING_OR_INVALID;
+    goto done;
   }
 
-  return (nbytes == (ssize_t)xattr_key_size && \
-      key->version == current_version && \
-      key->os_version == os_version && \
-      key->compile_option == current_compile_option_crc32 && \
-      key->ruby_revision == current_ruby_revision);
+  storage_data = rb_str_new_static(data, data_size);
+
+  *exception_tag = bs_storage_to_output(handler, storage_data, output_data);
+  ret = 0;
+done:
+  if (data != NULL) xfree(data);
+  return ret;
 }
 
 /*
- * Read an entire file into a char*
- * contents must be freed with xfree() when done.
+ * Like mkdir -p, this recursively creates directory parents of a file. e.g.
+ * given /a/b/c, creates /a and /a/b.
  */
-static size_t
-bs_read_contents(int fd, size_t size, char ** contents)
+static int
+mkpath(char * file_path, mode_t mode)
 {
-  *contents = ALLOC_N(char, size);
-  return read(fd, *contents, size);
+  /* It would likely be more efficient to count back until we
+   * find a component that *does* exist, but this will only run
+   * at most 256 times, so it seems not worthwhile to change. */
+  char * p;
+  for (p = strchr(file_path + 1, '/'); p; p = strchr(p + 1, '/')) {
+    *p = '\0';
+    if (mkdir(file_path, mode) == -1) {
+      if (errno != EEXIST) {
+        *p = '/';
+        return -1;
+      }
+    }
+    *p = '/';
+  }
+  return 0;
 }
 
+/*
+ * Write a cache header/key and a compiled artifact to a given cache path by
+ * writing to a tmpfile and then renaming the tmpfile over top of the final
+ * path.
+ */
 static int
-bs_close_and_unclobber_times(int * fd, const char * path, time_t atime, time_t mtime)
+atomic_write_cache_file(char * path, struct bs_cache_key * key, VALUE data)
 {
-  struct utimbuf times = {
-    .actime = atime,
-    .modtime = mtime,
-  };
-  if (close(*fd) == -1) {
+  char template[MAX_CACHEPATH_SIZE + 20];
+  char * dest;
+  char * tmp_path;
+  int fd;
+  ssize_t nwrite;
+
+  dest = strncpy(template, path, MAX_CACHEPATH_SIZE);
+  strcat(dest, ".tmp.XXXXXX");
+
+  tmp_path = mktemp(template);
+  fd = open(tmp_path, O_WRONLY | O_CREAT, 0644);
+  if (fd < 0) {
+    if (mkpath(path, 0755) < 0) return -1;
+    fd = open(tmp_path, O_WRONLY | O_CREAT, 0644);
+    if (fd < 0) return -1;
+  }
+
+  key->data_size = RSTRING_LEN(data);
+  nwrite = write(fd, key, KEY_SIZE);
+  if (nwrite < 0) return -1;
+  if (nwrite != KEY_SIZE) {
+    errno = EIO; /* Lies but whatever */
     return -1;
   }
-  *fd = 0;
-  return utime(path, &times);
+
+  nwrite = write(fd, RSTRING_PTR(data), RSTRING_LEN(data));
+  if (nwrite < 0) return -1;
+  if (nwrite != RSTRING_LEN(data)) {
+    errno = EIO; /* Lies but whatever */
+    return -1;
+  }
+
+  close(fd);
+  return rename(tmp_path, path);
 }
 
+/*
+ * Given an errno value (converted to a ruby Fixnum), return the corresponding
+ * Errno::* constant. If none is found, return StandardError instead.
+ */
 static VALUE
 prot_exception_for_errno(VALUE err)
 {
@@ -474,11 +485,199 @@ prot_exception_for_errno(VALUE err)
   return rb_eStandardError;
 }
 
-static VALUE
-prot_input_to_output(VALUE arg)
+
+/* Read contents from an fd, whose contents are asserted to be +size+ bytes
+ * long, into a buffer */
+static ssize_t
+bs_read_contents(int fd, size_t size, char ** contents)
 {
-  struct i2o_data * data = (struct i2o_data *)arg;
-  return rb_funcall(data->handler, rb_intern("input_to_output"), 1, data->input_data);
+  *contents = ALLOC_N(char, size);
+  return read(fd, *contents, size);
+}
+
+/*
+ * This is the meat of the extension. bs_fetch is
+ * Bootsnap::CompileCache::Native.fetch.
+ *
+ * There are three "formats" in use here:
+ *   1. "input" fomat, which is what we load from the source file;
+ *   2. "storage" format, which we write to the cache;
+ *   3. "output" format, which is what we return.
+ *
+ * E.g., For ISeq compilation:
+ *   input: ruby source, as text
+ *   storage: binary string (RubyVM::InstructionSequence#to_binary)
+ *   output: Instance of RubyVM::InstructionSequence
+ *
+ * And for YAML:
+ *   input: yaml as text
+ *   storage: MessagePack or Marshal text
+ *   output: ruby object, loaded from yaml/messagepack/marshal
+ *
+ * The handler passed in must support three messages:
+ *   * storage_to_output(s) -> o
+ *   * input_to_output(i)   -> o
+ *   * input_to_storage(i)  -> s
+ *     (input_to_storage may raise Bootsnap::CompileCache::Uncompilable, which
+ *     will prevent caching and cause output to be generated with
+ *     input_to_output)
+ *
+ * The semantics of this function are basically:
+ *
+ *   return storage_to_output(cache[path]) if cache[path]
+ *   storage = input_to_storage(input)
+ *   cache[path] = storage
+ *   return storage_to_output(storage)
+ *
+ * Or expanded a bit:
+ *
+ *   - Check if the cache file exists and is up to date.
+ *   - If it is, load this data to storage_data.
+ *   - return storage_to_output(storage_data)
+ *   - Read the file to input_data
+ *   - Generate storage_data using input_to_storage(input_data)
+ *   - Write storage_data data, with a cache key, to the cache file.
+ *   - Return storage_to_output(storage_data)
+ */
+static VALUE
+bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler)
+{
+  struct bs_cache_key cached_key, current_key;
+  char * contents = NULL;
+  int cache_fd = -1, current_fd = -1;
+  int res, valid_cache, exception_tag = 0;
+
+  VALUE input_data;   /* data read from source file, e.g. YAML or ruby source */
+  VALUE storage_data; /* compiled data, e.g. msgpack / binary iseq */
+  VALUE output_data;  /* return data, e.g. ruby hash or loaded iseq */
+
+  VALUE exception; /* ruby exception object to raise instead of returning */
+
+  /* Open the source file and generate a cache key for it */
+  current_fd = open_current_file(path, &current_key);
+  if (current_fd < 0) goto fail_errno;
+
+  /* Open the cache key if it exists, and read its cache key in */
+  cache_fd = open_cache_file(cache_path, &cached_key);
+  if (cache_fd < 0 && cache_fd != CACHE_MISSING_OR_INVALID) goto fail_errno;
+
+  /* True if the cache existed and no invalidating changes have occurred since
+   * it was generated. */
+  valid_cache = cache_key_equal(&current_key, &cached_key);
+
+  if (valid_cache) {
+    /* Fetch the cache data and return it if we're able to load it successfully */
+    res = fetch_cached_data(cache_fd, (ssize_t)cached_key.data_size, handler, &output_data, &exception_tag);
+    if (exception_tag != 0)                   goto raise;
+    else if (res == CACHE_MISSING_OR_INVALID) valid_cache = 0;
+    else if (res == ERROR_WITH_ERRNO)         goto fail_errno;
+    else if (!NIL_P(output_data))             goto succeed; /* fast-path, goal */
+  }
+  close(cache_fd);
+  cache_fd = -1;
+  /* Cache is stale, invalid, or missing. Regenerate and write it out. */
+
+  /* Read the contents of the source file into a buffer */
+  if (bs_read_contents(current_fd, current_key.size, &contents) < 0) goto fail_errno;
+  input_data = rb_str_new_static(contents, current_key.size);
+
+  /* Try to compile the input_data using input_to_storage(input_data) */
+  exception_tag = bs_input_to_storage(handler, input_data, path_v, &storage_data);
+  if (exception_tag != 0) goto raise;
+  /* If input_to_storage raised Bootsnap::CompileCache::Uncompilable, don't try
+   * to cache anything; just return input_to_output(input_data) */
+  if (storage_data == uncompilable) {
+    bs_input_to_output(handler, input_data, &output_data, &exception_tag);
+    if (exception_tag != 0) goto raise;
+    goto succeed;
+  }
+  /* If storage_data isn't a string, we can't cache it */
+  if (!RB_TYPE_P(storage_data, T_STRING)) goto invalid_type_storage_data;
+
+  /* Write the cache key and storage_data to the cache directory */
+  res = atomic_write_cache_file(cache_path, &current_key, storage_data);
+  if (res < 0) goto fail_errno;
+
+  /* Having written the cache, now convert storage_data to output_data */
+  exception_tag = bs_storage_to_output(handler, storage_data, &output_data);
+  if (exception_tag != 0) goto raise;
+
+  /* If output_data is nil, delete the cache entry and generate the output
+   * using input_to_output */
+  if (NIL_P(output_data)) {
+    if (unlink(cache_path) < 0) goto fail_errno;
+    bs_input_to_output(handler, input_data, &output_data, &exception_tag);
+    if (exception_tag != 0) goto raise;
+  }
+
+  goto succeed; /* output_data is now the correct return. */
+
+#define CLEANUP \
+  if (contents != NULL) xfree(contents);   \
+  if (current_fd >= 0)  close(current_fd); \
+  if (cache_fd >= 0)    close(cache_fd);
+
+succeed:
+  CLEANUP;
+  return output_data;
+fail_errno:
+  CLEANUP;
+  exception = rb_protect(prot_exception_for_errno, INT2FIX(errno), &res);
+  if (res) exception = rb_eStandardError;
+  rb_exc_raise(exception);
+  __builtin_unreachable();
+raise:
+  CLEANUP;
+  rb_jump_tag(exception_tag);
+  __builtin_unreachable();
+invalid_type_storage_data:
+  CLEANUP;
+  Check_Type(storage_data, T_STRING);
+  __builtin_unreachable();
+
+#undef CLEANUP
+}
+
+/*****************************************************************************/
+/********************* Handler Wrappers **************************************/
+/*****************************************************************************
+ * Everything after this point in the file is just wrappers to deal with ruby's
+ * clunky method of handling exceptions from ruby methods invoked from C.
+ */
+
+struct s2o_data {
+  VALUE handler;
+  VALUE storage_data;
+};
+
+struct i2o_data {
+  VALUE handler;
+  VALUE input_data;
+};
+
+struct i2s_data {
+  VALUE handler;
+  VALUE input_data;
+  VALUE pathval;
+};
+
+static VALUE
+prot_storage_to_output(VALUE arg)
+{
+  struct s2o_data * data = (struct s2o_data *)arg;
+  return rb_funcall(data->handler, rb_intern("storage_to_output"), 1, data->storage_data);
+}
+
+static int
+bs_storage_to_output(VALUE handler, VALUE storage_data, VALUE * output_data)
+{
+  int state;
+  struct s2o_data s2o_data = {
+    .handler      = handler,
+    .storage_data = storage_data,
+  };
+  *output_data = rb_protect(prot_storage_to_output, (VALUE)&s2o_data, &state);
+  return state;
 }
 
 static void
@@ -489,6 +688,13 @@ bs_input_to_output(VALUE handler, VALUE input_data, VALUE * output_data, int * e
     .input_data = input_data,
   };
   *output_data = rb_protect(prot_input_to_output, (VALUE)&i2o_data, exception_tag);
+}
+
+static VALUE
+prot_input_to_output(VALUE arg)
+{
+  struct i2o_data * data = (struct i2o_data *)arg;
+  return rb_funcall(data->handler, rb_intern("input_to_output"), 1, data->input_data);
 }
 
 static VALUE
@@ -525,37 +731,4 @@ bs_input_to_storage(VALUE handler, VALUE input_data, VALUE pathval, VALUE * stor
   };
   *storage_data = rb_protect(prot_input_to_storage, (VALUE)&i2s_data, &state);
   return state;
-}
-
-static VALUE
-prot_storage_to_output(VALUE arg)
-{
-  struct s2o_data * data = (struct s2o_data *)arg;
-  return rb_funcall(data->handler, rb_intern("storage_to_output"), 1, data->storage_data);
-}
-
-static int
-bs_storage_to_output(VALUE handler, VALUE storage_data, VALUE * output_data)
-{
-  int state;
-  struct s2o_data s2o_data = {
-    .handler      = handler,
-    .storage_data = storage_data,
-  };
-  *output_data = rb_protect(prot_storage_to_output, (VALUE)&s2o_data, &state);
-  return state;
-}
-
-/* default no if empty, yes if present, no if "0" */
-static int
-logging_enabled()
-{
-  char * log = getenv("OPT_AOT_LOG");
-  if (log == 0) {
-    return 0;
-  } else if (log[0] == '0') {
-    return 0;
-  } else {
-    return 1;
-  }
 }
