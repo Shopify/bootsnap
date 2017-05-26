@@ -1,4 +1,4 @@
-# 0.3.0 (pre)
+# 0.3.0
 
 * Migrate CompileCache from xattr as a cache backend to a cache directory
     * Adds support for Linux and FreeBSD
