@@ -1,3 +1,7 @@
+# *(unreleased)*
+
+* Don't whitelist paths under `RbConfig::CONFIG['prefix']` as stable; instead use `['libdir']` (#41).
+
 # 0.3.0
 
 * Migrate CompileCache from xattr as a cache backend to a cache directory
