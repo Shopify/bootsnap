@@ -176,7 +176,6 @@ fnv1a_64(const char *str)
 static uint32_t
 get_os_version(void)
 {
-  size_t len;
   uint64_t hash;
   struct utsname utsname;
 
