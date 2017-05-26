@@ -13,7 +13,7 @@ module Bootsnap
         volatile     = Path.new(__FILE__)
         stable       = Path.new(bundler_file)
         unknown      = Path.new('/who/knows')
-        prefix       = Path.new(RbConfig::CONFIG['prefix']  + '/a')
+        lib          = Path.new(RbConfig::CONFIG['libdir']  + '/a')
         site         = Path.new(RbConfig::CONFIG['sitedir'] + '/b')
 
         assert stable.stable?
@@ -23,7 +23,7 @@ module Bootsnap
         assert unknown.volatile?
         refute unknown.stable?
 
-        assert prefix.stable?
+        assert lib.stable?
         refute site.stable?
       end
 
