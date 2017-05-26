@@ -18,13 +18,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-
-/* get_os_version has different strategies depending on platform */
-#ifdef __linux__
-#include <gnu/libc-version.h>
-#else
-#include <sys/sysctl.h>
-#endif
+#include <sys/utsname.h>
 
 /* 1000 is an arbitrary limit; FNV64 plus some slashes brings the cap down to
  * 981 for the cache dir */
@@ -91,7 +85,7 @@ static VALUE bs_compile_option_crc32_set(VALUE self, VALUE crc32_v);
 static VALUE bs_rb_fetch(VALUE self, VALUE cachedir_v, VALUE path_v, VALUE handler);
 
 /* Helpers */
-static uint64_t fnv_64a(const char *str);
+static uint64_t fnv1a_64(const char *str);
 static void bs_cache_path(const char * cachedir, const char * path, char ** cache_path);
 static int bs_read_key(int fd, struct bs_cache_key * key);
 static int cache_key_equal(struct bs_cache_key * k1, struct bs_cache_key * k2);
@@ -162,10 +156,10 @@ bs_compile_option_crc32_set(VALUE self, VALUE crc32_v)
  *   - 32 bits doesn't feel collision-resistant enough; 64 is nice.
  */
 static uint64_t
-fnv_64a(const char *str)
+fnv1a_64(const char *str)
 {
   unsigned char *s = (unsigned char *)str;
-  uint64_t h = ((uint64_t)0xcbf29ce484222325ULL);
+  uint64_t h = (uint64_t)0xcbf29ce484222325ULL;
 
   while (*s) {
     h ^= (uint64_t)*s++;
@@ -192,19 +186,13 @@ get_os_version(void)
 {
   size_t len;
   uint64_t hash;
-#ifdef __linux__
-  const char * version;
-  version = gnu_get_libc_version();
-  hash = fnv_64a(version);
-#else
-  char * version;
-  int mib[2] = {CTL_KERN, KERN_OSRELEASE};
-  if (sysctl(mib, 2, NULL, &len, NULL, 0) < 0) return 0;
-  version = ALLOC_N(char, len);
-  if (sysctl(mib, 2, version, &len, NULL, 0) < 0) return 0;
-  hash = fnv_64a(version);
-  xfree(version);
-#endif
+  struct utsname utsname;
+
+  /* Not worth crashing if this fails; lose cache invalidation potential */
+  if (uname(&utsname) < 0) return 0;
+
+  hash = fnv1a_64(utsname.version);
+
   return (uint32_t)(hash >> 32);
 }
 
@@ -218,7 +206,7 @@ get_os_version(void)
 static void
 bs_cache_path(const char * cachedir, const char * path, char ** cache_path)
 {
-  uint64_t hash = fnv_64a(path);
+  uint64_t hash = fnv1a_64(path);
 
   uint8_t first_byte = (hash >> (64 - 8));
   uint64_t remainder = hash & 0x00ffffffffffffff;
