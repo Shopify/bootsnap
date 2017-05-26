@@ -13,7 +13,9 @@ module Bootsnap
 
       def self.call(path)
         path = path.to_s
-        raise RelativePathNotSupported unless path.start_with?(SLASH)
+        unless path.start_with?(SLASH)
+          raise RelativePathNotSupported, "Bootsnap can not cache relative load paths: '#{path}'"
+        end
 
         relative_slice = (path.size + 1)..-1
         # If the bundle path is a descendent of this path, we do additional
