@@ -172,14 +172,6 @@ fnv1a_64(const char *str)
 /*
  * The idea here is that we want a cache key member that changes when the OS
  * changes in such a way as to make existing compiled ISeqs unloadable.
- *
- * On Darwin and FreeBSD, this is the kernel version, since that tends to vary
- * with whole-system upgrades. What we probably care about more is the libc
- * version, which is what we explicitly ask for on linux.
- * (and KERN_OSRELEASE came back empty for me one one linux box, so...?)
- *
- * I'm kind of guessing about the important factors here. We could probably do
- * this better.
  */
 static uint32_t
 get_os_version(void)
