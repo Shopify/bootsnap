@@ -59,7 +59,7 @@ module Bootsnap
         @data = begin
           MessagePack.load(File.binread(@store_path))
         # handle malformed data due to upgrade incompatability
-        rescue Errno::ENOENT, MessagePack::MalformedFormatError, MessagePack::UnknownExtTypeError
+        rescue Errno::ENOENT, MessagePack::MalformedFormatError, MessagePack::UnknownExtTypeError, EOFError
           {}
         end
       end
