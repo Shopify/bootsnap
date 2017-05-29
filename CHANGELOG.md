@@ -1,6 +1,8 @@
-# *(unreleased)*
+# 0.3.1
 
 * Don't whitelist paths under `RbConfig::CONFIG['prefix']` as stable; instead use `['libdir']` (#41).
+* Catch `EOFError` when reading load-path-cache and regenerate cache.
+* Support relative paths in load-path-cache.
 
 # 0.3.0
 
