@@ -1,3 +1,7 @@
+# 0.3.2
+
+* Minor performance savings around checking validity of cache in the presence of relative paths.
+
 # 0.3.1
 
 * Don't whitelist paths under `RbConfig::CONFIG['prefix']` as stable; instead use `['libdir']` (#41).
