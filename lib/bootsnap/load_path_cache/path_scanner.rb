@@ -3,8 +3,6 @@ require_relative '../load_path_cache'
 module Bootsnap
   module LoadPathCache
     module PathScanner
-      RelativePathNotSupported = Class.new(StandardError)
-
       REQUIRABLES_AND_DIRS = "/**/*{#{DOT_RB},#{DL_EXTENSIONS.join(',')},/}"
       IS_DIR = %r{(.*)/\z}
       NORMALIZE_NATIVE_EXTENSIONS = !DL_EXTENSIONS.include?(LoadPathCache::DOT_SO)
@@ -13,7 +11,6 @@ module Bootsnap
 
       def self.call(path)
         path = path.to_s
-        raise RelativePathNotSupported unless path.start_with?(SLASH)
 
         relative_slice = (path.size + 1)..-1
         # If the bundle path is a descendent of this path, we do additional

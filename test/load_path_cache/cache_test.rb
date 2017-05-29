@@ -8,6 +8,7 @@ module Bootsnap
         @dir2 = Dir.mktmpdir
         FileUtils.touch("#{@dir1}/a.rb")
         FileUtils.mkdir_p("#{@dir1}/foo/bar")
+        FileUtils.touch("#{@dir1}/foo/bar/baz.rb")
         FileUtils.touch("#{@dir2}/b.rb")
         FileUtils.touch("#{@dir1}/conflict.rb")
         FileUtils.touch("#{@dir2}/conflict.rb")
@@ -74,6 +75,21 @@ module Bootsnap
         assert_equal("#{@dir1}/both.rb", cache.find("both"))
         assert_equal("#{@dir1}/both.rb", cache.find("both.rb"))
         assert_equal("#{@dir1}/both#{DLEXT}", cache.find("both#{DLEXT}"))
+      end
+
+      def test_relative_paths_rescanned
+        Dir.chdir(@dir2) do
+          cache = Cache.new(NullCache, ['foo'])
+          refute(cache.find('bar/baz'))
+          Dir.chdir(@dir1) do
+            # one caveat here is that you get the actual path back when
+            # resolving relative paths. On darwin, this means that
+            # /var/folders/... comes back as /private/var/folders/... -- In
+            # production, this should be fine, but for this test to pass, we
+            # have to resolve it.
+            assert_equal(File.realpath("#{@dir1}/foo/bar/baz.rb"), cache.find('bar/baz'))
+          end
+        end
       end
 
       def test_development_mode

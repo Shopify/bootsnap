@@ -30,34 +30,42 @@ module Bootsnap
         false
       end
 
+      def relative?
+        !path.start_with?(SLASH)
+      end
+
       # Return a list of all the requirable files and all of the subdirectories
       # of this +Path+.
       def entries_and_dirs(store)
         if stable?
           # the cached_mtime field is unused for 'stable' paths, but is
           # set to zero anyway, just in case we change the stability heuristics.
-          _, entries, dirs = store.get(path)
+          _, entries, dirs = store.get(expanded_path)
           return [entries, dirs] if entries # cache hit
           entries, dirs = scan!
-          store.set(path, [0, entries, dirs])
+          store.set(expanded_path, [0, entries, dirs])
           return [entries, dirs]
         end
 
-        cached_mtime, entries, dirs = store.get(path)
+        cached_mtime, entries, dirs = store.get(expanded_path)
 
-        current_mtime = latest_mtime(path, dirs || [])
+        current_mtime = latest_mtime(expanded_path, dirs || [])
         return [[], []]        if current_mtime == -1 # path does not exist
         return [entries, dirs] if cached_mtime == current_mtime
 
         entries, dirs = scan!
-        store.set(path, [current_mtime, entries, dirs])
+        store.set(expanded_path, [current_mtime, entries, dirs])
         [entries, dirs]
+      end
+
+      def expanded_path
+        File.expand_path(path)
       end
 
       private
 
       def scan! # (expensive) returns [entries, dirs]
-        PathScanner.call(path)
+        PathScanner.call(expanded_path)
       end
 
       # last time a directory was modified in this subtree. +dirs+ should be a
@@ -89,9 +97,9 @@ module Bootsnap
 
       def stability
         @stability ||= begin
-          if Gem.path.detect { |p| path.start_with?(p.to_s) }
+          if Gem.path.detect { |p| expanded_path.start_with?(p.to_s) }
             STABLE
-          elsif path.start_with?(RUBY_LIBDIR) && !path.start_with?(RUBY_SITEDIR)
+          elsif expanded_path.start_with?(RUBY_LIBDIR) && !expanded_path.start_with?(RUBY_SITEDIR)
             STABLE
           else
             VOLATILE
