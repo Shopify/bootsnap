@@ -46,7 +46,7 @@ module Bootsnap
       # Try to resolve this feature to an absolute path without traversing the
       # loadpath.
       def find(feature)
-        reinitialize if dir_changed? || stale?
+        reinitialize if (@has_relative_paths && dir_changed?) || stale?
         feature = feature.to_s
         return feature if feature.start_with?(SLASH)
         return File.expand_path(feature) if feature.start_with?('./')
@@ -130,6 +130,7 @@ module Bootsnap
         @store.transaction do
           paths.map(&:to_s).each do |path|
             p = Path.new(path)
+            @has_relative_paths = true if p.relative?
             next if p.non_directory?
             entries, dirs = p.entries_and_dirs(@store)
             # push -> low precedence -> set only if unset
