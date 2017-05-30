@@ -1,6 +1,7 @@
 # 0.3.2
 
 * Minor performance savings around checking validity of cache in the presence of relative paths.
+* When coverage is enabled, skips optimization instead of exploding.
 
 # 0.3.1
 
