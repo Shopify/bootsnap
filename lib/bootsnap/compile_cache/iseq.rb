@@ -12,6 +12,12 @@ module Bootsnap
         RubyVM::InstructionSequence.compile_file(path).to_binary
       rescue SyntaxError
         raise Uncompilable, 'syntax error'
+      rescue RuntimeError => e
+        if e.message == 'should not compile with coverage'
+          raise Uncompilable, 'coverage is enabled'
+        else
+          raise
+        end
       end
 
       def self.storage_to_output(binary)
