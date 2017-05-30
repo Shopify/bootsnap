@@ -12,6 +12,8 @@ methods to optimize and cache expensive computations. See [the How Does This Wor
 
 ## Usage
 
+This gem works on MacOS and Linux.
+
 Add `bootsnap` to your `Gemfile`:
 
 ```ruby
