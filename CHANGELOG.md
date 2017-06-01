@@ -1,3 +1,7 @@
+# 1.0.0
+
+* (none)
+
 # 0.3.2
 
 * Minor performance savings around checking validity of cache in the presence of relative paths.
