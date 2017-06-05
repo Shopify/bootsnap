@@ -5,11 +5,19 @@ class CompileCacheTest < Minitest::Test
 
   def test_no_write_permission_to_cache
     path = Help.set_file('a.rb', 'a = 3', 100)
-    cp = Help.cache_path(@tmp_dir, path)
-    FileUtils.mkdir_p(File.dirname(cp))
-    FileUtils.touch(cp)
-    FileUtils.chmod(0400, cp)
+    folder = File.dirname(Help.cache_path(@tmp_dir, path))
+    FileUtils.mkdir_p(folder)
+    FileUtils.chmod(0400, folder)
     assert_raises(Errno::EACCES) { load(path) }
+  end
+
+  def test_can_open_read_only_cache
+    path = Help.set_file('a.rb', 'a = 3', 100)
+    # Load once to create the cache file
+    load(path)
+    FileUtils.chmod(0400, path)
+    # Loading again after the file is marked read-only should still succeed
+    load(path)
   end
 
   def test_file_is_only_read_once

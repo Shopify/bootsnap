@@ -316,7 +316,7 @@ open_cache_file(const char * path, struct bs_cache_key * key)
 {
   int fd, res;
 
-  fd = open(path, O_RDWR, 0644);
+  fd = open(path, O_RDONLY);
   if (fd < 0) {
     if (errno == ENOENT) return CACHE_MISSING_OR_INVALID;
     return ERROR_WITH_ERRNO;
