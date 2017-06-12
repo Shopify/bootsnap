@@ -20,8 +20,15 @@ Add `bootsnap` to your `Gemfile`:
 gem 'bootsnap'
 ```
 
-Next, add this to your boot setup immediately after `require 'bundler/setup'` (i.e. as early as
-possible: the sooner this is loaded, the sooner it can start optimizing things)
+If you are using rails, add this to `config/boot.rb` immediately after `require 'bundler/setup'`:
+
+```ruby
+require 'bootsnap/setup'
+```
+
+If you are not using rails, or if you are but want more control over things, add this to your
+application setup immediately after `require 'bundler/setup'` (i.e. as early as possible: the sooner
+this is loaded, the sooner it can start optimizing things)
 
 ```ruby
 require 'bootsnap'
