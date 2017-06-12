@@ -262,7 +262,7 @@ open    /c/nope.bundle -> -1
 We use the `*_path_cache` features in production and haven't experienced any issues in a long time.
 
 The `compile_cache_*` features work well for us in development on macOS. It should work on Linux,
-and we intend to deploy it in production, but haven't we haven't yet.
+and we intend to deploy it in production, but we haven't yet.
 
 `disable_trace` should be completely safe, but we don't really use it because some people like to
 use tools that make use of `trace` instructions.
