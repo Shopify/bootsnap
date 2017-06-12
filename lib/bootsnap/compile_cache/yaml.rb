@@ -1,3 +1,5 @@
+require 'bootsnap/bootsnap'
+
 module Bootsnap
   module CompileCache
     module YAML
