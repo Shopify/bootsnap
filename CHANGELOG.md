@@ -1,3 +1,8 @@
+# 1.1.0
+
+* Add `bootsnap/setup`
+* Support jruby (without compile caching features)
+
 # 1.0.0
 
 * (none)
