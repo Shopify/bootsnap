@@ -1,6 +1,7 @@
 require 'test_helper'
 require 'tmpdir'
 require 'fileutils'
+require 'bootsnap/load_path_cache/store'
 
 module Bootsnap
   module LoadPathCache

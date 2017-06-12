@@ -10,7 +10,11 @@ require 'minitest/autorun'
 require 'mocha/mini_test'
 
 cache_dir = File.expand_path('../../tmp/bootsnap-compile-cache', __FILE__)
-Bootsnap::CompileCache.setup(cache_dir: cache_dir, iseq: true, yaml: false)
+Bootsnap.setup(
+  cache_dir: cache_dir,
+  load_path_cache: false,
+  autoload_paths_cache: false
+)
 
 module TestHandler
   def self.input_to_storage(i, p)
@@ -76,14 +80,11 @@ module TmpdirHelper
     @prev_dir = Dir.pwd
     @tmp_dir = Dir.mktmpdir('bootsnap-test')
     Dir.chdir(@tmp_dir)
-    @prev = Bootsnap::CompileCache::ISeq.cache_dir
-    Bootsnap::CompileCache::ISeq.cache_dir = @tmp_dir
   end
 
   def teardown
     super
     Dir.chdir(@prev_dir)
     FileUtils.remove_entry(@tmp_dir)
-    Bootsnap::CompileCache::ISeq.cache_dir = @prev
   end
 end

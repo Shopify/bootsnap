@@ -3,13 +3,13 @@ require_relative 'compile_cache/yaml'
 
 module Bootsnap
   module CompileCache
-    def self.setup(cache_dir:, iseq:, yaml:)
+    def self.setup(iseq:, yaml:)
       if iseq
-        Bootsnap::CompileCache::ISeq.install!(cache_dir)
+        Bootsnap::CompileCache::ISeq.install!(iseq)
       end
 
       if yaml
-        Bootsnap::CompileCache::YAML.install!(cache_dir)
+        Bootsnap::CompileCache::YAML.install!(yaml)
       end
     end
   end

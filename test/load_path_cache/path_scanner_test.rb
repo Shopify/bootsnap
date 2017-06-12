@@ -1,3 +1,5 @@
+require 'test_helper'
+
 module Bootsnap
   module LoadPathCache
     class PathScannerTest < MiniTest::Test
