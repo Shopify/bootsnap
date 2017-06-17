@@ -179,7 +179,7 @@ static uint32_t
 get_os_version(void)
 {
   #ifdef _WIN32
-  /* Ignore for now */
+  return (uint32_t)GetVersion();
   #else
   uint64_t hash;
   struct utsname utsname;
