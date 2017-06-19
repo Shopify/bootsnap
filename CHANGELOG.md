@@ -2,6 +2,7 @@
 
 * Add `bootsnap/setup`
 * Support jruby (without compile caching features)
+* Better deoptimization when Coverage is enabled
 
 # 1.0.0
 
