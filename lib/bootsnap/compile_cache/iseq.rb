@@ -47,18 +47,6 @@ module Bootsnap
             puts "unmatched platform for file #{path}"
           end
           raise
-        rescue Errno::ERANGE
-          STDERR.puts <<~EOF
-            \x1b[31mError loading ISeq from cache for \x1b[1;34m#{path}\x1b[0;31m!
-            You can likely fix this by running:
-              \x1b[1;32mxattr -c #{path}
-            \x1b[0;31m...but, first, please make sure \x1b[1;34m@burke\x1b[0;31m knows you ran into this bug!
-            He will want to see the results of:
-              \x1b[1;32m/bin/ls -l@ #{path}
-            \x1b[0;31mand:
-              \x1b[1;32mxattr -p user.aotcc.key #{path}\x1b[0m
-          EOF
-          raise
         end
 
         def compile_option=(hash)
