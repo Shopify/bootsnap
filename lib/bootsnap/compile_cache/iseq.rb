@@ -32,10 +32,7 @@ module Bootsnap
       module InstructionSequenceMixin
         def load_iseq(path)
           # Having coverage enabled prevents iseq dumping/loading.
-          # Ruby unfortunately doesn't give us a good API to actually test
-          # whether coverage is currently enabled, so we have to use this
-          # fairly gross heuristic.
-          return nil if defined?(Coverage)
+          return nil if defined?(Coverage) && Bootsnap::CompileCache::Native.coverage_running?
 
           Bootsnap::CompileCache::Native.fetch(
             Bootsnap::CompileCache::ISeq.cache_dir,

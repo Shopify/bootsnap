@@ -111,6 +111,15 @@ struct s2o_data;
 struct i2o_data;
 struct i2s_data;
 
+/* https://bugs.ruby-lang.org/issues/13667 */
+extern VALUE rb_get_coverages(void);
+static VALUE
+bs_rb_coverage_running(VALUE self)
+{
+  VALUE cov = rb_get_coverages();
+  return RTEST(cov) ? Qtrue : Qfalse;
+}
+
 /*
  * Ruby C extensions are initialized by calling Init_<extname>.
  *
@@ -131,6 +140,7 @@ Init_bootsnap(void)
 
   uncompilable = rb_intern("__bootsnap_uncompilable__");
 
+  rb_define_module_function(rb_mBootsnap_CompileCache_Native, "coverage_running?", bs_rb_coverage_running, 0);
   rb_define_module_function(rb_mBootsnap_CompileCache_Native, "fetch", bs_rb_fetch, 3);
   rb_define_module_function(rb_mBootsnap_CompileCache_Native, "compile_option_crc32=", bs_compile_option_crc32_set, 1);
 }
