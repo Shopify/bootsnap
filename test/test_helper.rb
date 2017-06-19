@@ -4,7 +4,6 @@ require 'bootsnap'
 
 require 'tmpdir'
 require 'fileutils'
-require 'ffi-xattr'
 
 require 'minitest/autorun'
 require 'mocha/mini_test'
