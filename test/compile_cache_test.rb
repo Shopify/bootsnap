@@ -3,6 +3,17 @@ require 'test_helper'
 class CompileCacheTest < Minitest::Test
   include TmpdirHelper
 
+  def test_coverage_running?
+    refute Bootsnap::CompileCache::Native.coverage_running?
+    require 'coverage'
+    begin
+      Coverage.start
+      assert Bootsnap::CompileCache::Native.coverage_running?
+    ensure
+      Coverage.result
+    end
+  end
+
   def test_no_write_permission_to_cache
     path = Help.set_file('a.rb', 'a = 3', 100)
     folder = File.dirname(Help.cache_path(@tmp_dir, path))
