@@ -12,12 +12,6 @@ module Bootsnap
         RubyVM::InstructionSequence.compile_file(path).to_binary
       rescue SyntaxError
         raise Uncompilable, 'syntax error'
-      rescue RuntimeError => e
-        if e.message == 'should not compile with coverage'
-          raise Uncompilable, 'coverage is enabled'
-        else
-          raise
-        end
       end
 
       def self.storage_to_output(binary)
@@ -37,6 +31,12 @@ module Bootsnap
 
       module InstructionSequenceMixin
         def load_iseq(path)
+          # Having coverage enabled prevents iseq dumping/loading.
+          # Ruby unfortunately doesn't give us a good API to actually test
+          # whether coverage is currently enabled, so we have to use this
+          # fairly gross heuristic.
+          return nil if defined?(Coverage)
+
           Bootsnap::CompileCache::Native.fetch(
             Bootsnap::CompileCache::ISeq.cache_dir,
             path.to_s,
