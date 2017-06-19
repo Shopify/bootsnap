@@ -18,7 +18,9 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#ifndef _WIN32
 #include <sys/utsname.h>
+#endif
 
 /* 1000 is an arbitrary limit; FNV64 plus some slashes brings the cap down to
  * 981 for the cache dir */
@@ -176,6 +178,9 @@ fnv1a_64(const char *str)
 static uint32_t
 get_os_version(void)
 {
+  #ifdef _WIN32
+  return (uint32_t)GetVersion();
+  #else
   uint64_t hash;
   struct utsname utsname;
 
@@ -185,6 +190,7 @@ get_os_version(void)
   hash = fnv1a_64(utsname.version);
 
   return (uint32_t)(hash >> 32);
+  #endif
 }
 
 /*
@@ -265,6 +271,9 @@ open_current_file(char * path, struct bs_cache_key * key)
 
   fd = open(path, O_RDONLY);
   if (fd < 0) return fd;
+  #ifdef _WIN32
+  setmode(fd, O_BINARY);
+  #endif
 
   if (fstat(fd, &statbuf) < 0) {
     close(fd);
@@ -321,6 +330,9 @@ open_cache_file(const char * path, struct bs_cache_key * key)
     if (errno == ENOENT) return CACHE_MISSING_OR_INVALID;
     return ERROR_WITH_ERRNO;
   }
+  #ifdef _WIN32
+  setmode(fd, O_BINARY);
+  #endif
 
   res = bs_read_key(fd, key);
   if (res < 0) {
@@ -393,7 +405,11 @@ mkpath(char * file_path, mode_t mode)
   char * p;
   for (p = strchr(file_path + 1, '/'); p; p = strchr(p + 1, '/')) {
     *p = '\0';
+    #ifdef _WIN32
+    if (mkdir(file_path) == -1) {
+    #else
     if (mkdir(file_path, mode) == -1) {
+    #endif
       if (errno != EEXIST) {
         *p = '/';
         return -1;
@@ -428,6 +444,9 @@ atomic_write_cache_file(char * path, struct bs_cache_key * key, VALUE data)
     fd = open(tmp_path, O_WRONLY | O_CREAT, 0644);
     if (fd < 0) return -1;
   }
+  #ifdef _WIN32
+  setmode(fd, O_BINARY);
+  #endif
 
   key->data_size = RSTRING_LEN(data);
   nwrite = write(fd, key, KEY_SIZE);

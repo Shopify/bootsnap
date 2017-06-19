@@ -48,7 +48,7 @@ module Bootsnap
       def find(feature)
         reinitialize if (@has_relative_paths && dir_changed?) || stale?
         feature = feature.to_s
-        return feature if feature.start_with?(SLASH)
+        return feature if absolute_path?(feature)
         return File.expand_path(feature) if feature.start_with?('./')
         @mutex.synchronize do
           x = search_index(feature)
@@ -82,6 +82,16 @@ module Bootsnap
             # cached these, we legitimately need to run the load path search.
             raise LoadPathCache::FallbackScan
           end
+        end
+      end
+
+      if RbConfig::CONFIG['host_os'] =~ /mswin|mingw|cygwin/
+        def absolute_path?(path)
+          path[1] == ':'
+        end
+      else
+        def absolute_path?(path)
+          path.start_with?(SLASH)
         end
       end
 
