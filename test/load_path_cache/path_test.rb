@@ -15,6 +15,9 @@ module Bootsnap
         unknown      = Path.new('/who/knows')
         lib          = Path.new(RbConfig::CONFIG['libdir']  + '/a')
         site         = Path.new(RbConfig::CONFIG['sitedir'] + '/b')
+        bundler      = Path.new('/bp/3')
+
+        Bundler.stubs(:bundle_path).returns('/bp')
 
         assert stable.stable?
         refute stable.volatile?
@@ -25,6 +28,7 @@ module Bootsnap
 
         assert lib.stable?
         refute site.stable?
+        assert bundler.stable?
       end
 
       def test_non_directory?

@@ -110,7 +110,8 @@ entries do not expire -- once their contents has been scanned, it is assumed to 
 
 The only directories considered "stable" are things under the Ruby install prefix
 (`RbConfig::CONFIG['prefix']`, e.g. `/usr/local/ruby` or `~/.rubies/x.y.z`), and things under the
-`Gem.path` (e.g. `~/.gem/ruby/x.y.z`). Everything else is considered "volatile".
+`Gem.path` (e.g. `~/.gem/ruby/x.y.z`) or `Bundler.bundle_path`. Everything else is considered
+"volatile".
 
 In addition to the [`Bootsnap::LoadPathCache::Cache`
 source](https://github.com/Shopify/bootsnap/blob/master/lib/bootsnap/load_path_cache/cache.rb),
