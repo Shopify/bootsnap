@@ -3,6 +3,7 @@
 * Add `bootsnap/setup`
 * Support jruby (without compile caching features)
 * Better deoptimization when Coverage is enabled
+* Consider `Bundler.bundle_path` to be stable
 
 # 1.0.0
 
