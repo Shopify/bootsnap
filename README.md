@@ -2,10 +2,10 @@
 
 **Beta-quality. See [the last section of this README](#trustworthiness).**
 
-Bootsnap is a library that plugs into a number of Ruby and (optionally) `ActiveSupport` and `YAML`
-methods to optimize and cache expensive computations. See [the How Does This Work section](#how-does-this-work) for more information.
+Bootsnap is a library that plugs into Ruby, with optional support for `ActiveSupport` and `YAML`,
+to optimize and cache expensive computations. See [How Does This Work](#how-does-this-work).
 
-#### Quick Performance Overview
+#### Performance
 - [Discourse](https://github.com/discourse/discourse) reports a boot time reduction of approximately 50%, from roughly 6 to 3 seconds on one machine;
 - One of our smaller internal apps also sees a reduction of 50%, from 3.6 to 1.8 seconds;
 - The core Shopify platform -- a rather large monolithic application -- boots about 75% faster, dropping from around 25s to 6.5s.
@@ -32,14 +32,15 @@ this is loaded, the sooner it can start optimizing things)
 
 ```ruby
 require 'bootsnap'
+env = ENV['RAILS_ENV'] || "development"
 Bootsnap.setup(
-  cache_dir:            'tmp/cache',                       # Path to your cache
-  development_mode:     ENV['RAILS_ENV'] == 'development', # This should be set to whatever evaluates your current working environment, e.g. RACK_ENV, RAILS_ENV, etc
-  load_path_cache:      true,                              # Should we optimize the LOAD_PATH with a cache?
-  autoload_paths_cache: true,                              # Should we optimize ActiveSupport autoloads with cache?
-  disable_trace:        false,                             # Sets `RubyVM::InstructionSequence.compile_option = { trace_instruction: false }`
-  compile_cache_iseq:   true,                              # Should compile Ruby code into ISeq cache?
-  compile_cache_yaml:   true                               # Should compile YAML into a cache?
+  cache_dir:            'tmp/cache',          # Path to your cache
+  development_mode:     env == 'development', # Current working environment, e.g. RACK_ENV, RAILS_ENV, etc
+  load_path_cache:      true,                 # Optimize the LOAD_PATH with a cache
+  autoload_paths_cache: true,                 # Optimize ActiveSupport autoloads with cache
+  disable_trace:        true,                 # (Alpha) Set `RubyVM::InstructionSequence.compile_option = { trace_instruction: false }`
+  compile_cache_iseq:   true,                 # Compile Ruby code into ISeq cache, breaks coverage reporting.
+  compile_cache_yaml:   true                  # Compile YAML into a cache
 )
 ```
 
@@ -49,8 +50,7 @@ will help optimize boot time further if you have an extremely large `$LOAD_PATH`
 
 ## How does this work?
 
-Bootsnap is a library that plugs into a number of Ruby and (optionally) `ActiveSupport` and `YAML`
-methods. These methods are modified to cache results of expensive computations, and can be grouped
+Bootsnap optimizes methods to cache results of expensive computations, and can be grouped
 into two broad categories:
 
 * [Path Pre-Scanning](#path-pre-scanning)
