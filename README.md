@@ -1,4 +1,4 @@
-# Bootsnap ![CI status](https://travis-ci.org/Shopify/bootsnap.svg?branch=master)
+# Bootsnap [![Build Status](https://travis-ci.org/Shopify/bootsnap.svg?branch=master)](https://travis-ci.org/Shopify/bootsnap)
 
 **Beta-quality. See [the last section of this README](#trustworthiness).**
 
