@@ -148,12 +148,17 @@ Init_bootsnap(void)
 /*
  * Bootsnap's ruby code registers a hook that notifies us via this function
  * when compile_option changes. These changes invalidate all existing caches.
+ *
+ * Note that on 32-bit platforms, a CRC32 can't be represented in a Fixnum, but
+ * can be represented by a uint.
  */
 static VALUE
 bs_compile_option_crc32_set(VALUE self, VALUE crc32_v)
 {
-  Check_Type(crc32_v, T_FIXNUM);
-  current_compile_option_crc32 = FIX2UINT(crc32_v);
+  if (!RB_TYPE_P(crc32_v, T_BIGNUM) && !RB_TYPE_P(crc32_v, T_FIXNUM)) {
+    Check_Type(crc32_v, T_FIXNUM);
+  }
+  current_compile_option_crc32 = NUM2UINT(crc32_v);
   return Qnil;
 }
 
