@@ -3,6 +3,14 @@ require 'test_helper'
 class CompileCacheTest < Minitest::Test
   include TmpdirHelper
 
+  def test_compile_option_crc32
+    # Just assert that this works.
+    Bootsnap::CompileCache::Native.compile_option_crc32 = 0xffffffff
+    assert_raises(RangeError) do
+      Bootsnap::CompileCache::Native.compile_option_crc32 = 0xffffffff + 1
+    end
+  end
+
   def test_coverage_running?
     refute Bootsnap::CompileCache::Native.coverage_running?
     require 'coverage'
