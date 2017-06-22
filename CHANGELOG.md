@@ -1,3 +1,7 @@
+# 1.1.1
+
+* Fix crash in `Native.compile_option_crc32=` on 32-bit platforms.
+
 # 1.1.0
 
 * Add `bootsnap/setup`
