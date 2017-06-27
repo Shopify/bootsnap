@@ -9,7 +9,7 @@ module Bootsnap
       def initialize(store, path_obj, development_mode: false)
         @development_mode = development_mode
         @store = store
-        @mutex = ::Thread::Mutex.new
+        @mutex = defined?(::Mutex) ? ::Mutex.new : ::Thread::Mutex.new # TODO: Remove once Ruby 2.2 support is dropped.
         @path_obj = path_obj
         reinitialize
       end
