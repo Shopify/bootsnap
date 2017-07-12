@@ -17,7 +17,7 @@ This gem works on MacOS and Linux.
 Add `bootsnap` to your `Gemfile`:
 
 ```ruby
-gem 'bootsnap'
+gem 'bootsnap', require: false
 ```
 
 If you are using rails, add this to `config/boot.rb` immediately after `require 'bundler/setup'`:
