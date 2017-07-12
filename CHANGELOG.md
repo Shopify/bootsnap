@@ -1,3 +1,7 @@
+# 1.1.2
+
+* Minor fix: deprecation warning
+
 # 1.1.1
 
 * Fix crash in `Native.compile_option_crc32=` on 32-bit platforms.
