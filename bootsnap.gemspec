@@ -11,8 +11,8 @@ Gem::Specification.new do |spec|
 
   spec.license       = "MIT"
 
-  spec.summary       = "wip"
-  spec.description   = "wip."
+  spec.summary       = "Boot large ruby/rails apps faster"
+  spec.description   = spec.summary
   spec.homepage      = "https://github.com/Shopify/bootsnap"
 
   spec.files = `git ls-files -z`.split("\x0").reject do |f|
