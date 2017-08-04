@@ -35,8 +35,8 @@ module Bootsnap
         acc[base] = nil # enumerator
 
         if [DOT_SO, *DL_EXTENSIONS].include?(ext)
-          DL_EXTENSIONS.each do |ext|
-            acc["#{base}#{ext}"] = nil # enumerator.bundle
+          DL_EXTENSIONS.each do |dl_ext|
+            acc["#{base}#{dl_ext}"] = nil # enumerator.bundle
           end
         end
 
