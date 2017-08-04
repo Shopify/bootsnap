@@ -1,5 +1,3 @@
-require_relative '../load_path_cache'
-
 module Bootsnap
   module LoadPathCache
     module PathScanner

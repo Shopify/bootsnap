@@ -1,4 +1,3 @@
-require_relative '../load_path_cache'
 require_relative '../explicit_require'
 
 module Bootsnap
