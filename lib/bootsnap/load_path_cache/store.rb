@@ -11,6 +11,8 @@ module Bootsnap
 
       def initialize(store_path)
         @store_path = store_path
+        @in_txn = false
+        @dirty = false
         load_data
       end
 

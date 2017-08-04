@@ -1,4 +1,3 @@
-require_relative '../load_path_cache'
 require_relative '../explicit_require'
 
 module Bootsnap
@@ -11,6 +10,7 @@ module Bootsnap
         @store = store
         @mutex = defined?(::Mutex) ? ::Mutex.new : ::Thread::Mutex.new # TODO: Remove once Ruby 2.2 support is dropped.
         @path_obj = path_obj
+        @has_relative_paths = nil
         reinitialize
       end
 
@@ -35,8 +35,8 @@ module Bootsnap
         acc[base] = nil # enumerator
 
         if [DOT_SO, *DL_EXTENSIONS].include?(ext)
-          DL_EXTENSIONS.each do |ext|
-            acc["#{base}#{ext}"] = nil # enumerator.bundle
+          DL_EXTENSIONS.each do |dl_ext|
+            acc["#{base}#{dl_ext}"] = nil # enumerator.bundle
           end
         end
 
