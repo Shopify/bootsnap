@@ -152,7 +152,7 @@ module Bootsnap
 
       def unshift_paths_locked(*paths)
         @store.transaction do
-          paths.map(&:to_s).reverse.each do |path|
+          paths.map(&:to_s).reverse_each do |path|
             p = Path.new(path)
             next if p.non_directory?
             entries, dirs = p.entries_and_dirs(@store)
