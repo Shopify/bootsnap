@@ -1,8 +1,18 @@
+require_relative '../explicit_require'
+
 module Bootsnap
   module LoadPathCache
     module PathScanner
-      REQUIRABLES_AND_DIRS = "/**/*{#{DOT_RB},#{DL_EXTENSIONS.join(',')},/}"
-      IS_DIR = %r{(.*)/\z}
+      # Glob pattern to find requirable files and subdirectories in given path.
+      # It expands to:
+      #
+      #   * `/*{.rb,.so,/}` - It matches requirable files, directories and
+      #     symlinks to directories at given path.
+      #   * `/*/**/*{.rb,.so,/}` - It matches requirable files and
+      #     subdirectories in any (even symlinked) directory at given path at
+      #     any directory tree depth.
+      #
+      REQUIRABLES_AND_DIRS = "/{,*/**/}*{#{DOT_RB},#{DL_EXTENSIONS.join(',')},/}"
       NORMALIZE_NATIVE_EXTENSIONS = !DL_EXTENSIONS.include?(LoadPathCache::DOT_SO)
       ALTERNATIVE_NATIVE_EXTENSIONS_PATTERN = /\.(o|bundle|dylib)\z/
       BUNDLE_PATH = (Bundler.bundle_path.cleanpath.to_s << LoadPathCache::SLASH).freeze
@@ -27,12 +37,13 @@ module Bootsnap
           next if contains_bundle_path && absolute_path.start_with?(BUNDLE_PATH)
           relative_path = absolute_path.slice!(relative_slice)
 
-          if md = relative_path.match(IS_DIR)
-            dirs << md[1]
+          if relative_path.end_with?('/')
+            dirs << relative_path[0..-2]
           else
             requirables << relative_path
           end
         end
+
         [requirables, dirs]
       end
     end
