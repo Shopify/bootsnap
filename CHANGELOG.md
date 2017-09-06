@@ -1,3 +1,7 @@
+# 1.1.3
+
+* Properly resolve symlinked path entries
+
 # 1.1.2
 
 * Minor fix: deprecation warning
