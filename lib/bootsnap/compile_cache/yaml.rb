@@ -4,11 +4,11 @@ module Bootsnap
   module CompileCache
     module YAML
       class << self
-        attr_accessor :msgpack_factory
+        attr_accessor :msgpack_factory, :preprocessor
       end
 
-      def self.input_to_storage(contents, _)
-        obj = ::YAML.load(contents)
+      def self.input_to_storage(contents, path)
+        obj = ::YAML.load(preprocessor.call(contents, path))
         msgpack_factory.packer.write(obj).to_s
       rescue NoMethodError, RangeError
         # if the object included things that we can't serialize, fall back to
@@ -32,7 +32,7 @@ module Bootsnap
         ::YAML.load(data)
       end
 
-      def self.install!(cache_dir)
+      def self.install!(cache_dir, preprocessor)
         require 'yaml'
         require 'msgpack'
 
@@ -42,6 +42,8 @@ module Bootsnap
         factory = MessagePack::Factory.new
         factory.register_type(0x00, Symbol)
         Bootsnap::CompileCache::YAML.msgpack_factory = factory
+
+        Bootsnap::CompileCache::YAML.preprocessor = preprocessor
 
         klass = class << ::YAML; self; end
         klass.send(:define_method, :load_file) do |path|

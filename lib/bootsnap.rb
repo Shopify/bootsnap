@@ -12,7 +12,8 @@ module Bootsnap
     autoload_paths_cache: true,
     disable_trace: false,
     compile_cache_iseq: true,
-    compile_cache_yaml: true
+    compile_cache_yaml: true,
+    preprocesser: nil
   )
     if autoload_paths_cache && !load_path_cache
       raise InvalidConfiguration, "feature 'autoload_paths_cache' depends on feature 'load_path_cache'"
@@ -29,7 +30,8 @@ module Bootsnap
     Bootsnap::CompileCache.setup(
       cache_dir: cache_dir + '/bootsnap-compile-cache',
       iseq: compile_cache_iseq,
-      yaml: compile_cache_yaml
+      yaml: compile_cache_yaml,
+      preprocessor: preprocessor
     )
   end
 
