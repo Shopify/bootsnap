@@ -5,11 +5,11 @@ module Bootsnap
   module CompileCache
     module ISeq
       class << self
-        attr_accessor :cache_dir
+        attr_accessor :cache_dir, :preprocessor
       end
 
-      def self.input_to_storage(_, path)
-        RubyVM::InstructionSequence.compile_file(path).to_binary
+      def self.input_to_storage(contents, path)
+        RubyVM::InstructionSequence.compile(preprocessor.call(contents, path)).to_binary
       rescue SyntaxError
         raise Uncompilable, 'syntax error'
       end
@@ -58,8 +58,9 @@ module Bootsnap
         Bootsnap::CompileCache::Native.compile_option_crc32 = crc
       end
 
-      def self.install!(cache_dir)
+      def self.install!(cache_dir, preprocessor)
         Bootsnap::CompileCache::ISeq.cache_dir = cache_dir
+        Bootsnap::CompileCache::ISeq.preprocessor = preprocessor
         Bootsnap::CompileCache::ISeq.compile_option_updated
         class << RubyVM::InstructionSequence
           prepend InstructionSequenceMixin
