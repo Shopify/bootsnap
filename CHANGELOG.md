@@ -1,3 +1,7 @@
+# 1.1.4
+
+* Avoid loading a constant twice by checking if it is already defined
+
 # 1.1.3
 
 * Properly resolve symlinked path entries
