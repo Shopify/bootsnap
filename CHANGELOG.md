@@ -1,4 +1,8 @@
-# 1.1.4
+# 1.1.5
+
+* bugfix re-release of 1.1.4
+
+# 1.1.4 (yanked)
 
 * Avoid loading a constant twice by checking if it is already defined
 
