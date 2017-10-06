@@ -36,7 +36,12 @@ module Bootsnap
       end
       $LOAD_PATH << ARCHDIR
       $LOAD_PATH << RUBYLIBDIR
-      yield
+      begin
+        yield
+      rescue LoadError
+        $LOAD_PATH.replace(orig)
+        yield
+      end
     ensure
       $LOAD_PATH.replace(orig)
     end
