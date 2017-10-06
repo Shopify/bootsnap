@@ -47,7 +47,7 @@ module Bootsnap
             # NameError instances.
             raise unless e.class == NameError
             raise if from_mod.const_defined?(const_name)
-            without_bootsnap_cache { super }
+            CoreExt::ActiveSupport.without_bootsnap_cache { super }
           end
 
           # Signature has changed a few times over the years; easiest to not
@@ -55,7 +55,7 @@ module Bootsnap
           def depend_on(*)
             super
           rescue LoadError
-            without_bootsnap_cache { super }
+            CoreExt::ActiveSupport.without_bootsnap_cache { super }
           end
         end
       end
