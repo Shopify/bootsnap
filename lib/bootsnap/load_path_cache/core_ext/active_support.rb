@@ -2,6 +2,15 @@ module Bootsnap
   module LoadPathCache
     module CoreExt
       module ActiveSupport
+        def self.with_bootsnap_fallback(error)
+          yield
+        rescue error => e
+          # NoMethodError is a NameError, but we only want to handle actual
+          # NameError instances.
+          raise unless e.class == error
+          without_bootsnap_cache { yield }
+        end
+
         def self.without_bootsnap_cache
           prev = Thread.current[:without_bootsnap_cache] || false
           Thread.current[:without_bootsnap_cache] = true
@@ -41,21 +50,13 @@ module Bootsnap
           # behaviour.  The gymnastics here are a bit awkward, but it prevents
           # 200+ lines of monkeypatches.
           def load_missing_constant(from_mod, const_name)
-            super
-          rescue NameError => e
-            # NoMethodError is a NameError, but we only want to handle actual
-            # NameError instances.
-            raise unless e.class == NameError
-            raise if from_mod.const_defined?(const_name)
-            without_bootsnap_cache { super }
+            CoreExt::ActiveSupport.with_bootsnap_fallback(NameError) { super }
           end
 
           # Signature has changed a few times over the years; easiest to not
           # reiterate it with version polymorphism here...
           def depend_on(*)
-            super
-          rescue LoadError
-            without_bootsnap_cache { super }
+            CoreExt::ActiveSupport.with_bootsnap_fallback(LoadError) { super }
           end
         end
       end
