@@ -12,9 +12,8 @@ module Bootsnap
 
         module ClassMethods
           def autoload_paths=(o)
-            r = super
+            super
             Bootsnap::LoadPathCache.autoload_paths_cache.reinitialize(o)
-            r
           end
 
           def search_for_file(path)

@@ -39,7 +39,7 @@ module Bootsnap
       end
 
       def test_volatile_cache_valid_when_mtime_has_not_changed
-        with_caching_fixtures do |dir, a, a_b, a_b_c|
+        with_caching_fixtures do |dir, _a, _a_b, _a_b_c|
           entries, dirs = PathScanner.call(dir)
           path = Path.new(dir) # volatile, since it'll be in /tmp
 
@@ -50,7 +50,7 @@ module Bootsnap
       end
 
       def test_volatile_cache_invalid_when_mtime_changed
-        with_caching_fixtures do |dir, a, a_b, a_b_c|
+        with_caching_fixtures do |dir, _a, a_b, _a_b_c|
           entries, dirs = PathScanner.call(dir)
           path = Path.new(dir) # volatile, since it'll be in /tmp
 
@@ -68,7 +68,7 @@ module Bootsnap
       end
 
       def test_volatile_cache_generated_when_missing
-        with_caching_fixtures do |dir, a, a_b, a_b_c|
+        with_caching_fixtures do |dir, _a, _a_b, _a_b_c|
           entries, dirs = PathScanner.call(dir)
           path = Path.new(dir) # volatile, since it'll be in /tmp
 
@@ -80,7 +80,7 @@ module Bootsnap
       end
 
       def test_stable_cache_does_not_notice_when_mtime_changes
-        with_caching_fixtures do |dir, a, a_b, a_b_c|
+        with_caching_fixtures do |dir, _a, a_b, _a_b_c|
           entries, dirs = PathScanner.call(dir)
           path = Path.new(dir) # volatile, since it'll be in /tmp
           path.expects(:stable?).returns(true)

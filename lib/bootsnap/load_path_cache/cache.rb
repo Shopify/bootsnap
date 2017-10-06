@@ -23,24 +23,21 @@ module Bootsnap
       end
 
       # { 'enumerator' => nil, 'enumerator.so' => nil, ... }
-      BUILTIN_FEATURES = $LOADED_FEATURES.reduce({}) do |acc, feat|
+      BUILTIN_FEATURES = $LOADED_FEATURES.each_with_object({}) do |feat, features|
         # Builtin features are of the form 'enumerator.so'.
         # All others include paths.
-        next acc unless feat.size < 20 && !feat.include?('/')
+        next unless feat.size < 20 && !feat.include?('/')
 
         base = File.basename(feat, '.*') # enumerator.so -> enumerator
         ext  = File.extname(feat) # .so
 
-        acc[feat] = nil # enumerator.so
-        acc[base] = nil # enumerator
+        features[feat] = nil # enumerator.so
+        features[base] = nil # enumerator
 
-        if [DOT_SO, *DL_EXTENSIONS].include?(ext)
-          DL_EXTENSIONS.each do |dl_ext|
-            acc["#{base}#{dl_ext}"] = nil # enumerator.bundle
-          end
+        next unless [DOT_SO, *DL_EXTENSIONS].include?(ext)
+        DL_EXTENSIONS.each do |dl_ext|
+          features["#{base}#{dl_ext}"] = nil # enumerator.bundle
         end
-
-        acc
       end.freeze
 
       # Try to resolve this feature to an absolute path without traversing the
@@ -67,7 +64,8 @@ module Bootsnap
           # If the extension was one of the ones we explicitly cache (.rb and the
           # native dynamic extension, e.g. .bundle or .so), we know it was a
           # failure and there's nothing more we can do to find the file.
-          when '', *CACHED_EXTENSIONS # no extension, .rb, (.bundle or .so)
+          # no extension, .rb, (.bundle or .so)
+          when '', *CACHED_EXTENSIONS # rubocop:disable Performance/CaseWhenSplat
             nil
           # Ruby allows specifying native extensions as '.so' even when DLEXT
           # is '.bundle'. This is where we handle that case.

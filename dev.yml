@@ -6,3 +6,4 @@ up:
   - bundler
 commands:
   test: 'rake compile && exec bin/testunit'
+  style: 'exec rubocop -D'

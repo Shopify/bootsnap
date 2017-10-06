@@ -4,4 +4,17 @@ inherit_from:
 AllCops:
   Exclude:
     - 'vendor/**/*'
+    - 'tmp/**/*'
+  TargetRubyVersion: '2.2'
 
+# This doesn't take into account retrying from an exception
+Lint/HandleExceptions:
+  Enabled: false
+
+# allow String.new to create mutable strings
+Style/EmptyLiteral:
+  Enabled: false
+
+# allow the use of globals which makes sense in a CLI app like this
+Style/GlobalVars:
+  Enabled: false

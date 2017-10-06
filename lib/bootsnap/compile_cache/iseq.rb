@@ -68,4 +68,3 @@ module Bootsnap
     end
   end
 end
-

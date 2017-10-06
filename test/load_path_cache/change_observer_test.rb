@@ -20,7 +20,7 @@ module Bootsnap
         @arr.unshift('d', 'e')
 
         @observer.expects(:push_paths).with(@arr, 'f', 'g')
-        @arr.concat(['f', 'g'])
+        @arr.concat(%w(f g))
 
         @observer.expects(:reinitialize).times(3)
         @arr.delete(3)
