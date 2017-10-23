@@ -99,7 +99,7 @@ module Bootsnap
         @stability ||= begin
           if Gem.path.detect { |p| expanded_path.start_with?(p.to_s) }
             STABLE
-          elsif expanded_path.start_with?(Bundler.bundle_path.to_s)
+          elsif Bootsnap.bundler? && expanded_path.start_with?(Bundler.bundle_path.to_s)
             STABLE
           elsif expanded_path.start_with?(RUBY_LIBDIR) && !expanded_path.start_with?(RUBY_SITEDIR)
             STABLE

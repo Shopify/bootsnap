@@ -15,7 +15,8 @@ module Bootsnap
       REQUIRABLES_AND_DIRS = "/{,*/**/}*{#{DOT_RB},#{DL_EXTENSIONS.join(',')},/}"
       NORMALIZE_NATIVE_EXTENSIONS = !DL_EXTENSIONS.include?(LoadPathCache::DOT_SO)
       ALTERNATIVE_NATIVE_EXTENSIONS_PATTERN = /\.(o|bundle|dylib)\z/
-      BUNDLE_PATH = (Bundler.bundle_path.cleanpath.to_s << LoadPathCache::SLASH).freeze
+      BUNDLE_PATH = Bootsnap.bundler? ?
+        (Bundler.bundle_path.cleanpath.to_s << LoadPathCache::SLASH).freeze : ''.freeze
 
       def self.call(path)
         path = path.to_s
