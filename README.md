@@ -48,6 +48,8 @@ Bootsnap.setup(
 'bootsnap')` using [this trick](https://github.com/Shopify/bootsnap/wiki/Bootlib::Require). This
 will help optimize boot time further if you have an extremely large `$LOAD_PATH`.
 
+**NB** Bootsnap and [Spring](https://github.com/rails/spring) are orthogonal tools. Springs caches your application so you don't need to start it every time you run a command, while bootsnap make the boot faster. This means you you can use both if you want (and this is what a new generated rails application will do now)
+
 ## How does this work?
 
 Bootsnap optimizes methods to cache results of expensive computations, and can be grouped
