@@ -4,16 +4,10 @@ env = ENV['RAILS_ENV'] || ENV['RACK_ENV'] || ENV['ENV']
 development_mode = ['', nil, 'development'].include?(env)
 
 # only enable on 'ruby' (MRI), POSIX (darin, linux, *bsd), and >= 2.3.0
-enable_cc = \
-  RUBY_ENGINE == 'ruby' && \
-  RUBY_PLATFORM =~ /darwin|linux|bsd/ && \
-  RUBY_VERSION                    # "1.9.3"
-    .split('.')                   # ["1", "9", "3"]
-    .map(&:to_i)                  # [1, 9, 3]
-    .zip([2, 3, -1])              # [[1, 2], [9, 3], [3, -1]]
-    .map { |a, b| a <=> b }       # [-1, 1, 1]
-    .detect { |e| !e.zero? }      # -1
-    .==(1)                        # false
+enable_cc =
+  RUBY_ENGINE == 'ruby' &&
+  RUBY_PLATFORM =~ /darwin|linux|bsd/ &&
+  Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("2.3.0")
 
 cache_dir = ENV['BOOTSNAP_CACHE_DIR']
 unless cache_dir
