@@ -1,7 +1,5 @@
 # Bootsnap [![Build Status](https://travis-ci.org/Shopify/bootsnap.svg?branch=master)](https://travis-ci.org/Shopify/bootsnap)
 
-**Beta-quality. See [the last section of this README](#trustworthiness).**
-
 Bootsnap is a library that plugs into Ruby, with optional support for `ActiveSupport` and `YAML`,
 to optimize and cache expensive computations. See [How Does This Work](#how-does-this-work).
 
@@ -264,21 +262,3 @@ open    /c/nope.bundle -> -1
 ```
 # (nothing!)
 ```
-
-## Trustworthiness
-
-We use the `*_path_cache` features in production and haven't experienced any issues in a long time.
-
-The `compile_cache_*` features work well for us in development on macOS. It should work on Linux,
-and we intend to deploy it in production, but we haven't yet.
-
-`disable_trace` should be completely safe, but we don't really use it because some people like to
-use tools that make use of `trace` instructions.
-
-| feature | where we're using it |
-|-|-|
-| `load_path_cache` | everywhere |
-| `autoload_path_cache` | everywhere |
-| `disable_trace` | nowhere, but it's safe unless you need tracing |
-| `compile_cache_iseq` | development, but probably safe to use everywhere |
-| `compile_cache_yaml` | development, but probably safe to use everywhere |
