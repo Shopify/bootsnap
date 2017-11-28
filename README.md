@@ -48,6 +48,11 @@ Bootsnap.setup(
 'bootsnap')` using [this trick](https://github.com/Shopify/bootsnap/wiki/Bootlib::Require). This
 will help optimize boot time further if you have an extremely large `$LOAD_PATH`.
 
+Note: Bootsnap and [Spring](https://github.com/rails/spring) are orthogonal tools. While Bootsnap
+speeds up the loading of individual source files, Spring keeps a copy of a pre-booted Rails process
+on hand to completely skip parts of the boot process the next time it's needed. The two tools work
+well together, and are both included in a newly-generated Rails applications by default. 
+
 ## How does this work?
 
 Bootsnap optimizes methods to cache results of expensive computations, and can be grouped
