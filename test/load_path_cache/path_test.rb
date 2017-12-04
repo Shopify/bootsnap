@@ -9,9 +9,10 @@ module Bootsnap
       end
 
       def test_stability
-        bundler_file = Bundler.method(:setup).source_location[0]
+        require 'time'
+        time_file    = Time.method(:rfc2822).source_location[0]
         volatile     = Path.new(__FILE__)
-        stable       = Path.new(bundler_file)
+        stable       = Path.new(time_file)
         unknown      = Path.new('/who/knows')
         lib          = Path.new(RbConfig::CONFIG['libdir']  + '/a')
         site         = Path.new(RbConfig::CONFIG['sitedir'] + '/b')
