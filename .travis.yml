@@ -1,5 +1,4 @@
-os: osx
 language: ruby
-rvm: ruby-2.4.0
+rvm: ruby-2.4.1
 before_script: rake
 script: bin/testunit
