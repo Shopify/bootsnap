@@ -30,11 +30,17 @@ module Bootsnap
         assert_raises(ReturnFalse) { cache.find('thread.rb') }
         assert_raises(ReturnFalse) { cache.find('enumerator') }
         assert_raises(ReturnFalse) { cache.find('enumerator.so') }
-        assert_raises(ReturnFalse) { cache.find('enumerator.bundle') }
+        if RUBY_PLATFORM =~ /darwin/
+          assert_raises(ReturnFalse) { cache.find('enumerator.bundle') }
+        else
+          assert_raises(FallbackScan) { cache.find('enumerator.bundle') }
+        end
 
-        refute(cache.find('thread.bundle'))
+        bundle = RUBY_PLATFORM =~ /darwin/ ? 'bundle' : 'so'
+
+        refute(cache.find('thread.' + bundle))
         refute(cache.find('enumerator.rb'))
-        refute(cache.find('encdb.bundle'))
+        refute(cache.find('encdb.' + bundle))
       end
 
       def test_simple
