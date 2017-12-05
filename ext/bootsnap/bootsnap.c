@@ -513,24 +513,24 @@ bs_read_contents(int fd, size_t size, char ** contents)
  * Bootsnap::CompileCache::Native.fetch.
  *
  * There are three "formats" in use here:
- *   1. "input" fomat, which is what we load from the source file;
+ *   1. "input" format, which is what we load from the source file;
  *   2. "storage" format, which we write to the cache;
  *   3. "output" format, which is what we return.
  *
  * E.g., For ISeq compilation:
- *   input: ruby source, as text
+ *   input:   ruby source, as text
  *   storage: binary string (RubyVM::InstructionSequence#to_binary)
- *   output: Instance of RubyVM::InstructionSequence
+ *   output:  Instance of RubyVM::InstructionSequence
  *
  * And for YAML:
- *   input: yaml as text
+ *   input:   yaml as text
  *   storage: MessagePack or Marshal text
- *   output: ruby object, loaded from yaml/messagepack/marshal
+ *   output:  ruby object, loaded from yaml/messagepack/marshal
  *
- * The handler passed in must support three messages:
- *   * storage_to_output(s) -> o
- *   * input_to_output(i)   -> o
- *   * input_to_storage(i)  -> s
+ * A handler<I,S,O> passed in must support three messages:
+ *   * storage_to_output(S) -> O
+ *   * input_to_output(I)   -> O
+ *   * input_to_storage(I)  -> S
  *     (input_to_storage may raise Bootsnap::CompileCache::Uncompilable, which
  *     will prevent caching and cause output to be generated with
  *     input_to_output)
@@ -655,7 +655,17 @@ invalid_type_storage_data:
 /********************* Handler Wrappers **************************************/
 /*****************************************************************************
  * Everything after this point in the file is just wrappers to deal with ruby's
- * clunky method of handling exceptions from ruby methods invoked from C.
+ * clunky method of handling exceptions from ruby methods invoked from C:
+ *
+ * In order to call a ruby method from C, while protecting against crashing in
+ * the event of an exception, we must call the method with rb_protect().
+ *
+ * rb_protect takes a C function and precisely one argument; however, we want
+ * to pass multiple arguments, so we must create structs to wrap them up.
+ *
+ * These functions return an exception_tag, which, if non-zero, indicates an
+ * exception that should be jumped to with rb_jump_tag after cleaning up
+ * allocated resources.
  */
 
 struct s2o_data {
