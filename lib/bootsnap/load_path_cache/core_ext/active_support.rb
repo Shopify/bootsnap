@@ -45,6 +45,10 @@ module Bootsnap
             # NoMethodError is a NameError, but we only want to handle actual
             # NameError instances.
             raise unless e.class == NameError
+            # We can only confidently handle cases when *this* constant fails
+            # to load, not other constants referred to by it.
+            raise unless e.name == const_name
+            # If the constant was actually loaded, something else went wrong?
             raise if from_mod.const_defined?(const_name)
             CoreExt::ActiveSupport.without_bootsnap_cache { super }
           end
