@@ -92,8 +92,8 @@ static void bs_cache_path(const char * cachedir, const char * path, char ** cach
 static int bs_read_key(int fd, struct bs_cache_key * key);
 static int cache_key_equal(struct bs_cache_key * k1, struct bs_cache_key * k2);
 static VALUE bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler);
-static int open_current_file(char * path, struct bs_cache_key * key);
-static int fetch_cached_data(int fd, ssize_t data_size, VALUE handler, VALUE * output_data, int * exception_tag);
+static int open_current_file(char * path, struct bs_cache_key * key, char ** errno_provenance);
+static int fetch_cached_data(int fd, ssize_t data_size, VALUE handler, VALUE * output_data, int * exception_tag, char ** errno_provenance);
 static VALUE prot_exception_for_errno(VALUE err);
 static uint32_t get_os_version(void);
 
@@ -279,18 +279,22 @@ bs_rb_fetch(VALUE self, VALUE cachedir_v, VALUE path_v, VALUE handler)
  * was loaded.
  */
 static int
-open_current_file(char * path, struct bs_cache_key * key)
+open_current_file(char * path, struct bs_cache_key * key, char ** errno_provenance)
 {
   struct stat statbuf;
   int fd;
 
   fd = open(path, O_RDONLY);
-  if (fd < 0) return fd;
+  if (fd < 0) {
+    *errno_provenance = (char *)"bs_fetch:open_current_file:open";
+    return fd;
+  }
   #ifdef _WIN32
   setmode(fd, O_BINARY);
   #endif
 
   if (fstat(fd, &statbuf) < 0) {
+    *errno_provenance = (char *)"bs_fetch:open_current_file:fstat";
     close(fd);
     return -1;
   }
@@ -336,12 +340,13 @@ bs_read_key(int fd, struct bs_cache_key * key)
  *   - ERROR_WITH_ERRNO (-1, errno is set)
  */
 static int
-open_cache_file(const char * path, struct bs_cache_key * key)
+open_cache_file(const char * path, struct bs_cache_key * key, char ** errno_provenance)
 {
   int fd, res;
 
   fd = open(path, O_RDONLY);
   if (fd < 0) {
+    *errno_provenance = (char *)"bs_fetch:open_cache_file:open";
     if (errno == ENOENT) return CACHE_MISSING_OR_INVALID;
     return ERROR_WITH_ERRNO;
   }
@@ -351,6 +356,7 @@ open_cache_file(const char * path, struct bs_cache_key * key)
 
   res = bs_read_key(fd, key);
   if (res < 0) {
+    *errno_provenance = (char *)"bs_fetch:open_cache_file:read";
     close(fd);
     return res;
   }
@@ -374,7 +380,7 @@ open_cache_file(const char * path, struct bs_cache_key * key)
  * or exception, will be the final data returnable to the user.
  */
 static int
-fetch_cached_data(int fd, ssize_t data_size, VALUE handler, VALUE * output_data, int * exception_tag)
+fetch_cached_data(int fd, ssize_t data_size, VALUE handler, VALUE * output_data, int * exception_tag, char ** errno_provenance)
 {
   char * data = NULL;
   ssize_t nread;
@@ -383,6 +389,7 @@ fetch_cached_data(int fd, ssize_t data_size, VALUE handler, VALUE * output_data,
   VALUE storage_data;
 
   if (data_size > 100000000000) {
+    *errno_provenance = (char *)"bs_fetch:fetch_cached_data:datasize";
     errno = EINVAL; /* because wtf? */
     ret = -1;
     goto done;
@@ -390,6 +397,7 @@ fetch_cached_data(int fd, ssize_t data_size, VALUE handler, VALUE * output_data,
   data = ALLOC_N(char, data_size);
   nread = read(fd, data, data_size);
   if (nread < 0) {
+    *errno_provenance = (char *)"bs_fetch:fetch_cached_data:read";
     ret = -1;
     goto done;
   }
@@ -441,12 +449,12 @@ mkpath(char * file_path, mode_t mode)
  * path.
  */
 static int
-atomic_write_cache_file(char * path, struct bs_cache_key * key, VALUE data)
+atomic_write_cache_file(char * path, struct bs_cache_key * key, VALUE data, char ** errno_provenance)
 {
   char template[MAX_CACHEPATH_SIZE + 20];
   char * dest;
   char * tmp_path;
-  int fd;
+  int fd, ret;
   ssize_t nwrite;
 
   dest = strncpy(template, path, MAX_CACHEPATH_SIZE);
@@ -455,9 +463,15 @@ atomic_write_cache_file(char * path, struct bs_cache_key * key, VALUE data)
   tmp_path = mktemp(template);
   fd = open(tmp_path, O_WRONLY | O_CREAT, 0644);
   if (fd < 0) {
-    if (mkpath(path, 0755) < 0) return -1;
+    if (mkpath(path, 0755) < 0) {
+      *errno_provenance = (char *)"bs_fetch:atomic_write_cache_file:mkpath";
+      return -1;
+    }
     fd = open(tmp_path, O_WRONLY | O_CREAT, 0644);
-    if (fd < 0) return -1;
+    if (fd < 0) {
+      *errno_provenance = (char *)"bs_fetch:atomic_write_cache_file:open";
+      return -1;
+    }
   }
   #ifdef _WIN32
   setmode(fd, O_BINARY);
@@ -465,8 +479,12 @@ atomic_write_cache_file(char * path, struct bs_cache_key * key, VALUE data)
 
   key->data_size = RSTRING_LEN(data);
   nwrite = write(fd, key, KEY_SIZE);
-  if (nwrite < 0) return -1;
+  if (nwrite < 0) {
+    *errno_provenance = (char *)"bs_fetch:atomic_write_cache_file:write";
+    return -1;
+  }
   if (nwrite != KEY_SIZE) {
+    *errno_provenance = (char *)"bs_fetch:atomic_write_cache_file:keysize";
     errno = EIO; /* Lies but whatever */
     return -1;
   }
@@ -474,12 +492,17 @@ atomic_write_cache_file(char * path, struct bs_cache_key * key, VALUE data)
   nwrite = write(fd, RSTRING_PTR(data), RSTRING_LEN(data));
   if (nwrite < 0) return -1;
   if (nwrite != RSTRING_LEN(data)) {
+    *errno_provenance = (char *)"bs_fetch:atomic_write_cache_file:writelength";
     errno = EIO; /* Lies but whatever */
     return -1;
   }
 
   close(fd);
-  return rename(tmp_path, path);
+  ret = rename(tmp_path, path);
+  if (ret < 0) {
+    *errno_provenance = (char *)"bs_fetch:atomic_write_cache_file:rename";
+  }
+  return ret;
 }
 
 /*
@@ -502,10 +525,15 @@ prot_exception_for_errno(VALUE err)
 /* Read contents from an fd, whose contents are asserted to be +size+ bytes
  * long, into a buffer */
 static ssize_t
-bs_read_contents(int fd, size_t size, char ** contents)
+bs_read_contents(int fd, size_t size, char ** contents, char ** errno_provenance)
 {
+  ssize_t nread;
   *contents = ALLOC_N(char, size);
-  return read(fd, *contents, size);
+  nread = read(fd, *contents, size);
+  if (nread < 0) {
+    *errno_provenance = (char *)"bs_fetch:bs_read_contents:read";
+  }
+  return nread;
 }
 
 /*
@@ -559,6 +587,7 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler)
   char * contents = NULL;
   int cache_fd = -1, current_fd = -1;
   int res, valid_cache, exception_tag = 0;
+  char * errno_provenance = NULL;
 
   VALUE input_data;   /* data read from source file, e.g. YAML or ruby source */
   VALUE storage_data; /* compiled data, e.g. msgpack / binary iseq */
@@ -567,11 +596,11 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler)
   VALUE exception; /* ruby exception object to raise instead of returning */
 
   /* Open the source file and generate a cache key for it */
-  current_fd = open_current_file(path, &current_key);
+  current_fd = open_current_file(path, &current_key, &errno_provenance);
   if (current_fd < 0) goto fail_errno;
 
   /* Open the cache key if it exists, and read its cache key in */
-  cache_fd = open_cache_file(cache_path, &cached_key);
+  cache_fd = open_cache_file(cache_path, &cached_key, &errno_provenance);
   if (cache_fd < 0 && cache_fd != CACHE_MISSING_OR_INVALID) goto fail_errno;
 
   /* True if the cache existed and no invalidating changes have occurred since
@@ -580,7 +609,10 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler)
 
   if (valid_cache) {
     /* Fetch the cache data and return it if we're able to load it successfully */
-    res = fetch_cached_data(cache_fd, (ssize_t)cached_key.data_size, handler, &output_data, &exception_tag);
+    res = fetch_cached_data(
+      cache_fd, (ssize_t)cached_key.data_size, handler,
+      &output_data, &exception_tag, &errno_provenance
+    );
     if (exception_tag != 0)                   goto raise;
     else if (res == CACHE_MISSING_OR_INVALID) valid_cache = 0;
     else if (res == ERROR_WITH_ERRNO)         goto fail_errno;
@@ -591,7 +623,7 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler)
   /* Cache is stale, invalid, or missing. Regenerate and write it out. */
 
   /* Read the contents of the source file into a buffer */
-  if (bs_read_contents(current_fd, current_key.size, &contents) < 0) goto fail_errno;
+  if (bs_read_contents(current_fd, current_key.size, &contents, &errno_provenance) < 0) goto fail_errno;
   input_data = rb_str_new_static(contents, current_key.size);
 
   /* Try to compile the input_data using input_to_storage(input_data) */
@@ -608,7 +640,7 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler)
   if (!RB_TYPE_P(storage_data, T_STRING)) goto invalid_type_storage_data;
 
   /* Write the cache key and storage_data to the cache directory */
-  res = atomic_write_cache_file(cache_path, &current_key, storage_data);
+  res = atomic_write_cache_file(cache_path, &current_key, storage_data, &errno_provenance);
   if (res < 0) goto fail_errno;
 
   /* Having written the cache, now convert storage_data to output_data */
@@ -618,7 +650,10 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler)
   /* If output_data is nil, delete the cache entry and generate the output
    * using input_to_output */
   if (NIL_P(output_data)) {
-    if (unlink(cache_path) < 0) goto fail_errno;
+    if (unlink(cache_path) < 0) {
+      errno_provenance = (char *)"bs_fetch:unlink";
+      goto fail_errno;
+    }
     bs_input_to_output(handler, input_data, &output_data, &exception_tag);
     if (exception_tag != 0) goto raise;
   }
@@ -637,6 +672,9 @@ fail_errno:
   CLEANUP;
   exception = rb_protect(prot_exception_for_errno, INT2FIX(errno), &res);
   if (res) exception = rb_eStandardError;
+  if (errno_provenance != NULL) {
+    exception = rb_exc_new_str(exception, rb_str_new2(errno_provenance));
+  }
   rb_exc_raise(exception);
   __builtin_unreachable();
 raise:
