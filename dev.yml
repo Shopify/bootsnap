@@ -2,9 +2,10 @@ env:
   BOOTSNAP_PEDANTIC: '1'
 
 up:
+  - rust
   - ruby: 2.3.3
   - bundler
 commands:
-  build: rake compile
-  test: 'rake compile && exec bin/testunit'
+  build: bundle exec rake build
+  test: 'bundle exec rake build && bundle exec bin/testunit'
   style: 'exec rubocop -D'

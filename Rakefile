@@ -1,3 +1,8 @@
+require 'bundler/setup'
+
+require 'helix_runtime/build_task'
+HelixRuntime::BuildTask.new
+
 require 'rake/extensiontask'
 
 gemspec = Gem::Specification.load('bootsnap.gemspec')
