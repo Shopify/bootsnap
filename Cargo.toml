@@ -7,3 +7,4 @@ crate-type = ["cdylib"]
 
 [dependencies]
 helix = "0.6.4"
+libcruby-sys = "0.7.2"

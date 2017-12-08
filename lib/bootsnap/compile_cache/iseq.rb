@@ -1,5 +1,16 @@
-require 'bootsnap/bootsnap'
+require 'helix_runtime'
+puts
+require 'bootsnap/native'
 require 'zlib'
+
+require 'coverage'
+puts
+puts
+# puts Bootsnap::Native.compile_option_crc32 = 123142
+puts Bootsnap::Native.coverage_running?
+Coverage.start
+puts Bootsnap::Native.coverage_running?
+exit 0
 
 module Bootsnap
   module CompileCache

@@ -3,6 +3,7 @@ name = "bootsnap"
 version = "2.0.0"
 dependencies = [
  "helix 0.6.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libcruby-sys 0.7.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -39,9 +40,18 @@ dependencies = [
  "libc 0.2.34 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
+[[package]]
+name = "libcruby-sys"
+version = "0.7.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "libc 0.2.34 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
 [metadata]
 "checksum cslice 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "0f8cb7306107e4b10e64994de6d3274bd08996a7c1322a27b86482392f96be0a"
 "checksum cstr-macro 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "db53fddba18cdd35477a7213a3ef6acfbfa333c31b42ce019e544c4a1420a06f"
 "checksum helix 0.6.4 (registry+https://github.com/rust-lang/crates.io-index)" = "e131c0e8557e78f4d992b87e97cec90f8503c4b5f3af24e1183e4822736e8079"
 "checksum libc 0.2.34 (registry+https://github.com/rust-lang/crates.io-index)" = "36fbc8a8929c632868295d0178dd8f63fc423fd7537ad0738372bd010b3ac9b0"
 "checksum libcruby-sys 0.6.4 (registry+https://github.com/rust-lang/crates.io-index)" = "ee430573ef01035bdc2a4b0efe3051cf4933752ad314010189b6433e6c6e7035"
+"checksum libcruby-sys 0.7.2 (registry+https://github.com/rust-lang/crates.io-index)" = "a8d944129f388f0dfd391fb8308f4e0b9cde5c83ed1e66c1ee395445ad62282c"
