@@ -586,7 +586,7 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler)
   struct bs_cache_key cached_key, current_key;
   char * contents = NULL;
   int cache_fd = -1, current_fd = -1;
-  int res, valid_cache, exception_tag = 0;
+  int res, valid_cache = 0, exception_tag = 0;
   char * errno_provenance = NULL;
 
   VALUE input_data;   /* data read from source file, e.g. YAML or ruby source */
@@ -601,11 +601,15 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler)
 
   /* Open the cache key if it exists, and read its cache key in */
   cache_fd = open_cache_file(cache_path, &cached_key, &errno_provenance);
-  if (cache_fd < 0 && cache_fd != CACHE_MISSING_OR_INVALID) goto fail_errno;
-
-  /* True if the cache existed and no invalidating changes have occurred since
-   * it was generated. */
-  valid_cache = cache_key_equal(&current_key, &cached_key);
+  if (cache_fd == CACHE_MISSING_OR_INVALID) {
+    /* This is ok: valid_cache remains false, we re-populate it. */
+  } else if (cache_fd < 0) {
+    goto fail_errno;
+  } else {
+    /* True if the cache existed and no invalidating changes have occurred since
+     * it was generated. */
+    valid_cache = cache_key_equal(&current_key, &cached_key);
+  }
 
   if (valid_cache) {
     /* Fetch the cache data and return it if we're able to load it successfully */
