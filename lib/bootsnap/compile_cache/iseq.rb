@@ -10,6 +10,7 @@ puts
 puts Bootsnap::Native.coverage_running?
 Coverage.start
 puts Bootsnap::Native.coverage_running?
+puts Bootsnap::Native.fetch(__FILE__, '/tmp/neato', Object.new)
 exit 0
 
 module Bootsnap

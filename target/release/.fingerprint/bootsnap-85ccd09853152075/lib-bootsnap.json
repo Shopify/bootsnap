@@ -1,1 +1,0 @@
-{"rustc":8291033049748019918,"features":"[]","target":12044174622329343269,"profile":9373104389626802791,"deps":[["helix v0.6.4",4925058201995900480],["libcruby-sys v0.7.2",13106676282276171263]],"local":[{"MtimeBased":[[1512707831,95455209],"/Users/burke/src/github.com/shopify/bootsnap/target/release/.fingerprint/bootsnap-85ccd09853152075/dep-lib-bootsnap"]}],"rustflags":[]}

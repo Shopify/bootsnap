@@ -5,11 +5,20 @@ use libcruby_sys::{
     Qfalse, Qtrue, Qnil,
     c_string, c_func, VALUE,
     NUM2U32,
-    rb_check_type, T_STRING, T_FIXNUM,
+    rb_check_type, T_STRING, T_FIXNUM, RSTRING_PTR, RSTRING_LEN,
     rb_define_module, rb_define_module_under, rb_define_class_under,
 };
 
 use std::ffi::CString;
+use std::fs::File;
+use std::slice;
+use std::io::{Read, Error, ErrorKind};
+use std::str;
+use std::time;
+
+macro_rules! c_str {
+    ($x:expr) => (CString::new($x).unwrap().as_ptr());
+}
 
 static mut COMPILE_OPTION: u32 = 0;
 
@@ -20,41 +29,17 @@ extern "C" {
 }
 
 #[no_mangle]
-pub extern "C" fn Init_native() {
-    let bootsnap     = CString::new("Bootsnap").unwrap();
-    let native       = CString::new("Native").unwrap();
-    let uncompilable = CString::new("Uncompilable").unwrap();
+pub unsafe extern "C" fn Init_native() {
+    let mod_bootsnap: VALUE = rb_define_module(c_str!("Bootsnap"));
+    rb_define_class_under(mod_bootsnap, c_str!("Uncompilable"), rb_eStandardError);
+    let mod_native: VALUE = rb_define_module_under(mod_bootsnap, c_str!("Native"));
 
-    let mod_native: VALUE;
-    unsafe {
-        let mod_bootsnap: VALUE = rb_define_module(bootsnap.as_ptr());
-        rb_define_class_under(mod_bootsnap, uncompilable.as_ptr(), rb_eStandardError);
-        mod_native = rb_define_module_under(mod_bootsnap, native.as_ptr());
-    }
-
-    {
-        let i = CString::new("coverage_running?").unwrap();
-        let f = bs_coverage_running as c_func;
-        unsafe {
-            rb_define_module_function(mod_native, i.as_ptr(), f, 0);
-        }
-    }
-
-    {
-        let i = CString::new("compile_option_crc32=").unwrap();
-        let f = bs_compile_option_crc32_set as c_func;
-        unsafe {
-            rb_define_module_function(mod_native, i.as_ptr(), f, 1);
-        }
-    }
-
-    {
-        let i = CString::new("fetch").unwrap();
-        let f = bs_fetch as c_func;
-        unsafe {
-            rb_define_module_function(mod_native, i.as_ptr(), f, 3);
-        }
-    }
+    rb_define_module_function(
+        mod_native, c_str!("coverage_running?"), bs_coverage_running as c_func, 0);
+    rb_define_module_function(
+        mod_native, c_str!("compile_option_crc32="), bs_compile_option_crc32_set as c_func, 1);
+    rb_define_module_function(
+        mod_native, c_str!("fetch"), bs_fetch as c_func, 3);
 }
 
 #[no_mangle]
@@ -73,11 +58,69 @@ pub unsafe extern "C" fn bs_compile_option_crc32_set(_: VALUE, option: VALUE) ->
     return Qnil;
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn bs_fetch(_: VALUE, path: VALUE, cache_path: VALUE, handler: VALUE) -> VALUE {
-    rb_check_type(path, T_STRING);
-    rb_check_type(cache_path, T_STRING);
+struct Mstr {
+    rust: String,
+    ruby: VALUE,
+}
 
-    println!("{:?}", handler);
-    return Qnil;
+impl Mstr {
+    unsafe fn new(rstring: VALUE) -> Mstr {
+        Mstr { ruby: rstring, rust: rstring_to_string(rstring) }
+    }
+}
+
+unsafe fn rstring_to_string(rstring: VALUE) -> String {
+    let slice = slice::from_raw_parts(
+        RSTRING_PTR(rstring) as *const u8,
+        RSTRING_LEN(rstring) as usize
+    );
+    str::from_utf8(slice).unwrap().to_string()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn bs_fetch(_: VALUE, path_v: VALUE, cache_path_v: VALUE, handler: VALUE) -> VALUE {
+    rb_check_type(path_v, T_STRING);
+    rb_check_type(cache_path_v, T_STRING);
+
+    let path       = Mstr::new(path_v);
+    let cache_path = Mstr::new(cache_path_v);
+
+    println!("{} : {} : {:?}", path.rust, cache_path.rust, handler);
+
+    match fetch(path, cache_path, handler) {
+        Ok(value) => value,
+        Err(err)  => libcruby_sys::rb_raise(rb_eStandardError, c_str!(format!("{}", err))),
+    }
+}
+
+fn fetch(path: Mstr, cache_path: Mstr, handler: VALUE) -> Result<VALUE, std::io::Error> {
+    let mut f_curr = File::open(path.rust)?;
+    let stat = f_curr.metadata()?;
+
+    let size  = stat.len() as usize;
+    let mtime = stat.modified()?.duration_since(time::UNIX_EPOCH).unwrap().as_secs();
+
+    if let Ok(f_cache) = File::open(cache_path.rust) {
+        println!("neato")
+    }
+
+    // build cache key, test cache...
+
+    let mut buf: Vec<u8> = vec![];
+    let sz = f_curr.read_to_end(&mut buf)?;
+    if sz != size {
+        return Err(Error::new(ErrorKind::Other, "wrong size"));
+    }
+
+    // key->version        = current_version;
+    // key->os_version     = current_os_version;
+    // key->compile_option = current_compile_option_crc32;
+    // key->ruby_revision  = current_ruby_revision;
+    // key->size           = (uint64_t)statbuf.st_size;
+    // key->mtime = (uint64_t)statbuf.st_mtime;
+
+    // current_fd = open_current_file(path, &current_key, &errno_provenance);
+    // if (current_fd < 0) goto fail_errno;
+
+    unsafe { return Ok(Qnil); }
 }

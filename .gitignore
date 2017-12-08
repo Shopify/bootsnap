@@ -7,7 +7,7 @@
 /pkg/
 /spec/reports/
 /tmp/
-target
+/target/
 *.bundle
 *.so
 *.o
