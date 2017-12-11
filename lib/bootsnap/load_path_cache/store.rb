@@ -69,7 +69,7 @@ module Bootsnap
       def dump_data
         # Change contents atomically so other processes can't get invalid
         # caches if they read at an inopportune time.
-        tmp = "#{@store_path}.#{(rand * 100000).to_i}.tmp"
+        tmp = "#{@store_path}.#{Process.pid}.#{(rand * 100000).to_i}.tmp"
         FileUtils.mkpath(File.dirname(tmp))
         File.binwrite(tmp, MessagePack.dump(@data))
         FileUtils.mv(tmp, @store_path)
