@@ -1,3 +1,7 @@
+# 1.1.6
+
+* Assortment of minor bugfixes
+
 # 1.1.5
 
 * bugfix re-release of 1.1.4
