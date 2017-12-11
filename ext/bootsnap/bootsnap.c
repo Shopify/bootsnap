@@ -32,7 +32,7 @@
 /*
  * An instance of this key is written as the first 64 bytes of each cache file.
  * The mtime and size members track whether the file contents have changed, and
- * the version, os_version, compile_option, and ruby_revision members track
+ * the version, ruby_platform, compile_option, and ruby_revision members track
  * changes to the environment that could invalidate compile results without
  * file contents having changed. The data_size member is not truly part of the
  * "key". Really, this could be called a "header" with the first six members
@@ -45,7 +45,7 @@
  */
 struct bs_cache_key {
   uint32_t version;
-  uint32_t os_version;
+  uint32_t ruby_platform;
   uint32_t compile_option;
   uint32_t ruby_revision;
   uint64_t size;
@@ -67,9 +67,9 @@ STATIC_ASSERT(sizeof(struct bs_cache_key) == KEY_SIZE);
 /* Effectively a schema version. Bumping invalidates all previous caches */
 static const uint32_t current_version = 2;
 
-/* Derived from kernel or libc version; intended to roughly correspond to when
- * ABIs have changed, requiring recompilation of native gems. */
-static uint32_t current_os_version;
+/* hash of e.g. "x86_64-darwin17", invalidating when ruby is recompiled on a
+ * new OS ABI, etc. */
+static uint32_t current_ruby_platform;
 /* Invalidates cache when switching ruby versions */
 static uint32_t current_ruby_revision;
 /* Invalidates cache when RubyVM::InstructionSequence.compile_option changes */
@@ -95,7 +95,7 @@ static VALUE bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handle
 static int open_current_file(char * path, struct bs_cache_key * key, char ** errno_provenance);
 static int fetch_cached_data(int fd, ssize_t data_size, VALUE handler, VALUE * output_data, int * exception_tag, char ** errno_provenance);
 static VALUE prot_exception_for_errno(VALUE err);
-static uint32_t get_os_version(void);
+static uint32_t get_ruby_platform(void);
 
 /*
  * Helper functions to call ruby methods on handler object without crashing on
@@ -136,7 +136,7 @@ Init_bootsnap(void)
   rb_eBootsnap_CompileCache_Uncompilable = rb_define_class_under(rb_mBootsnap_CompileCache, "Uncompilable", rb_eStandardError);
 
   current_ruby_revision = FIX2INT(rb_const_get(rb_cObject, rb_intern("RUBY_REVISION")));
-  current_os_version = get_os_version();
+  current_ruby_platform = get_ruby_platform();
 
   uncompilable = rb_intern("__bootsnap_uncompilable__");
 
@@ -175,8 +175,14 @@ bs_compile_option_crc32_set(VALUE self, VALUE crc32_v)
 static uint64_t
 fnv1a_64(const char *str)
 {
-  unsigned char *s = (unsigned char *)str;
   uint64_t h = (uint64_t)0xcbf29ce484222325ULL;
+  return fnv1a_64_iter(h, str);
+}
+
+static uint64_t
+fnv1a_64_iter(uint64_t h, const char *str)
+{
+  unsigned char *s = (unsigned char *)str;
 
   while (*s) {
     h ^= (uint64_t)*s++;
@@ -187,25 +193,34 @@ fnv1a_64(const char *str)
 }
 
 /*
- * The idea here is that we want a cache key member that changes when the OS
- * changes in such a way as to make existing compiled ISeqs unloadable.
+ * When ruby's version doesn't change, but it's recompiled on a different OS
+ * (or OS version), we need to invalidate the cache.
+ *
+ * We actually factor in some extra information here, to be extra confident
+ * that we don't try to re-use caches that will not be compatible, by factoring
+ * in utsname.version.
  */
 static uint32_t
-get_os_version(void)
+get_ruby_platform(void)
 {
-  #ifdef _WIN32
-  return (uint32_t)GetVersion();
-  #else
   uint64_t hash;
+  VALUE ruby_platform;
+
+  ruby_platform = rb_const_get(rb_cObject, rb_intern("RUBY_PLATFORM"));
+  hash = fnv1a_64(RSTRING_PTR(ruby_platform));
+
+#ifdef _WIN32
+  return (uint32_t)(hash >> 32) ^ (uint32_t)GetVersion();
+#else
   struct utsname utsname;
 
   /* Not worth crashing if this fails; lose cache invalidation potential */
-  if (uname(&utsname) < 0) return 0;
+  if (uname(&utsname) < 0) return hash;
 
-  hash = fnv1a_64(utsname.version);
+  hash = fnv1a_64_iter(hash, utsname.version);
 
   return (uint32_t)(hash >> 32);
-  #endif
+#endif
 }
 
 /*
@@ -239,7 +254,7 @@ cache_key_equal(struct bs_cache_key * k1, struct bs_cache_key * k2)
 {
   return (
     k1->version        == k2->version        &&
-    k1->os_version     == k2->os_version     &&
+    k1->ruby_platform  == k2->ruby_platform  &&
     k1->compile_option == k2->compile_option &&
     k1->ruby_revision  == k2->ruby_revision  &&
     k1->size           == k2->size           &&
@@ -300,7 +315,7 @@ open_current_file(char * path, struct bs_cache_key * key, char ** errno_provenan
   }
 
   key->version        = current_version;
-  key->os_version     = current_os_version;
+  key->ruby_platform  = current_ruby_platform;
   key->compile_option = current_compile_option_crc32;
   key->ruby_revision  = current_ruby_revision;
   key->size           = (uint64_t)statbuf.st_size;
