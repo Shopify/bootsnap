@@ -173,13 +173,6 @@ bs_compile_option_crc32_set(VALUE self, VALUE crc32_v)
  *   - 32 bits doesn't feel collision-resistant enough; 64 is nice.
  */
 static uint64_t
-fnv1a_64(const char *str)
-{
-  uint64_t h = (uint64_t)0xcbf29ce484222325ULL;
-  return fnv1a_64_iter(h, str);
-}
-
-static uint64_t
 fnv1a_64_iter(uint64_t h, const char *str)
 {
   unsigned char *s = (unsigned char *)str;
@@ -190,6 +183,13 @@ fnv1a_64_iter(uint64_t h, const char *str)
   }
 
   return h;
+}
+
+static uint64_t
+fnv1a_64(const char *str)
+{
+  uint64_t h = (uint64_t)0xcbf29ce484222325ULL;
+  return fnv1a_64_iter(h, str);
 }
 
 /*
@@ -214,10 +214,10 @@ get_ruby_platform(void)
 #else
   struct utsname utsname;
 
-  /* Not worth crashing if this fails; lose cache invalidation potential */
-  if (uname(&utsname) < 0) return hash;
-
-  hash = fnv1a_64_iter(hash, utsname.version);
+  /* Not worth crashing if this fails; lose extra cache invalidation potential */
+  if (uname(&utsname) >= 0) {
+    hash = fnv1a_64_iter(hash, utsname.version);
+  }
 
   return (uint32_t)(hash >> 32);
 #endif
