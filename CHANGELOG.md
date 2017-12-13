@@ -1,6 +1,7 @@
 # 1.1.7
 
 * Create cache entries as 0775/0664 instead of 0755/0644
+* Better handling around cache updates in highly-parallel workloads
 
 # 1.1.6
 
