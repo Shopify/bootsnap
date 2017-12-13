@@ -476,13 +476,13 @@ atomic_write_cache_file(char * path, struct bs_cache_key * key, VALUE data, char
   strcat(dest, ".tmp.XXXXXX");
 
   tmp_path = mktemp(template);
-  fd = open(tmp_path, O_WRONLY | O_CREAT, 0644);
+  fd = open(tmp_path, O_WRONLY | O_CREAT, 0664);
   if (fd < 0) {
-    if (mkpath(path, 0755) < 0) {
+    if (mkpath(path, 0775) < 0) {
       *errno_provenance = (char *)"bs_fetch:atomic_write_cache_file:mkpath";
       return -1;
     }
-    fd = open(tmp_path, O_WRONLY | O_CREAT, 0644);
+    fd = open(tmp_path, O_WRONLY | O_CREAT, 0664);
     if (fd < 0) {
       *errno_provenance = (char *)"bs_fetch:atomic_write_cache_file:open";
       return -1;
