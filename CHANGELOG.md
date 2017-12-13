@@ -1,3 +1,7 @@
+# 1.1.7
+
+* Create cache entries as 0775/0664 instead of 0755/0644
+
 # 1.1.6
 
 * Assortment of minor bugfixes
