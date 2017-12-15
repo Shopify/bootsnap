@@ -1,3 +1,7 @@
+# (unreleased)
+
+* Fix cache write mode on Windows
+
 # 1.1.7
 
 * Create cache entries as 0775/0664 instead of 0755/0644
