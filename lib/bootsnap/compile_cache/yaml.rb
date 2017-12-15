@@ -8,6 +8,7 @@ module Bootsnap
       end
 
       def self.input_to_storage(contents, _)
+        raise Uncompilable if contents.index("!ruby/object")
         obj = ::YAML.load(contents)
         msgpack_factory.packer.write(obj).to_s
       rescue NoMethodError, RangeError

@@ -1,5 +1,6 @@
 # (unreleased)
 
+* Don't cache YAML documents with `!ruby/object`
 * Fix cache write mode on Windows
 
 # 1.1.7
