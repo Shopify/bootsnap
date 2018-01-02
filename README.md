@@ -18,13 +18,15 @@ Add `bootsnap` to your `Gemfile`:
 gem 'bootsnap', require: false
 ```
 
-If you are using rails, add this to `config/boot.rb` immediately after `require 'bundler/setup'`:
+If you are using Rails, add this to `config/boot.rb` immediately after `require 'bundler/setup'`:
 
 ```ruby
 require 'bootsnap/setup'
 ```
 
-If you are not using rails, or if you are but want more control over things, add this to your
+You can see how this require works [here](https://github.com/Shopify/bootsnap/blob/master/lib/bootsnap/setup.rb).
+
+If you are not using Rails, or if you are but want more control over things, add this to your
 application setup immediately after `require 'bundler/setup'` (i.e. as early as possible: the sooner
 this is loaded, the sooner it can start optimizing things)
 
@@ -49,7 +51,13 @@ will help optimize boot time further if you have an extremely large `$LOAD_PATH`
 Note: Bootsnap and [Spring](https://github.com/rails/spring) are orthogonal tools. While Bootsnap
 speeds up the loading of individual source files, Spring keeps a copy of a pre-booted Rails process
 on hand to completely skip parts of the boot process the next time it's needed. The two tools work
-well together, and are both included in a newly-generated Rails applications by default. 
+well together, and are both included in a newly-generated Rails applications by default.
+
+### Environments
+
+All Bootsnap features are enabled in development, test, production, and all other environments according to the configuration in the setup. At Shopify, we use this gem safely in all environments without issue.
+
+If you would like to disable any feature for a certain environment, we suggest changing the configuration to take into account the appropriate ENV var or configuration according to your needs.
 
 ## How does this work?
 
