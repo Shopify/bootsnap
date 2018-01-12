@@ -62,6 +62,12 @@ class CompileCacheKeyFormatTest < Minitest::Test
     assert_equal('NEATO /DEV/NULL', actual)
   end
 
+  def test_unexistent_fetch
+    assert_raises(Errno::ENOENT) do
+      Bootsnap::CompileCache::Native.fetch(@tmp_dir, '123', Bootsnap::CompileCache::ISeq)
+    end
+  end
+
   private
 
   def cache_key_for_file(file)

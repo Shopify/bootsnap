@@ -94,7 +94,6 @@ static int cache_key_equal(struct bs_cache_key * k1, struct bs_cache_key * k2);
 static VALUE bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler);
 static int open_current_file(char * path, struct bs_cache_key * key, char ** errno_provenance);
 static int fetch_cached_data(int fd, ssize_t data_size, VALUE handler, VALUE * output_data, int * exception_tag, char ** errno_provenance);
-static VALUE prot_exception_for_errno(VALUE err);
 static uint32_t get_ruby_platform(void);
 
 /*
@@ -520,22 +519,6 @@ atomic_write_cache_file(char * path, struct bs_cache_key * key, VALUE data, char
   return ret;
 }
 
-/*
- * Given an errno value (converted to a ruby Fixnum), return the corresponding
- * Errno::* constant. If none is found, return StandardError instead.
- */
-static VALUE
-prot_exception_for_errno(VALUE err)
-{
-  if (err != INT2FIX(0)) {
-    VALUE mErrno = rb_const_get(rb_cObject, rb_intern("Errno"));
-    VALUE constants = rb_funcall(mErrno, rb_intern("constants"), 0);
-    VALUE which = rb_funcall(constants, rb_intern("[]"), 1, err);
-    return rb_funcall(mErrno, rb_intern("const_get"), 1, which);
-  }
-  return rb_eStandardError;
-}
-
 
 /* Read contents from an fd, whose contents are asserted to be +size+ bytes
  * long, into a buffer */
@@ -689,11 +672,7 @@ succeed:
   return output_data;
 fail_errno:
   CLEANUP;
-  exception = rb_protect(prot_exception_for_errno, INT2FIX(errno), &res);
-  if (res) exception = rb_eStandardError;
-  if (errno_provenance != NULL) {
-    exception = rb_exc_new_str(exception, rb_str_new2(errno_provenance));
-  }
+  exception = rb_syserr_new(errno, errno_provenance);
   rb_exc_raise(exception);
   __builtin_unreachable();
 raise:
