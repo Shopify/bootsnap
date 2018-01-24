@@ -18,9 +18,11 @@ Add `bootsnap` to your `Gemfile`:
 gem 'bootsnap', require: false
 ```
 
-If you are using Rails, add this to `config/boot.rb` immediately after `require 'bundler/setup'`:
+If you are using Rails, add this to `config/boot.rb` (and remove `bundler/setup` if you have it):
 
 ```ruby
+require 'bundler'
+Bundler.setup(:default, ENV.fetch('RAILS_ENV', :development)) # Makes sure your $LOAD_PATH only contains the necessary gems
 require 'bootsnap/setup'
 ```
 
