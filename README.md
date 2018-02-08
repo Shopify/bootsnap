@@ -38,7 +38,7 @@ Bootsnap.setup(
   development_mode:     env == 'development', # Current working environment, e.g. RACK_ENV, RAILS_ENV, etc
   load_path_cache:      true,                 # Optimize the LOAD_PATH with a cache
   autoload_paths_cache: true,                 # Optimize ActiveSupport autoloads with cache
-  disable_trace:        true,                 # (Alpha) Set `RubyVM::InstructionSequence.compile_option = { trace_instruction: false }`
+  disable_trace:        env == 'production',  # Set `RubyVM::InstructionSequence.compile_option = { trace_instruction: false }`. Disables all interactive debuggers and TracePoint features.
   compile_cache_iseq:   true,                 # Compile Ruby code into ISeq cache, breaks coverage reporting.
   compile_cache_yaml:   true                  # Compile YAML into a cache
 )
