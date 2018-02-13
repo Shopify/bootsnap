@@ -1,5 +1,7 @@
 # Bootsnap [![Build Status](https://travis-ci.org/Shopify/bootsnap.svg?branch=master)](https://travis-ci.org/Shopify/bootsnap)
 
+[日本語版のREADMEを読んで下さい。You can also see our Japanese README](README.jp.md)
+
 Bootsnap is a library that plugs into Ruby, with optional support for `ActiveSupport` and `YAML`,
 to optimize and cache expensive computations. See [How Does This Work](#how-does-this-work).
 
