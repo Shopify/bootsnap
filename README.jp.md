@@ -1,12 +1,14 @@
 # Bootsnap [![Build Status](https://travis-ci.org/Shopify/bootsnap.svg?branch=master)](https://travis-ci.org/Shopify/bootsnap)
 
-Bootsnap は RubyVM におけるバイトコード生成やファイルルックアップ等の時間のかかる処理を最適化するためのライブラリです。ActiveSupport や YAML もサポートしています。
+Bootsnap は RubyVM におけるバイトコード生成やファイルルックアップ等の時間のかかる処理を最適化するためのライブラリです。ActiveSupport や YAML もサポートしています。[内部動作](#内部動作)もご覧ください。
 
 注意書き: このライブラリは英語話者によって管理されています。この README は日本語ですが、日本語でのサポートはしておらず、リクエストにお答えすることもできません。バイリンガルの方がサポートをサポートしてくださる場合はお知らせください！:)
 
-## パフォーマンス
+### パフォーマンス
 
-Discourse では、約6秒から3秒まで、約50%の起動時間短縮が確認されています。小さなアプリケーションでも、50%の改善（3.6秒から1.8秒）が確認されています。非常に巨大でモノリシックなアプリである Shopify のプラットフォームでは、約25秒から6.5秒へと約75％短縮されました。
+* [Discourse](https://github.com/discourse/discourse) では、約6秒から3秒まで、約50%の起動時間短縮が確認されています。
+* 小さなアプリケーションでも、50%の改善（3.6秒から1.8秒）が確認されています。
+* 非常に巨大でモノリシックなアプリである Shopify のプラットフォームでは、約25秒から6.5秒へと約75％短縮されました。
 
 ## 使用方法
 
@@ -16,11 +18,13 @@ Discourse では、約6秒から3秒まで、約50%の起動時間短縮が確�
 gem 'bootsnap', require: false
 ```
 
-Rails を使用している場合は、以下のコードを、`config/boot.rb` 内にある `require 'bundler/setup'` の後に追加してください。
+Rails を使用している場合は、以下のコードを、`config/boot.rb` 内にある `require 'bundler/setup'` の直後に追加してください。
 
 ```ruby
 require 'bootsnap/setup'
 ```
+
+この require の仕組みは[こちら](https://github.com/Shopify/bootsnap/blob/master/lib/bootsnap/setup.rb)で確認できます。
 
 Rails を使用していない場合、または、より多くの設定を変更したい場合は、以下のコードを `require 'bundler/setup'` の直後に追加してください(早く読み込まれるほど、より多くのものを最適化することができます）。
 
@@ -38,24 +42,31 @@ Bootsnap.setup(
 )
 ```
 
-ヒント: `require 'bootsnap'` を `BootLib::Require.from_gem('bootsnap', 'bootsnap')` で、 [こちらのトリック](https://github.com/Shopify/bootsnap/wiki/Bootlib::Require)を使って置き換えることができます。こうすると、巨大な`$LOAD_PATH`がある場合でも、起動時間を最短化するのに役立ちます。
+**ヒント**: `require 'bootsnap'` を `BootLib::Require.from_gem('bootsnap', 'bootsnap')` で、 [こちらのトリック](https://github.com/Shopify/bootsnap/wiki/Bootlib::Require)を使って置き換えることができます。こうすると、巨大な`$LOAD_PATH`がある場合でも、起動時間を最短化するのに役立ちます。
 
-## Bootsnap の内部動作
+注意: Bootsnap と [Spring](https://github.com/rails/spring) は別領域の問題を扱うツールです。Bootsnap は個々のソースファイルの読み込みを高速化します。一方で、Spring は起動されたRailsプロセスのコピーを保持して次回の起動時に起動プロセスの一部を完全にスキップします。2つのツールはうまく連携しており、どちらも新しく生成された Rails アプリケーションにデフォルトで含まれています。
 
-Bootsnap は、処理に時間のかかるメソッドの結果をキャッシュすることで最適化しています。これには、大きく分けて2つのカテゴリに分けられます。
+### 環境
+Bootsnapのすべての機能はセットアップ時の設定に従って開発、テスト、プロダクション、および他のすべての環境で有効化されます。Shopify では、この gem を問題なくすべての環境で安全に使用しています。
+
+特定の環境で機能を無効にする場合は、必要に応じて適切な ENV 変数または設定を考慮して設定を変更することをおすすめします。
+
+## 内部動作
+
+Bootsnap は、処理に時間のかかるメソッドの結果をキャッシュすることで最適化しています。これは、大きく分けて2つのカテゴリに分けられます。
 
 * [Path Pre-Scanning](#path-pre-scanning)
-    *  `Kernel#require` と `Kernel#load` を `$LOAD_PATH` のフルスキャンを行わないようにオーバーライドします。
-    *  `ActiveSupport::Dependencies.{autoloadable_module?,load_missing_constant,depend_on}` を `ActiveSupport::Dependencies.autoload_paths` のフルスキャンを行わないようにオーバーライドします。
+    * `Kernel#require` と `Kernel#load` を `$LOAD_PATH` フルスキャンを行わないように変更します。
+    * `ActiveSupport::Dependencies.{autoloadable_module?,load_missing_constant,depend_on}` を `ActiveSupport::Dependencies.autoload_paths` のフルスキャンを行わないようにオーバーライドします。
 * [Compilation caching](#compilation-caching)
-    *  Ruby バイトコードのコンパイル結果をキャッシュするためのメソッド `RubyVM::InstructionSequence.load_iseq` が実装されています。
-    *  `YAML.load_file` を YAML オブジェクトのロード結果を MessagePack でキャッシュするようにオーバーライドします。 MessagePack でサポートされていないタイプが使われている場合は Marshal が使われます。
+    * Ruby バイトコードのコンパイル結果をキャッシュするためのメソッド `RubyVM::InstructionSequence.load_iseq` が実装されています。
+    * `YAML.load_file` を YAML オブジェクトのロード結果を MessagePack でキャッシュするように変更します。 MessagePack でサポートされていないタイプが使われている場合は Marshal が使われます。
 
 ### Path Pre-Scanning
 
 _(このライブラリは [bootscale](https://github.com/byroot/bootscale) という別のライブラリを元に開発されました)_
 
-Bootsnap の始動時、あるいはパス(例えば、`$LOAD_PATH`)の変更時に、`Bootsnap::LoadPathCache` がキャッシュから必要なエントリーのリストを読み込みます。または、必要に応じてフルスキャンを実行し結果をキャッシュします。
+Bootsnap の初期化時、あるいはパス(例えば、`$LOAD_PATH`)の変更時に、`Bootsnap::LoadPathCache` がキャッシュから必要なエントリーのリストを読み込みます。または、必要に応じてフルスキャンを実行し結果をキャッシュします。
 その後、たとえば `require 'foo'` を評価する場合, Ruby は `$LOAD_PATH` `['x', 'y', ...]` のすべてのエントリーを繰り返し評価することで `x/foo.rb`, `y/foo.rb` などを探索します。これに対して Bootsnap は、キャッシュされた reuiqre 可能なファイルと `$LOAD_PATH` を見ることで、Rubyが最終的に選択するであろうパスで置き換えます。
 
 この動作によって生成された syscall を見ると、最終的な結果は以前なら次のようになります。
@@ -76,9 +87,9 @@ open y/foo.rb
 ...
 ```
 
-`autoload_paths_cache` オプションが `Bootsnap.setup` に与えられている場合、`ActiveSupport::Dependencies.autoload_paths` をトラバースするメソッドにはまったく同じ最適化が使用されます。
+`autoload_paths_cache` オプションが `Bootsnap.setup` に与えられている場合、`ActiveSupport::Dependencies.autoload_paths` をトラバースする方法にはまったく同じ最適化が使用されます。
 
-`*_path_cache` 機能を埋め込むオーバーライドを図にすると、次のようになります。
+`*_path_cache` を機能させるオーバーライドを図にすると、次のようになります。
 
 ![Bootsnapの説明図](https://cloud.githubusercontent.com/assets/3074765/24532120/eed94e64-158b-11e7-9137-438d759b2ac8.png)
 
@@ -94,11 +105,11 @@ Bootsnap は、 `$LOAD_PATH` エントリを安定エントリと不安定エン
 
 ## Compilation Caching
 
-このコンセプトのより分かりやすい解説は [yomikomu](https://github.com/ko1/yomikomu) をお読み下さい。
+*（このコンセプトのより分かりやすい解説は [yomikomu](https://github.com/ko1/yomikomu) をお読み下さい。)*
 
 Ruby には複雑な文法が実装されており、構文解析は簡単なオペレーションではありません。1.9以降、Ruby は Ruby ソースを内部のバイトコードに変換した後、Ruby VM によって実行してきました。2.3.0 以降、[RubyはAPIを公開し](https://ruby-doc.org/core-2.3.0/RubyVM/InstructionSequence.html)、そのバイトコードをキャッシュすることができるようになりました。これにより、同じファイルが複数ロードされた時の、比較的時間のかかる部分をバイパスすることができます。
 
-また、Shopify のアプリケーションでは、アプリケーションの起動時に YAML ドキュメントの読み込みに多くの時間を費やしていることを発見しました。そして、 MessagePack と Marshal は deserialization にあたって YAML よりもはるかに高速であるということに気付きました。そこで、YAML ドキュメントを、Ruby バイトコードと同じコンパイルキャッシングの最適化を施すことで、高速化しています。Ruby の "バイトコード" フォーマットに相当するものは MessagePack ドキュメント (あるいは、MessagePack をサポートしていないタイプの YAML ドキュメントの場合は、Marshal stream)になります。
+また、アプリケーションの起動時に YAML ドキュメントの読み込みに多くの時間を費やしていることを発見しました。そして、 MessagePack と Marshal は deserialization にあたって YAML よりもはるかに高速であるということに気付きました。そこで、YAML ドキュメントを、Ruby バイトコードと同じコンパイルキャッシングの最適化を施すことで、高速化しています。Ruby の "バイトコード" フォーマットに相当するものは MessagePack ドキュメント (あるいは、MessagePack をサポートしていないタイプの YAML ドキュメントの場合は、Marshal stream)になります。
 
 これらのコンパイル結果は、入力ファイル（FNV1a-64）のフルパスのハッシュを取って生成されたファイル名で、キャッシュディレクトリに保存されます。
 
@@ -132,9 +143,9 @@ close     m
 close     n
 ```
 
-これは一目見るだけでは劣化していると思われるかもしれませんが、性能に大きな違いがあります。
+これは一見劣化していると思われるかもしれませんが、性能に大きな違いがあります。
 
-（両方のリストの最初の3つの syscalls -- `open`, `fstat64`, `close` -- は本質的に有用ではありません。[このRubyパッチ](https://bugs.ruby-lang.org/issues/13378)は、Boosnap と組み合わせることによって、それらを最適化しています）
+*（両方のリストの最初の3つの syscalls -- `open`, `fstat64`, `close` -- は本質的に有用ではありません。[このRubyパッチ](https://bugs.ruby-lang.org/issues/13378)は、Boosnap と組み合わせることによって、それらを最適化しています）*
 
 Bootsnap は、64バイトのヘッダーとそれに続くキャッシュの内容を含んだキャッシュファイルを書き込みます。ヘッダーは、次のいくつかのフィールドで構成されるキャッシュキーです。
 
