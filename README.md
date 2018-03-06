@@ -24,6 +24,9 @@ If you are using Rails, add this to `config/boot.rb` immediately after `require 
 require 'bootsnap/setup'
 ```
 
+It's technically possible to simply specify `gem 'bootsnap', require: 'bootsnap/setup'`, but it's
+important to load Bootsnap as early as possible to get maximum performance improvement.
+
 You can see how this require works [here](https://github.com/Shopify/bootsnap/blob/master/lib/bootsnap/setup.rb).
 
 If you are not using Rails, or if you are but want more control over things, add this to your
