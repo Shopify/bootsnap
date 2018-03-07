@@ -1,3 +1,8 @@
+# 1.2.0
+
+* Add `LoadedFeaturesIndex` to preserve fix a common bug related to `LOAD_PATH` modifications after
+  loading bootsnap.
+
 # 1.1.8
 
 * Don't cache YAML documents with `!ruby/object`
