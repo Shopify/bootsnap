@@ -1,3 +1,7 @@
+# 1.2.1
+
+* Fix method visibility of `Kernel#require`.
+
 # 1.2.0
 
 * Add `LoadedFeaturesIndex` to preserve fix a common bug related to `LOAD_PATH` modifications after
