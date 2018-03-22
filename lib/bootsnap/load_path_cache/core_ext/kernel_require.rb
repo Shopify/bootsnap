@@ -11,6 +11,8 @@ module Bootsnap
 end
 
 module Kernel
+  private
+
   alias_method :require_without_bootsnap, :require
 
   # Note that require registers to $LOADED_FEATURES while load does not.
