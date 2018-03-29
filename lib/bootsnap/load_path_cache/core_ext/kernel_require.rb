@@ -36,6 +36,14 @@ module Kernel
     require_with_bootsnap_lfi(path)
   end
 
+  alias_method :require_relative_without_bootsnap, :require_relative
+  def require_relative(path)
+    realpath = Bootsnap::LoadPathCache.realpath_cache.call(
+      caller_locations(1..1).first.absolute_path, path
+    )
+    require(realpath)
+  end
+
   alias_method :load_without_bootsnap, :load
   def load(path, wrap = false)
     if resolved = Bootsnap::LoadPathCache.load_path_cache.find(path)
@@ -76,6 +84,14 @@ class << Kernel
     return false
   rescue Bootsnap::LoadPathCache::FallbackScan
     require_with_bootsnap_lfi(path)
+  end
+
+  alias_method :require_relative_without_bootsnap, :require_relative
+  def require_relative(path)
+    realpath = Bootsnap::LoadPathCache.realpath_cache.call(
+      caller_locations(1..1).first.absolute_path, path
+    )
+    require(realpath)
   end
 
   alias_method :load_without_bootsnap, :load
