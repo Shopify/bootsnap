@@ -10,7 +10,7 @@ to optimize and cache expensive computations. See [How Does This Work](#how-does
 
 ## Usage
 
-This gem works on MacOS and Linux.
+This gem works on macOS and Linux.
 
 Add `bootsnap` to your `Gemfile`:
 
