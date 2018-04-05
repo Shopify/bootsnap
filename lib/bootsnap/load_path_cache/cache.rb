@@ -9,7 +9,7 @@ module Bootsnap
         @development_mode = development_mode
         @store = store
         @mutex = defined?(::Mutex) ? ::Mutex.new : ::Thread::Mutex.new # TODO: Remove once Ruby 2.2 support is dropped.
-        @path_obj = path_obj
+        @path_obj = path_obj.map { |f| File.exist?(f) ? File.realpath(f) : f }
         @has_relative_paths = nil
         reinitialize
       end

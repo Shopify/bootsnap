@@ -21,12 +21,14 @@ module Bootsnap
     CACHED_EXTENSIONS = DLEXT2 ? [DOT_RB, DLEXT, DLEXT2] : [DOT_RB, DLEXT]
 
     class << self
-      attr_reader :load_path_cache, :autoload_paths_cache, :loaded_features_index
+      attr_reader :load_path_cache, :autoload_paths_cache,
+                  :loaded_features_index, :realpath_cache
 
       def setup(cache_path:, development_mode:, active_support: true)
         store = Store.new(cache_path)
 
         @loaded_features_index = LoadedFeaturesIndex.new
+        @realpath_cache = RealpathCache.new
 
         @load_path_cache = Cache.new(store, $LOAD_PATH, development_mode: development_mode)
         require_relative 'load_path_cache/core_ext/kernel_require'
@@ -53,3 +55,4 @@ require_relative 'load_path_cache/cache'
 require_relative 'load_path_cache/store'
 require_relative 'load_path_cache/change_observer'
 require_relative 'load_path_cache/loaded_features_index'
+require_relative 'load_path_cache/realpath_cache'
