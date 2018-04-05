@@ -115,6 +115,15 @@ module Bootsnap
         dev_yes_cache.stubs(:now).returns(time + 31)
         assert dev_yes_cache.find('new')
       end
+
+      def test_path_obj_equal?
+        path_obj = []
+        cache = Cache.new(NullCache, path_obj)
+
+        path_obj.unshift(@dir1)
+
+        assert_equal("#{@dir1}/a.rb", cache.find('a'))
+      end
     end
   end
 end
