@@ -1,3 +1,7 @@
+# 1.3.0
+
+* Handle cases where load path entries are symlinked (https://github.com/Shopify/bootsnap/pull/136)
+
 # 1.2.1
 
 * Fix method visibility of `Kernel#require`.
