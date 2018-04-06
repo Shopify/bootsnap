@@ -1,4 +1,9 @@
 language: ruby
+sudo: false
+
+os:
+  - linux
+  - osx
 
 rvm:
   - ruby-2.4

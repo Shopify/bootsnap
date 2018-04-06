@@ -4,8 +4,8 @@ module Bootsnap
   module LoadPathCache
     class CacheTest < MiniTest::Test
       def setup
-        @dir1 = Dir.mktmpdir
-        @dir2 = Dir.mktmpdir
+        @dir1 = File.realpath(Dir.mktmpdir)
+        @dir2 = File.realpath(Dir.mktmpdir)
         FileUtils.touch("#{@dir1}/a.rb")
         FileUtils.mkdir_p("#{@dir1}/foo/bar")
         FileUtils.touch("#{@dir1}/foo/bar/baz.rb")

@@ -9,7 +9,7 @@ module Bootsnap
 
       def setup
         @cache = RealpathCache.new
-        @base_dir = Dir.mktmpdir
+        @base_dir = File.realpath(Dir.mktmpdir)
         @absolute_dir = "#{@base_dir}/absolute"
         Dir.mkdir(@absolute_dir)
 
