@@ -25,9 +25,9 @@ module Bootsnap
         @observer.expects(:reinitialize).times(3)
         @arr.delete(3)
         @arr.compact!
-        @arr.map!(&:foo)
+        @arr.map!(&:upcase)
 
-        assert_equal(%w(d e a b c f g), @arr)
+        assert_equal(%w(D E A B C F G), @arr)
       end
     end
   end

@@ -45,8 +45,8 @@ module Bootsnap
           reject! reverse! select! shuffle! shift slice! sort! sort_by!
         ).each do |meth|
           sc.send(:alias_method, :"#{meth}_without_lpc", meth)
-          arr.define_singleton_method(meth) do |*a|
-            send(:"#{meth}_without_lpc", *a)
+          arr.define_singleton_method(meth) do |*a, &block|
+            send(:"#{meth}_without_lpc", *a, &block)
             observer.reinitialize
           end
         end
