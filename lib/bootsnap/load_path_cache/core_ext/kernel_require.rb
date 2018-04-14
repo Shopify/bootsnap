@@ -11,61 +11,11 @@ module Bootsnap
 end
 
 module Kernel
-  private
+  module_function
 
   alias_method :require_without_bootsnap, :require
 
   # Note that require registers to $LOADED_FEATURES while load does not.
-  def require_with_bootsnap_lfi(path, resolved = nil)
-    Bootsnap::LoadPathCache.loaded_features_index.register(path, resolved) do
-      require_without_bootsnap(resolved || path)
-    end
-  end
-
-  def require(path)
-    return false if Bootsnap::LoadPathCache.loaded_features_index.key?(path)
-
-    if resolved = Bootsnap::LoadPathCache.load_path_cache.find(path)
-      return require_with_bootsnap_lfi(path, resolved)
-    end
-
-    raise Bootsnap::LoadPathCache::CoreExt.make_load_error(path)
-  rescue Bootsnap::LoadPathCache::ReturnFalse
-    return false
-  rescue Bootsnap::LoadPathCache::FallbackScan
-    require_with_bootsnap_lfi(path)
-  end
-
-  alias_method :require_relative_without_bootsnap, :require_relative
-  def require_relative(path)
-    realpath = Bootsnap::LoadPathCache.realpath_cache.call(
-      caller_locations(1..1).first.absolute_path, path
-    )
-    require(realpath)
-  end
-
-  alias_method :load_without_bootsnap, :load
-  def load(path, wrap = false)
-    if resolved = Bootsnap::LoadPathCache.load_path_cache.find(path)
-      return load_without_bootsnap(resolved, wrap)
-    end
-
-    # load also allows relative paths from pwd even when not in $:
-    if File.exist?(relative = File.expand_path(path))
-      return load_without_bootsnap(relative, wrap)
-    end
-
-    raise Bootsnap::LoadPathCache::CoreExt.make_load_error(path)
-  rescue Bootsnap::LoadPathCache::ReturnFalse
-    return false
-  rescue Bootsnap::LoadPathCache::FallbackScan
-    load_without_bootsnap(path, wrap)
-  end
-end
-
-class << Kernel
-  alias_method :require_without_bootsnap, :require
-
   def require_with_bootsnap_lfi(path, resolved = nil)
     Bootsnap::LoadPathCache.loaded_features_index.register(path, resolved) do
       require_without_bootsnap(resolved || path)
