@@ -22,12 +22,12 @@ module Bootsnap
         @observer.expects(:push_paths).with(@arr, 'f', 'g')
         @arr.concat(%w(f g))
 
-        @observer.expects(:reinitialize).times(3)
+        @observer.expects(:reinitialize).times(4)
         @arr.delete(3)
         @arr.compact!
         @arr.map!(&:upcase)
-
-        assert_equal(%w(D E A B C F G), @arr)
+        assert_equal('G', @arr.pop)
+        assert_equal(%w(D E A B C F), @arr)
       end
     end
   end

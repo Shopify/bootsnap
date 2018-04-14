@@ -47,8 +47,9 @@ module Bootsnap
         ).each do |meth|
           sc.send(:alias_method, :"#{meth}_without_lpc", meth)
           arr.define_singleton_method(meth) do |*a, &block|
-            send(:"#{meth}_without_lpc", *a, &block)
+            ret = send(:"#{meth}_without_lpc", *a, &block)
             observer.reinitialize
+            ret
           end
         end
       end
