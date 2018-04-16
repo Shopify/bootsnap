@@ -41,13 +41,15 @@ module Bootsnap
         # accounting cost would be greater than the hit from these, since we
         # actively discourage calling them.
         %i(
-          collect! compact! delete delete_at delete_if fill flatten! insert map!
-          reject! reverse! select! shuffle! shift slice! sort! sort_by!
+          []= clear collect! compact! delete delete_at delete_if fill flatten!
+          insert keep_if map! pop reject! replace reverse! rotate! select!
+          shift shuffle! slice! sort! sort_by! uniq!
         ).each do |meth|
           sc.send(:alias_method, :"#{meth}_without_lpc", meth)
           arr.define_singleton_method(meth) do |*a, &block|
-            send(:"#{meth}_without_lpc", *a, &block)
+            ret = send(:"#{meth}_without_lpc", *a, &block)
             observer.reinitialize
+            ret
           end
         end
       end
