@@ -103,14 +103,6 @@ module Bootsnap
         @mutex.synchronize { push_paths_locked(*paths) }
       end
 
-      def each_requirable
-        @mutex.synchronize do
-          @index.each do |rel, entry|
-            yield "#{entry}/#{rel}"
-          end
-        end
-      end
-
       def reinitialize(path_obj = @path_obj)
         @mutex.synchronize do
           @path_obj = path_obj
