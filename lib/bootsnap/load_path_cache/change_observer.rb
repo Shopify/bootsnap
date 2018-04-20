@@ -1,37 +1,28 @@
 module Bootsnap
   module LoadPathCache
     module ChangeObserver
-      def self.register(observer, arr)
-        # Re-overriding these methods on an array that already has them would
-        # cause StackOverflowErrors
-        return if arr.respond_to?(:push_without_lpc)
-
+      module ArrayMixin
         # For each method that adds items to one end or another of the array
         # (<<, push, unshift, concat), override that method to also notify the
         # observer of the change.
-        sc = arr.singleton_class
-        sc.send(:alias_method, :shovel_without_lpc, :<<)
-        arr.define_singleton_method(:<<) do |entry|
-          observer.push_paths(self, entry.to_s)
-          shovel_without_lpc(entry)
+        def <<(entry)
+          @lpc_observer.push_paths(self, entry.to_s)
+          super
         end
 
-        sc.send(:alias_method, :push_without_lpc, :push)
-        arr.define_singleton_method(:push) do |*entries|
-          observer.push_paths(self, *entries.map(&:to_s))
-          push_without_lpc(*entries)
+        def push(*entries)
+          @lpc_observer.push_paths(self, *entries.map(&:to_s))
+          super
         end
 
-        sc.send(:alias_method, :unshift_without_lpc, :unshift)
-        arr.define_singleton_method(:unshift) do |*entries|
-          observer.unshift_paths(self, *entries.map(&:to_s))
-          unshift_without_lpc(*entries)
+        def unshift(*entries)
+          @lpc_observer.unshift_paths(self, *entries.map(&:to_s))
+          super
         end
 
-        sc.send(:alias_method, :concat_without_lpc, :concat)
-        arr.define_singleton_method(:concat) do |entries|
-          observer.push_paths(self, *entries.map(&:to_s))
-          concat_without_lpc(entries)
+        def concat(entries)
+          @lpc_observer.push_paths(self, *entries.map(&:to_s))
+          super
         end
 
         # For each method that modifies the array more aggressively, override
@@ -44,14 +35,18 @@ module Bootsnap
           []= clear collect! compact! delete delete_at delete_if fill flatten!
           insert keep_if map! pop reject! replace reverse! rotate! select!
           shift shuffle! slice! sort! sort_by! uniq!
-        ).each do |meth|
-          sc.send(:alias_method, :"#{meth}_without_lpc", meth)
-          arr.define_singleton_method(meth) do |*a, &block|
-            ret = send(:"#{meth}_without_lpc", *a, &block)
-            observer.reinitialize
+        ).each do |method_name|
+          define_method(method_name) do |*args, &block|
+            ret = super(*args, &block)
+            @lpc_observer.reinitialize
             ret
           end
         end
+      end
+
+      def self.register(observer, arr)
+        arr.instance_variable_set(:@lpc_observer, observer)
+        arr.extend(ArrayMixin)
       end
     end
   end

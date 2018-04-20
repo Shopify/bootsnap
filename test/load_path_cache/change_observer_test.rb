@@ -29,6 +29,14 @@ module Bootsnap
         assert_equal('G', @arr.pop)
         assert_equal(%w(D E A B C F), @arr)
       end
+
+      def test_register_twice_observes_once
+        ChangeObserver.register(@observer, @arr)
+
+        @observer.expects(:push_paths).with(@arr, 'a').once
+        @arr << 'a'
+        assert_equal(%w(a), @arr)
+      end
     end
   end
 end
