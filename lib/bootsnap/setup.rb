@@ -3,7 +3,7 @@ require_relative '../bootsnap'
 env = ENV['RAILS_ENV'] || ENV['RACK_ENV'] || ENV['ENV']
 development_mode = ['', nil, 'development'].include?(env)
 
-# only enable on 'ruby' (MRI), POSIX (darin, linux, *bsd), and >= 2.3.0
+# only enable on 'ruby' (MRI), POSIX (darwin, linux, *bsd), and >= 2.3.0
 enable_cc =
   RUBY_ENGINE == 'ruby' &&
   RUBY_PLATFORM =~ /darwin|linux|bsd/ &&
