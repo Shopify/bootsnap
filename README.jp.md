@@ -56,11 +56,11 @@ Bootsnapのすべての機能はセットアップ時の設定に従って開発
 Bootsnap は、処理に時間のかかるメソッドの結果をキャッシュすることで最適化しています。これは、大きく分けて2つのカテゴリに分けられます。
 
 * [Path Pre-Scanning](#path-pre-scanning)
-    * `Kernel#require` と `Kernel#load` を `$LOAD_PATH` フルスキャンを行わないように変更します。
-    * `ActiveSupport::Dependencies.{autoloadable_module?,load_missing_constant,depend_on}` を `ActiveSupport::Dependencies.autoload_paths` のフルスキャンを行わないようにオーバーライドします。
+  * `Kernel#require` と `Kernel#load` を `$LOAD_PATH` フルスキャンを行わないように変更します。
+  * `ActiveSupport::Dependencies.{autoloadable_module?,load_missing_constant,depend_on}` を `ActiveSupport::Dependencies.autoload_paths` のフルスキャンを行わないようにオーバーライドします。
 * [Compilation caching](#compilation-caching)
-    * Ruby バイトコードのコンパイル結果をキャッシュするためのメソッド `RubyVM::InstructionSequence.load_iseq` が実装されています。
-    * `YAML.load_file` を YAML オブジェクトのロード結果を MessagePack でキャッシュするように変更します。 MessagePack でサポートされていないタイプが使われている場合は Marshal が使われます。
+  * Ruby バイトコードのコンパイル結果をキャッシュするためのメソッド `RubyVM::InstructionSequence.load_iseq` が実装されています。
+  * `YAML.load_file` を YAML オブジェクトのロード結果を MessagePack でキャッシュするように変更します。 MessagePack でサポートされていないタイプが使われている場合は Marshal が使われます。
 
 ### Path Pre-Scanning
 
