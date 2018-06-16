@@ -18,11 +18,15 @@ Add `bootsnap` to your `Gemfile`:
 gem 'bootsnap', require: false
 ```
 
-If you are using Rails, add this to `config/boot.rb` (and remove `bundler/setup` if you have it):
-
+If you are using Rails, add this to `config/boot.rb` immediately after require `bundler/setup` or a `Bundler.setup` call:
+```ruby
+ require 'bundler/setup'
+ require 'bootsnap/setup'
+```
+Protip: Using Bundler.setup like in the example below can _further_ improve boot time by reducing the `$LOAD_PATH` to only include gems for the given environment
 ```ruby
 require 'bundler'
-Bundler.setup(:default, ENV.fetch('RAILS_ENV', :development)) # Makes sure your $LOAD_PATH only contains the necessary gems
+Bundler.setup(:default, ENV.fetch('RAILS_ENV', :development))
 require 'bootsnap/setup'
 ```
 
