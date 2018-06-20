@@ -6,13 +6,13 @@ module Bootsnap
       # Glob pattern to find requirable files and subdirectories in given path.
       # It expands to:
       #
-      #   * `/*{.rb,.so,/}` - It matches requirable files, directories and
-      #     symlinks to directories at given path.
-      #   * `/*/**/*{.rb,.so,/}` - It matches requirable files and
+      #   * `/**/*{.rb,.so,/}` - It matches requirable files, directories and
+      #     symlinks to directories at given path any directory tree depth.
+      #   * `/**/*/**/*{.rb,.so,/}` - It matches requirable files and
       #     subdirectories in any (even symlinked) directory at given path at
       #     any directory tree depth.
       #
-      REQUIRABLES_AND_DIRS = "/{,*/**/}*{#{DOT_RB},#{DL_EXTENSIONS.join(',')},/}"
+      REQUIRABLES_AND_DIRS = "/**/{,*/**/}*{#{DOT_RB},#{DL_EXTENSIONS.join(',')},/}"
       NORMALIZE_NATIVE_EXTENSIONS = !DL_EXTENSIONS.include?(LoadPathCache::DOT_SO)
       ALTERNATIVE_NATIVE_EXTENSIONS_PATTERN = /\.(o|bundle|dylib)\z/
       BUNDLE_PATH = Bootsnap.bundler? ?
@@ -45,7 +45,7 @@ module Bootsnap
           end
         end
 
-        [requirables, dirs]
+        [requirables.uniq, dirs.uniq]
       end
     end
   end
