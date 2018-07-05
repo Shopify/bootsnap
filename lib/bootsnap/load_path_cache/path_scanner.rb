@@ -3,7 +3,7 @@ require_relative '../explicit_require'
 module Bootsnap
   module LoadPathCache
     module PathScanner
-      ALL_FILES = "/**/{,*/**/}*"
+      ALL_FILES = "/{,**/*/**/}*"
       REQUIRABLE_EXTENSIONS = [DOT_RB] + DL_EXTENSIONS
       NORMALIZE_NATIVE_EXTENSIONS = !DL_EXTENSIONS.include?(LoadPathCache::DOT_SO)
       ALTERNATIVE_NATIVE_EXTENSIONS_PATTERN = /\.(o|bundle|dylib)\z/
@@ -37,7 +37,7 @@ module Bootsnap
           end
         end
 
-        [requirables.uniq, dirs.uniq]
+        [requirables, dirs]
       end
     end
   end
