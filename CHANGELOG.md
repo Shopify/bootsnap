@@ -1,3 +1,7 @@
+# 1.3.1
+
+* Change load path scanning to more correctly follow symlinks.
+
 # 1.3.0
 
 * Handle cases where load path entries are symlinked (https://github.com/Shopify/bootsnap/pull/136)
