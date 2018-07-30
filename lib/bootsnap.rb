@@ -6,17 +6,26 @@ require_relative 'bootsnap/compile_cache'
 module Bootsnap
   InvalidConfiguration = Class.new(StandardError)
 
+  def self.supports_iseq_cache?
+    !!defined?(RubyVM::InstructionSequence)
+  end
+
   def self.setup(
     cache_dir:,
     development_mode: true,
     load_path_cache: true,
     autoload_paths_cache: true,
     disable_trace: false,
-    compile_cache_iseq: true,
+    compile_cache_iseq: supports_iseq_cache?,
     compile_cache_yaml: true
   )
     if autoload_paths_cache && !load_path_cache
       raise InvalidConfiguration, "feature 'autoload_paths_cache' depends on feature 'load_path_cache'"
+    end
+
+    if compile_cache_iseq && !supports_iseq_cache?
+      compile_cache_iseq = false
+      warn("This implementation of Ruby does not support ISeq caching.")
     end
 
     setup_disable_trace if disable_trace

@@ -8,6 +8,7 @@ os:
 rvm:
   - ruby-2.4
   - ruby-2.5
+  - truffleruby
 
 before_script: rake
 script: bundle exec bin/testunit
