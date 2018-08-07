@@ -84,7 +84,7 @@ module Bootsnap
 
       private
 
-      STRIP_EXTENSION = /\..*?$/
+      STRIP_EXTENSION = /\.[^.]*?$/
       private_constant :STRIP_EXTENSION
 
       def strip_extension(f)
