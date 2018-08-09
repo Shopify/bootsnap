@@ -48,7 +48,7 @@ module Bootsnap
         klass.send(:define_method, :load_file) do |path|
           Bootsnap::CompileCache::Native.fetch(
             cache_dir,
-            path.to_s,
+            path,
             Bootsnap::CompileCache::YAML
           )
         end

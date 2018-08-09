@@ -269,6 +269,8 @@ cache_key_equal(struct bs_cache_key * k1, struct bs_cache_key * k2)
 static VALUE
 bs_rb_fetch(VALUE self, VALUE cachedir_v, VALUE path_v, VALUE handler)
 {
+  FilePathValue(path_v);
+
   Check_Type(cachedir_v, T_STRING);
   Check_Type(path_v, T_STRING);
 
