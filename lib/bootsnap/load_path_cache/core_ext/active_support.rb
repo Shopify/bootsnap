@@ -42,6 +42,8 @@ module Bootsnap
           def load_missing_constant(from_mod, const_name)
             super
           rescue NameError => e
+            # If we already had cache disabled, there's no use retrying
+            raise if Thread.current[:without_bootsnap_cache]
             # NoMethodError is a NameError, but we only want to handle actual
             # NameError instances.
             raise unless e.class == NameError
@@ -58,6 +60,8 @@ module Bootsnap
           def depend_on(*)
             super
           rescue LoadError
+            # If we already had cache disabled, there's no use retrying
+            raise if Thread.current[:without_bootsnap_cache]
             CoreExt::ActiveSupport.without_bootsnap_cache { super }
           end
         end
