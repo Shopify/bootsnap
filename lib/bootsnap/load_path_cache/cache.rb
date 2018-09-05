@@ -132,10 +132,11 @@ module Bootsnap
             p = Path.new(path)
             @has_relative_paths = true if p.relative?
             next if p.non_directory?
+            expanded_path = p.expanded_path
             entries, dirs = p.entries_and_dirs(@store)
             # push -> low precedence -> set only if unset
             dirs.each    { |dir| @dirs[dir]  ||= true }
-            entries.each { |rel| @index[rel] ||= p.expanded_path }
+            entries.each { |rel| @index[rel] ||= expanded_path }
           end
         end
       end
@@ -145,10 +146,11 @@ module Bootsnap
           paths.map(&:to_s).reverse_each do |path|
             p = Path.new(path)
             next if p.non_directory?
+            expanded_path = p.expanded_path
             entries, dirs = p.entries_and_dirs(@store)
             # unshift -> high precedence -> unconditional set
             dirs.each    { |dir| @dirs[dir]  = true }
-            entries.each { |rel| @index[rel] = p.expanded_path }
+            entries.each { |rel| @index[rel] = expanded_path }
           end
         end
       end
