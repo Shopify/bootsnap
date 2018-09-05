@@ -10,6 +10,14 @@ module Bootsnap
           Thread.current[:without_bootsnap_cache] = prev
         end
 
+        def self.allow_bootsnap_retry(allowed)
+          prev = Thread.current[:without_bootsnap_retry] || false
+          Thread.current[:without_bootsnap_retry] = !allowed
+          yield
+        ensure
+          Thread.current[:without_bootsnap_retry] = prev
+        end
+
         module ClassMethods
           def autoload_paths=(o)
             super
@@ -33,6 +41,12 @@ module Bootsnap
             CoreExt::ActiveSupport.without_bootsnap_cache { super }
           end
 
+          def require_or_load(*)
+            CoreExt::ActiveSupport.allow_bootsnap_retry(true) do
+              super
+            end
+          end
+
           # If we can't find a constant using the patched implementation of
           # search_for_file, try again with the default implementation.
           #
@@ -40,8 +54,13 @@ module Bootsnap
           # behaviour.  The gymnastics here are a bit awkward, but it prevents
           # 200+ lines of monkeypatches.
           def load_missing_constant(from_mod, const_name)
-            super
+            CoreExt::ActiveSupport.allow_bootsnap_retry(false) do
+              super
+            end
           rescue NameError => e
+            # This function can end up called recursively, we only want to
+            # retry at the top-level.
+            raise if Thread.current[:without_bootsnap_retry]
             # If we already had cache disabled, there's no use retrying
             raise if Thread.current[:without_bootsnap_cache]
             # NoMethodError is a NameError, but we only want to handle actual
