@@ -27,9 +27,9 @@ module Bootsnap
 
         # uniq! keeps the first occurance of each path, otherwise preserving
         # order, preserving the effective load path
-        def uniq!
+        def uniq!(*args)
           ret = super
-          @lpc_observer.reinitialize if block_given?
+          @lpc_observer.reinitialize if block_given? || !args.empty?
           ret
         end
 
