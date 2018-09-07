@@ -37,6 +37,16 @@ module Bootsnap
         @arr << 'a'
         assert_equal(%w(a), @arr)
       end
+
+      def test_uniq_without_block
+        @observer.expects(:reinitialize).never
+        @arr.uniq!
+      end
+
+      def test_uniq_with_block
+        @observer.expects(:reinitialize).once
+        @arr.uniq! {}
+      end
     end
   end
 end

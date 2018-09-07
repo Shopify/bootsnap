@@ -25,6 +25,14 @@ module Bootsnap
           super
         end
 
+        # uniq! keeps the first occurance of each path, otherwise preserving
+        # order, preserving the effective load path
+        def uniq!(*args)
+          ret = super
+          @lpc_observer.reinitialize if block_given? || !args.empty?
+          ret
+        end
+
         # For each method that modifies the array more aggressively, override
         # the method to also have the observer completely reconstruct its state
         # after the modification. Many of these could be made to modify the
@@ -34,7 +42,7 @@ module Bootsnap
         %i(
           []= clear collect! compact! delete delete_at delete_if fill flatten!
           insert keep_if map! pop reject! replace reverse! rotate! select!
-          shift shuffle! slice! sort! sort_by! uniq!
+          shift shuffle! slice! sort! sort_by!
         ).each do |method_name|
           define_method(method_name) do |*args, &block|
             ret = super(*args, &block)
