@@ -69,9 +69,9 @@ module Bootsnap
 
       def test_directory_caching
         cache = Cache.new(NullCache, [@dir1])
-        assert cache.has_dir?("foo")
-        assert cache.has_dir?("foo/bar")
-        refute cache.has_dir?("bar")
+        assert_equal @dir1, cache.load_dir("foo")
+        assert_equal @dir1, cache.load_dir("foo/bar")
+        assert_nil cache.load_dir("bar")
       end
 
       def test_extension_permutations

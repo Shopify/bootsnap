@@ -14,10 +14,10 @@ module Bootsnap
         reinitialize
       end
 
-      # Does this directory exist as a child of one of the path items?
-      # e.g. given "/a/b/c/d" exists, and the path is ["/a/b"], has_dir?("c/d")
-      # is true.
-      def has_dir?(dir)
+      # What is the path item that contains the dir as child?
+      # e.g. given "/a/b/c/d" exists, and the path is ["/a/b"], load_dir("c/d")
+      # is "/a/b".
+      def load_dir(dir)
         reinitialize if stale?
         @mutex.synchronize { @dirs[dir] }
       end
@@ -108,7 +108,7 @@ module Bootsnap
           @path_obj = path_obj
           ChangeObserver.register(self, @path_obj)
           @index = {}
-          @dirs = Hash.new(false)
+          @dirs = {}
           @generated_at = now
           push_paths_locked(*@path_obj)
         end
@@ -135,7 +135,7 @@ module Bootsnap
             expanded_path = p.expanded_path
             entries, dirs = p.entries_and_dirs(@store)
             # push -> low precedence -> set only if unset
-            dirs.each    { |dir| @dirs[dir]  ||= true }
+            dirs.each    { |dir| @dirs[dir]  ||= path }
             entries.each { |rel| @index[rel] ||= expanded_path }
           end
         end
@@ -149,7 +149,7 @@ module Bootsnap
             expanded_path = p.expanded_path
             entries, dirs = p.entries_and_dirs(@store)
             # unshift -> high precedence -> unconditional set
-            dirs.each    { |dir| @dirs[dir]  = true }
+            dirs.each    { |dir| @dirs[dir]  = path }
             entries.each { |rel| @index[rel] = expanded_path }
           end
         end
