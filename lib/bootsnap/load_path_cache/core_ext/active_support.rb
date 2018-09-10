@@ -34,7 +34,7 @@ module Bootsnap
           end
 
           def autoloadable_module?(path_suffix)
-            Bootsnap::LoadPathCache.autoload_paths_cache.has_dir?(path_suffix)
+            Bootsnap::LoadPathCache.autoload_paths_cache.load_dir(path_suffix)
           end
 
           def remove_constant(const)
