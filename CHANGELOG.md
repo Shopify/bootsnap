@@ -1,3 +1,10 @@
+# 1.3.2
+
+* Fix Spring + Bootsnap incompatibility when there are files with similar names.
+* Fix `YAML.load_file` monkey patch to keep accepting File objects as arguments.
+* Fix the API for `ActiveSupport::Dependencies#autoloadable_module?`.
+* Some performance improvements.
+
 # 1.3.1
 
 * Change load path scanning to more correctly follow symlinks.
