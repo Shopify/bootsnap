@@ -22,6 +22,20 @@ module Bootsnap
         @mutex.synchronize { @dirs[dir] }
       end
 
+      if defined? JRuby::Util.internal_libraries
+        JRUBY_INTERNAL_LIBRARIES = JRuby::Util.internal_libraries.each_with_object({}) do |lib, hash|
+          basename = File.basename(lib, '.*')
+          dirname = File.dirname(lib)
+          key = dirname == '.' ? basename : File.join(dirname, basename)
+
+          hash[key] = key # jruby/util => jruby/util
+          hash[lib] = lib # jruby/util.rb => jruby/util.rb
+          hash[key + DOT_SO] = key + DOT_SO # jruby/util.so => jruby/util.so
+        end.freeze
+      else
+        JRUBY_INTERNAL_LIBRARIES = {}.freeze
+      end
+
       # { 'enumerator' => nil, 'enumerator.so' => nil, ... }
       BUILTIN_FEATURES = $LOADED_FEATURES.each_with_object({}) do |feat, features|
         # Builtin features are of the form 'enumerator.so'.
@@ -45,6 +59,11 @@ module Bootsnap
       def find(feature)
         reinitialize if (@has_relative_paths && dir_changed?) || stale?
         feature = feature.to_s
+
+        if JRUBY_INTERNAL_LIBRARIES.key?(feature) && !BUILTIN_FEATURES.key?(feature)
+          return JRUBY_INTERNAL_LIBRARIES[feature]
+        end
+
         return feature if absolute_path?(feature)
         return File.expand_path(feature) if feature.start_with?('./')
         @mutex.synchronize do
