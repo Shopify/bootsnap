@@ -43,7 +43,7 @@ class BundlerTest < Minitest::Test
   def without_required_env_keys
     original_env = {}
     begin
-      %w[BUNDLE_BIN_PATH BUNDLE_GEMFILE].each do |k|
+      %w(BUNDLE_BIN_PATH BUNDLE_GEMFILE).each do |k|
         original_env[k] = ENV[k]
         ENV[k] = nil
       end
