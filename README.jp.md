@@ -67,7 +67,7 @@ Bootsnap は、処理に時間のかかるメソッドの結果をキャッシ�
 _(このライブラリは [bootscale](https://github.com/byroot/bootscale) という別のライブラリを元に開発されました)_
 
 Bootsnap の初期化時、あるいはパス(例えば、`$LOAD_PATH`)の変更時に、`Bootsnap::LoadPathCache` がキャッシュから必要なエントリーのリストを読み込みます。または、必要に応じてフルスキャンを実行し結果をキャッシュします。
-その後、たとえば `require 'foo'` を評価する場合, Ruby は `$LOAD_PATH` `['x', 'y', ...]` のすべてのエントリーを繰り返し評価することで `x/foo.rb`, `y/foo.rb` などを探索します。これに対して Bootsnap は、キャッシュされた reuiqre 可能なファイルと `$LOAD_PATH` を見ることで、Rubyが最終的に選択するであろうパスで置き換えます。
+その後、たとえば `require 'foo'` を評価する場合, Ruby は `$LOAD_PATH` `['x', 'y', ...]` のすべてのエントリーを繰り返し評価することで `x/foo.rb`, `y/foo.rb` などを探索します。これに対して Bootsnap は、キャッシュされた require 可能なファイルと `$LOAD_PATH` を見ることで、Rubyが最終的に選択するであろうパスで置き換えます。
 
 この動作によって生成された syscall を見ると、最終的な結果は以前なら次のようになります。
 
