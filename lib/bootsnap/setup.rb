@@ -30,6 +30,18 @@ unless cache_dir
   cache_dir = File.join(app_root, 'tmp', 'cache')
 end
 
+begin
+  File.mkpath(cache_dir)
+rescue
+  # Ignore errors. If we couldn't mkpath, then writable? will return false below.
+end
+if !File.writable?(cache_dir)
+  $stderr.puts "[bootsnap/setup] cache directory #{cache_dir} doesn't exist or is not writable."
+  $stderr.puts "[bootsnap/setup] An alternative directory can be specified with the environment variable BOOTSNAP_CACHE_DIR"
+
+  raise "can't write to bootsnap cache directory"
+end
+
 Bootsnap.setup(
   cache_dir:            cache_dir,
   development_mode:     development_mode,
