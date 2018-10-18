@@ -15,6 +15,12 @@ Gem::Specification.new do |spec|
   spec.description   = spec.summary
   spec.homepage      = "https://github.com/Shopify/bootsnap"
 
+  spec.metadata = {
+    'bug_tracker_uri'   => 'https://github.com/Shopify/bootsnap/issues',
+    'changelog_uri'     => 'https://github.com/Shopify/bootsnap/blob/master/CHANGELOG.md',
+    'source_code_uri'   => 'https://github.com/Shopify/bootsnap',
+  }
+
   spec.files = `git ls-files -z`.split("\x0").reject do |f|
     f.match(%r{^(test|spec|features)/})
   end
