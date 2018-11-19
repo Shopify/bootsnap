@@ -12,7 +12,7 @@ Bootsnap は RubyVM におけるバイトコード生成やファイルルック
 
 ## 使用方法
 
-この gem は MacOS と Linux で作動します。まずは、`bootsnap` を `Gemfile` に追加します:
+この gem は macOS と Linux で作動します。まずは、`bootsnap` を `Gemfile` に追加します:
 
 ```ruby
 gem 'bootsnap', require: false
