@@ -8,6 +8,11 @@ os:
 rvm:
   - ruby-2.4
   - ruby-2.5
+  - ruby-head
+
+matrix:
+  allow_failures:
+    - rvm: ruby-head
 
 before_script: rake
 script: bundle exec bin/testunit
