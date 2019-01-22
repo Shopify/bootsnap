@@ -1,0 +1,10 @@
+#!/bin/bash
+
+set -euxo pipefail
+
+if [[ "${MINIMAL_SUPPORT-0}" -eq 1 ]]; then
+  exec bin/test-minimal-support
+else
+  rake
+  exec bin/testunit
+fi

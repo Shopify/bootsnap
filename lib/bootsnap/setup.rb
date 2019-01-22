@@ -3,12 +3,6 @@ require_relative '../bootsnap'
 env = ENV['RAILS_ENV'] || ENV['RACK_ENV'] || ENV['ENV']
 development_mode = ['', nil, 'development'].include?(env)
 
-# only enable on 'ruby' (MRI), POSIX (darwin, linux, *bsd), and >= 2.3.0
-enable_cc =
-  RUBY_ENGINE == 'ruby' &&
-  RUBY_PLATFORM =~ /darwin|linux|bsd/ &&
-  Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("2.3.0")
-
 cache_dir = ENV['BOOTSNAP_CACHE_DIR']
 unless cache_dir
   config_dir_frame = caller.detect do |line|
@@ -36,6 +30,6 @@ Bootsnap.setup(
   load_path_cache:      true,
   autoload_paths_cache: true, # assume rails. open to PRs to impl. detection
   disable_trace:        false,
-  compile_cache_iseq:   enable_cc,
-  compile_cache_yaml:   enable_cc
+  compile_cache_iseq:   true,
+  compile_cache_yaml:   true,
 )

@@ -25,6 +25,11 @@ module Bootsnap
                   :loaded_features_index, :realpath_cache
 
       def setup(cache_path:, development_mode:, active_support: true)
+        unless supported?
+          $stderr.puts "[bootsnap/setup] Load path caching is not supported on this implementation of Ruby"
+          return
+        end
+
         store = Store.new(cache_path)
 
         @loaded_features_index = LoadedFeaturesIndex.new
@@ -44,6 +49,11 @@ module Bootsnap
           )
           require_relative 'load_path_cache/core_ext/active_support'
         end
+      end
+
+      def supported?
+        RUBY_ENGINE == 'ruby' &&
+        RUBY_PLATFORM =~ /darwin|linux|bsd/
       end
     end
   end
