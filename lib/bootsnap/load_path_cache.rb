@@ -26,7 +26,7 @@ module Bootsnap
 
       def setup(cache_path:, development_mode:, active_support: true)
         unless supported?
-          $stderr.puts "[bootsnap/setup] Load path caching is not supported on this implementation of Ruby"
+          warn "[bootsnap/setup] Load path caching is not supported on this implementation of Ruby" if $VERBOSE
           return
         end
 

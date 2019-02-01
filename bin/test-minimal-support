@@ -4,4 +4,4 @@ set -euxo pipefail
 
 cd test/minimal_support
 bundle
-BOOTSNAP_CACHE_DIR=/tmp bundle exec ruby -I ../../lib bootsnap_setup.rb
+BOOTSNAP_CACHE_DIR=/tmp bundle exec ruby -w -I ../../lib bootsnap_setup.rb

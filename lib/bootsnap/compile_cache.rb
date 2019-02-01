@@ -6,7 +6,7 @@ module Bootsnap
           require_relative 'compile_cache/iseq'
           Bootsnap::CompileCache::ISeq.install!(cache_dir)
         else
-          $stderr.puts "[bootsnap/setup] bytecode caching is not supported on this implementation of Ruby"
+          warn "[bootsnap/setup] bytecode caching is not supported on this implementation of Ruby" if $VERBOSE
         end
       end
 
@@ -15,7 +15,7 @@ module Bootsnap
           require_relative 'compile_cache/yaml'
           Bootsnap::CompileCache::YAML.install!(cache_dir)
         else
-          $stderr.puts "[bootsnap/setup] YAML parsing caching is not supported on this implementation of Ruby"
+          warn "[bootsnap/setup] YAML parsing caching is not supported on this implementation of Ruby" if $VERBOSE
         end
       end
     end
