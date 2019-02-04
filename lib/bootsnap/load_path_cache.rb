@@ -59,10 +59,12 @@ module Bootsnap
   end
 end
 
-require_relative 'load_path_cache/path_scanner'
-require_relative 'load_path_cache/path'
-require_relative 'load_path_cache/cache'
-require_relative 'load_path_cache/store'
-require_relative 'load_path_cache/change_observer'
-require_relative 'load_path_cache/loaded_features_index'
-require_relative 'load_path_cache/realpath_cache'
+if Bootsnap::LoadPathCache.supported?
+  require_relative 'load_path_cache/path_scanner'
+  require_relative 'load_path_cache/path'
+  require_relative 'load_path_cache/cache'
+  require_relative 'load_path_cache/store'
+  require_relative 'load_path_cache/change_observer'
+  require_relative 'load_path_cache/loaded_features_index'
+  require_relative 'load_path_cache/realpath_cache'
+end
