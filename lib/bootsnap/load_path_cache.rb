@@ -37,6 +37,7 @@ module Bootsnap
 
         @load_path_cache = Cache.new(store, $LOAD_PATH, development_mode: development_mode)
         require_relative('load_path_cache/core_ext/kernel_require')
+        require_relative('load_path_cache/core_ext/loaded_features')
 
         if active_support
           # this should happen after setting up the initial cache because it

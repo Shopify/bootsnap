@@ -24,6 +24,7 @@ module Bootsnap
     class LoadedFeaturesIndex
       def initialize
         @lfi = {}
+        @deletion_lfi = Hash.new { |h, k| h[k] = [] }
         @mutex = defined?(::Mutex) ? ::Mutex.new : ::Thread::Mutex.new # TODO: Remove once Ruby 2.2 support is dropped.
 
         # In theory the user could mutate $LOADED_FEATURES and invalidate our
@@ -37,8 +38,18 @@ module Bootsnap
             # /a/b/lib/my/foo.rb
             #          ^^^^^^^^^
             short = feat[(lpe.length + 1)..-1]
+            stripped = strip_extension(short)
             @lfi[short] = true
-            @lfi[strip_extension(short)] = true
+            @lfi[stripped] = true
+            @deletion_lfi[feat.hash] << short << stripped
+          end
+        end
+      end
+
+      def purge(feature)
+        @mutex.synchronize do
+          (@deletion_lfi.delete(feature.hash) || []).each do |lfi_entry|
+            @lfi.delete(lfi_entry)
           end
         end
       end
@@ -77,6 +88,9 @@ module Bootsnap
         @mutex.synchronize do
           @lfi[short] = true
           (@lfi[altname] = true) if altname
+
+          @deletion_lfi[long.hash] << short
+          @deletion_lfi[long.hash] << altname if altname
         end
 
         ret
