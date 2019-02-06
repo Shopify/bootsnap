@@ -56,7 +56,7 @@ module Bootsnap
           # returns false as if it were already loaded; however, there is no
           # file to find on disk. We've pre-built a list of these, and we
           # return false if any of them is loaded.
-          raise LoadPathCache::ReturnFalse if BUILTIN_FEATURES.key?(feature)
+          raise(LoadPathCache::ReturnFalse, '', []) if BUILTIN_FEATURES.key?(feature)
 
           # The feature wasn't found on our preliminary search through the index.
           # We resolve this differently depending on what the extension was.
@@ -78,7 +78,7 @@ module Bootsnap
           else
             # other, unknown extension. For example, `.rake`. Since we haven't
             # cached these, we legitimately need to run the load path search.
-            raise LoadPathCache::FallbackScan
+            raise(LoadPathCache::FallbackScan, '', [])
           end
         end
       end
