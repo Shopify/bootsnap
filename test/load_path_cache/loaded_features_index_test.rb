@@ -65,6 +65,20 @@ module Bootsnap
         refute(@index.key?('foo'))
       end
 
+      def test_register_finds_correct_feature
+        refute(@index.key?('bundler'))
+        refute(@index.key?('bundler.rb'))
+        refute(@index.key?('foo'))
+        @index.register('bundler', nil) { $LOADED_FEATURES << '/a/b/bundler.rb' }
+        assert(@index.key?('bundler'))
+        assert(@index.key?('bundler.rb'))
+        refute(@index.key?('foo'))
+        @index.purge('/a/b/bundler.rb')
+        refute(@index.key?('bundler'))
+        refute(@index.key?('bundler.rb'))
+        refute(@index.key?('foo'))
+      end
+
       def test_derives_initial_state_from_loaded_features
         index = LoadedFeaturesIndex.new
         assert(index.key?('minitest/autorun'))

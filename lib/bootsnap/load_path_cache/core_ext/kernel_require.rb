@@ -19,10 +19,6 @@ module Kernel
   def require_with_bootsnap_lfi(path, resolved = nil)
     Bootsnap::LoadPathCache.loaded_features_index.register(path, resolved) do
       require_without_bootsnap(resolved || path)
-      # TODO(burke): if resolved was nil, the correct thing here is probably to
-      # ingress the appended contents to $LOADED_FEATURES into the LFI, but
-      # it's hard to imagine how to do this without creating a bunch of
-      # redundant work, since require can call itself a bunch of times.
     end
   end
 
