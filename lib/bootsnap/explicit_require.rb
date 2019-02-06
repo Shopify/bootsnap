@@ -5,7 +5,7 @@ module Bootsnap
     DLEXT      = RbConfig::CONFIG['DLEXT']
 
     def self.from_self(feature)
-      require_relative "../#{feature}"
+      require_relative("../#{feature}")
     end
 
     def self.from_rubylibdir(feature)

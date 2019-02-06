@@ -1,4 +1,4 @@
-require_relative 'path_scanner'
+require_relative('path_scanner')
 
 module Bootsnap
   module LoadPathCache
@@ -17,7 +17,7 @@ module Bootsnap
         stability == VOLATILE
       end
 
-      attr_reader :path
+      attr_reader(:path)
 
       def initialize(path)
         @path = path.to_s
@@ -76,8 +76,8 @@ module Bootsnap
         ["", *dirs].each do |dir|
           curr = begin
             File.mtime("#{path}/#{dir}").to_i
-          rescue Errno::ENOENT, Errno::ENOTDIR
-            -1
+                 rescue Errno::ENOENT, Errno::ENOTDIR
+                   -1
           end
           max = curr if curr > max
         end

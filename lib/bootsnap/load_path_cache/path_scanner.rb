@@ -1,4 +1,4 @@
-require_relative '../explicit_require'
+require_relative('../explicit_require')
 
 module Bootsnap
   module LoadPathCache
@@ -7,8 +7,12 @@ module Bootsnap
       REQUIRABLE_EXTENSIONS = [DOT_RB] + DL_EXTENSIONS
       NORMALIZE_NATIVE_EXTENSIONS = !DL_EXTENSIONS.include?(LoadPathCache::DOT_SO)
       ALTERNATIVE_NATIVE_EXTENSIONS_PATTERN = /\.(o|bundle|dylib)\z/
-      BUNDLE_PATH = Bootsnap.bundler? ?
-        (Bundler.bundle_path.cleanpath.to_s << LoadPathCache::SLASH).freeze : ''.freeze
+
+      BUNDLE_PATH = if Bootsnap.bundler?
+        (Bundler.bundle_path.cleanpath.to_s << LoadPathCache::SLASH).freeze
+      else
+        ''.freeze
+      end
 
       def self.call(path)
         path = path.to_s

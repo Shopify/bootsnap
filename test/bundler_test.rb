@@ -1,30 +1,30 @@
-require 'test_helper'
+require('test_helper')
 
 class BundlerTest < Minitest::Test
   def test_bundler_with_bundle_bin_path_env
     without_required_env_keys do
       ENV['BUNDLE_BIN_PATH'] = 'foo'
-      assert_predicate Bootsnap, :bundler?
+      assert_predicate(Bootsnap, :bundler?)
     end
   end
 
   def test_bundler_with_bundle_gemfile_env
     without_required_env_keys do
       ENV['BUNDLE_GEMFILE'] = 'foo'
-      assert_predicate Bootsnap, :bundler?
+      assert_predicate(Bootsnap, :bundler?)
     end
   end
 
   def test_bundler_without_bundler_const
     without_bundler do
-      refute_predicate Bootsnap, :bundler?
+      refute_predicate(Bootsnap, :bundler?)
     end
   end
 
   def test_bundler_without_required_env_keys
     without_required_env_keys do
-      assert defined?(::Bundler)
-      refute_predicate Bootsnap, :bundler?
+      assert(defined?(::Bundler))
+      refute_predicate(Bootsnap, :bundler?)
     end
   end
 

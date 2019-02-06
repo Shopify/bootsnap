@@ -1,21 +1,21 @@
-require 'bootsnap/bootsnap'
+require('bootsnap/bootsnap')
 
 module Bootsnap
   module CompileCache
     module YAML
       class << self
-        attr_accessor :msgpack_factory
+        attr_accessor(:msgpack_factory)
       end
 
       def self.input_to_storage(contents, _)
-        raise Uncompilable if contents.index("!ruby/object")
+        raise(Uncompilable) if contents.index("!ruby/object")
         obj = ::YAML.load(contents)
         msgpack_factory.packer.write(obj).to_s
       rescue NoMethodError, RangeError
         # if the object included things that we can't serialize, fall back to
         # Marshal. It's a bit slower, but can encode anything yaml can.
         # NoMethodError is unexpected types; RangeError is Bignums
-        return Marshal.dump(obj)
+        Marshal.dump(obj)
       end
 
       def self.storage_to_output(data)
@@ -34,8 +34,8 @@ module Bootsnap
       end
 
       def self.install!(cache_dir)
-        require 'yaml'
-        require 'msgpack'
+        require('yaml')
+        require('msgpack')
 
         # MessagePack serializes symbols as strings by default.
         # We want them to roundtrip cleanly, so we use a custom factory.

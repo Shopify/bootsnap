@@ -1,6 +1,6 @@
-require 'test_helper'
-require 'tmpdir'
-require 'fileutils'
+require('test_helper')
+require('tmpdir')
+require('fileutils')
 
 module Bootsnap
   module LoadPathCache
@@ -15,7 +15,7 @@ module Bootsnap
         FileUtils.rm_rf(@dir)
       end
 
-      attr_reader :store
+      attr_reader(:store)
 
       def test_persistence
         store.transaction { store.set('a', 'b') }
@@ -59,9 +59,9 @@ module Bootsnap
 
       def test_no_commit_unless_dirty
         store.transaction { store.set('a', nil) }
-        refute File.exist?(@path)
+        refute(File.exist?(@path))
         store.transaction { store.set('a', 1) }
-        assert File.exist?(@path)
+        assert(File.exist?(@path))
       end
 
       def test_retry_on_collision

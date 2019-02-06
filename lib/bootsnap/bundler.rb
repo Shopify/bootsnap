@@ -1,11 +1,11 @@
 module Bootsnap
-  module_function
+  extend(self)
 
   def bundler?
     return false unless defined?(::Bundler)
 
     # Bundler environment variable
-    ['BUNDLE_BIN_PATH', 'BUNDLE_GEMFILE'].each do |current|
+    %w(BUNDLE_BIN_PATH BUNDLE_GEMFILE).each do |current|
       return true if ENV.key?(current)
     end
 

@@ -1,7 +1,7 @@
-require_relative 'bootsnap/version'
-require_relative 'bootsnap/bundler'
-require_relative 'bootsnap/load_path_cache'
-require_relative 'bootsnap/compile_cache'
+require_relative('bootsnap/version')
+require_relative('bootsnap/bundler')
+require_relative('bootsnap/load_path_cache')
+require_relative('bootsnap/compile_cache')
 
 module Bootsnap
   InvalidConfiguration = Class.new(StandardError)
@@ -16,7 +16,7 @@ module Bootsnap
     compile_cache_yaml: true
   )
     if autoload_paths_cache && !load_path_cache
-      raise InvalidConfiguration, "feature 'autoload_paths_cache' depends on feature 'load_path_cache'"
+      raise(InvalidConfiguration, "feature 'autoload_paths_cache' depends on feature 'load_path_cache'")
     end
 
     setup_disable_trace if disable_trace
@@ -36,7 +36,10 @@ module Bootsnap
 
   def self.setup_disable_trace
     if Gem::Version.new(RUBY_VERSION) >= Gem::Version.new('2.5.0')
-      warn("from #{caller_locations(1, 1)[0]}: The 'disable_trace' method is not allowed with this Ruby version. current: #{RUBY_VERSION}, allowed version: < 2.5.0")
+      warn(
+        "from #{caller_locations(1, 1)[0]}: The 'disable_trace' method is not allowed with this Ruby version. " \
+        "current: #{RUBY_VERSION}, allowed version: < 2.5.0",
+      )
     else
       RubyVM::InstructionSequence.compile_option = { trace_instruction: false }
     end

@@ -3,19 +3,19 @@ module Bootsnap
     def self.setup(cache_dir:, iseq:, yaml:)
       if iseq
         if supported?
-          require_relative 'compile_cache/iseq'
+          require_relative('compile_cache/iseq')
           Bootsnap::CompileCache::ISeq.install!(cache_dir)
-        else
-          warn "[bootsnap/setup] bytecode caching is not supported on this implementation of Ruby" if $VERBOSE
+        elsif $VERBOSE
+          warn("[bootsnap/setup] bytecode caching is not supported on this implementation of Ruby")
         end
       end
 
       if yaml
         if supported?
-          require_relative 'compile_cache/yaml'
+          require_relative('compile_cache/yaml')
           Bootsnap::CompileCache::YAML.install!(cache_dir)
-        else
-          warn "[bootsnap/setup] YAML parsing caching is not supported on this implementation of Ruby" if $VERBOSE
+        elsif $VERBOSE
+          warn("[bootsnap/setup] YAML parsing caching is not supported on this implementation of Ruby")
         end
       end
     end

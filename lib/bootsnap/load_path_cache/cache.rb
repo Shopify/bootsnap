@@ -1,4 +1,4 @@
-require_relative '../explicit_require'
+require_relative('../explicit_require')
 
 module Bootsnap
   module LoadPathCache
@@ -174,7 +174,7 @@ module Bootsnap
       end
 
       def try_index(f)
-        if p = @index[f]
+        if (p = @index[f])
           p + '/' + f
         end
       end

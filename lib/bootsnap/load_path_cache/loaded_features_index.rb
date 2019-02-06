@@ -68,7 +68,7 @@ module Bootsnap
         altname = if File.extname(short) != ''
           # strip the path from 'bundler.rb' -> 'bundler'
           strip_extension(short)
-        elsif long && ext = File.extname(long)
+        elsif long && (ext = File.extname(long))
           # get the extension from the expanded path if given
           # 'bundler' + '.rb'
           short + ext
@@ -85,7 +85,7 @@ module Bootsnap
       private
 
       STRIP_EXTENSION = /\.[^.]*?$/
-      private_constant :STRIP_EXTENSION
+      private_constant(:STRIP_EXTENSION)
 
       def strip_extension(f)
         f.sub(STRIP_EXTENSION, '')

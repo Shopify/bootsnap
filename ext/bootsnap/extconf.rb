@@ -1,4 +1,4 @@
-require "mkmf"
+require("mkmf")
 $CFLAGS << ' -O3 '
 $CFLAGS << ' -std=c99'
 

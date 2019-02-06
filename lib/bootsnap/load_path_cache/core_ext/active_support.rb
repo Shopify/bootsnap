@@ -92,7 +92,7 @@ end
 module ActiveSupport
   module Dependencies
     class << self
-      prepend Bootsnap::LoadPathCache::CoreExt::ActiveSupport::ClassMethods
+      prepend(Bootsnap::LoadPathCache::CoreExt::ActiveSupport::ClassMethods)
     end
   end
 end

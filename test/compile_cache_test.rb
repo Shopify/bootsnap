@@ -1,7 +1,7 @@
-require 'test_helper'
+require('test_helper')
 
 class CompileCacheTest < Minitest::Test
-  include TmpdirHelper
+  include(TmpdirHelper)
 
   def test_compile_option_crc32
     # Just assert that this works.
@@ -12,11 +12,11 @@ class CompileCacheTest < Minitest::Test
   end
 
   def test_coverage_running?
-    refute Bootsnap::CompileCache::Native.coverage_running?
-    require 'coverage'
+    refute(Bootsnap::CompileCache::Native.coverage_running?)
+    require('coverage')
     begin
       Coverage.start
-      assert Bootsnap::CompileCache::Native.coverage_running?
+      assert(Bootsnap::CompileCache::Native.coverage_running?)
     ensure
       Coverage.result
     end

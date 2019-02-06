@@ -1,19 +1,19 @@
-require 'test_helper'
-require 'tempfile'
-require 'tmpdir'
-require 'fileutils'
+require('test_helper')
+require('tempfile')
+require('tmpdir')
+require('fileutils')
 
 class CompileCacheKeyFormatTest < Minitest::Test
-  include TmpdirHelper
+  include(TmpdirHelper)
 
   R = {
-    version:        0...4,
-    os_version:     4...8,
+    version: 0...4,
+    os_version: 4...8,
     compile_option: 8...12,
-    ruby_revision:  12...16,
-    size:           16...24,
-    mtime:          24...32,
-    data_size:      32...40,
+    ruby_revision: 12...16,
+    size: 16...24,
+    mtime: 24...32,
+    data_size: 32...40,
   }
 
   def test_key_version

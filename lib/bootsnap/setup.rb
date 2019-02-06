@@ -1,4 +1,4 @@
-require_relative '../bootsnap'
+require_relative('../bootsnap')
 
 env = ENV['RAILS_ENV'] || ENV['RACK_ENV'] || ENV['ENV']
 development_mode = ['', nil, 'development'].include?(env)
@@ -10,11 +10,11 @@ unless cache_dir
   end
 
   unless config_dir_frame
-    $stderr.puts "[bootsnap/setup] couldn't infer cache directory! Either:"
-    $stderr.puts "[bootsnap/setup]   1. require bootsnap/setup from your application's config directory; or"
-    $stderr.puts "[bootsnap/setup]   2. Define the environment variable BOOTSNAP_CACHE_DIR"
+    $stderr.puts("[bootsnap/setup] couldn't infer cache directory! Either:")
+    $stderr.puts("[bootsnap/setup]   1. require bootsnap/setup from your application's config directory; or")
+    $stderr.puts("[bootsnap/setup]   2. Define the environment variable BOOTSNAP_CACHE_DIR")
 
-    raise "couldn't infer bootsnap cache directory"
+    raise("couldn't infer bootsnap cache directory")
   end
 
   path = config_dir_frame.split(/:\d+:/).first

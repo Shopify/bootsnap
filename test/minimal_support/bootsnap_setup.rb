@@ -1,2 +1,2 @@
-require 'bundler/setup'
-require 'bootsnap/setup'
+require('bundler/setup')
+require('bootsnap/setup')

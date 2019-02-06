@@ -1,4 +1,4 @@
-require 'test_helper'
+require('test_helper')
 
 module Bootsnap
   module LoadPathCache
@@ -69,9 +69,9 @@ module Bootsnap
 
       def test_directory_caching
         cache = Cache.new(NullCache, [@dir1])
-        assert_equal @dir1, cache.load_dir("foo")
-        assert_equal @dir1, cache.load_dir("foo/bar")
-        assert_nil cache.load_dir("bar")
+        assert_equal(@dir1, cache.load_dir("foo"))
+        assert_equal(@dir1, cache.load_dir("foo/bar"))
+        assert_nil(cache.load_dir("bar"))
       end
 
       def test_extension_permutations
@@ -85,7 +85,7 @@ module Bootsnap
 
       def test_relative_paths_rescanned
         Dir.chdir(@dir2) do
-          cache = Cache.new(NullCache, ['foo'])
+          cache = Cache.new(NullCache, %w(foo))
           refute(cache.find('bar/baz'))
           Dir.chdir(@dir1) do
             # one caveat here is that you get the actual path back when
@@ -108,12 +108,12 @@ module Bootsnap
         FileUtils.touch("#{@dir1}/new.rb")
 
         dev_no_cache.stubs(:now).returns(time + 31)
-        refute dev_no_cache.find('new')
+        refute(dev_no_cache.find('new'))
 
         dev_yes_cache.stubs(:now).returns(time + 28)
-        refute dev_yes_cache.find('new')
+        refute(dev_yes_cache.find('new'))
         dev_yes_cache.stubs(:now).returns(time + 31)
-        assert dev_yes_cache.find('new')
+        assert(dev_yes_cache.find('new'))
       end
 
       def test_path_obj_equal?

@@ -1,25 +1,25 @@
-require 'bootsnap/bootsnap'
-require 'zlib'
+require('bootsnap/bootsnap')
+require('zlib')
 
 module Bootsnap
   module CompileCache
     module ISeq
       class << self
-        attr_accessor :cache_dir
+        attr_accessor(:cache_dir)
       end
 
       def self.input_to_storage(_, path)
         RubyVM::InstructionSequence.compile_file(path).to_binary
       rescue SyntaxError
-        raise Uncompilable, 'syntax error'
+        raise(Uncompilable, 'syntax error')
       end
 
       def self.storage_to_output(binary)
         RubyVM::InstructionSequence.load_from_binary(binary)
       rescue RuntimeError => e
         if e.message == 'broken binary format'
-          STDERR.puts "[Bootsnap::CompileCache] warning: rejecting broken binary"
-          return nil
+          STDERR.puts("[Bootsnap::CompileCache] warning: rejecting broken binary")
+          nil
         else
           raise
         end
@@ -41,7 +41,7 @@ module Bootsnap
           )
         rescue RuntimeError => e
           if e.message =~ /unmatched platform/
-            puts "unmatched platform for file #{path}"
+            puts("unmatched platform for file #{path}")
           end
           raise
         end
@@ -62,7 +62,7 @@ module Bootsnap
         Bootsnap::CompileCache::ISeq.cache_dir = cache_dir
         Bootsnap::CompileCache::ISeq.compile_option_updated
         class << RubyVM::InstructionSequence
-          prepend InstructionSequenceMixin
+          prepend(InstructionSequenceMixin)
         end
       end
     end

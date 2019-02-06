@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'test_helper'
+require('test_helper')
 
 module Bootsnap
   module LoadPathCache
@@ -54,7 +54,7 @@ module Bootsnap
 
           expected = "#{@absolute_dir}/real_required.rb"
 
-          assert @cache.call(caller_path, require_path).eql?(expected)
+          assert(@cache.call(caller_path, require_path).eql?(expected))
         end
 
         (EXTENSIONS.size - 1).times do |n|
@@ -68,7 +68,7 @@ module Bootsnap
 
             expected = "#{@absolute_dir}/real_required#{EXTENSIONS[n + 1]}"
 
-            assert @cache.call(caller_path, require_path).eql?(expected)
+            assert(@cache.call(caller_path, require_path).eql?(expected))
           end
         end
 
@@ -79,7 +79,7 @@ module Bootsnap
           remove_required(EXTENSIONS)
 
           expected = "#{@base_dir}/#{required_dir}/#{required_file}"
-          assert @cache.call(caller_path, require_path).eql?(expected)
+          assert(@cache.call(caller_path, require_path).eql?(expected))
         end
       end
     end

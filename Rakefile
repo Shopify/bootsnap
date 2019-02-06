@@ -1,5 +1,5 @@
-require 'rake/extensiontask'
-require 'bundler/gem_tasks'
+require('rake/extensiontask')
+require('bundler/gem_tasks')
 
 gemspec = Gem::Specification.load('bootsnap.gemspec')
 Rake::ExtensionTask.new do |ext|

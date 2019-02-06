@@ -11,9 +11,9 @@ module Bootsnap
 end
 
 module Kernel
-  module_function
+  extend(self)
 
-  alias_method :require_without_bootsnap, :require
+  alias_method(:require_without_bootsnap, :require)
 
   # Note that require registers to $LOADED_FEATURES while load does not.
   def require_with_bootsnap_lfi(path, resolved = nil)
@@ -25,18 +25,18 @@ module Kernel
   def require(path)
     return false if Bootsnap::LoadPathCache.loaded_features_index.key?(path)
 
-    if resolved = Bootsnap::LoadPathCache.load_path_cache.find(path)
+    if (resolved = Bootsnap::LoadPathCache.load_path_cache.find(path))
       return require_with_bootsnap_lfi(path, resolved)
     end
 
-    raise Bootsnap::LoadPathCache::CoreExt.make_load_error(path)
+    raise(Bootsnap::LoadPathCache::CoreExt.make_load_error(path))
   rescue Bootsnap::LoadPathCache::ReturnFalse
-    return false
+    false
   rescue Bootsnap::LoadPathCache::FallbackScan
     require_with_bootsnap_lfi(path)
   end
 
-  alias_method :require_relative_without_bootsnap, :require_relative
+  alias_method(:require_relative_without_bootsnap, :require_relative)
   def require_relative(path)
     realpath = Bootsnap::LoadPathCache.realpath_cache.call(
       caller_locations(1..1).first.absolute_path, path
@@ -44,9 +44,9 @@ module Kernel
     require(realpath)
   end
 
-  alias_method :load_without_bootsnap, :load
+  alias_method(:load_without_bootsnap, :load)
   def load(path, wrap = false)
-    if resolved = Bootsnap::LoadPathCache.load_path_cache.find(path)
+    if (resolved = Bootsnap::LoadPathCache.load_path_cache.find(path))
       return load_without_bootsnap(resolved, wrap)
     end
 
@@ -55,16 +55,16 @@ module Kernel
       return load_without_bootsnap(relative, wrap)
     end
 
-    raise Bootsnap::LoadPathCache::CoreExt.make_load_error(path)
+    raise(Bootsnap::LoadPathCache::CoreExt.make_load_error(path))
   rescue Bootsnap::LoadPathCache::ReturnFalse
-    return false
+    false
   rescue Bootsnap::LoadPathCache::FallbackScan
     load_without_bootsnap(path, wrap)
   end
 end
 
 class Module
-  alias_method :autoload_without_bootsnap, :autoload
+  alias_method(:autoload_without_bootsnap, :autoload)
   def autoload(const, path)
     # NOTE: This may defeat LoadedFeaturesIndex, but it's not immediately
     # obvious how to make it work. This feels like a pretty niche case, unclear
@@ -75,7 +75,7 @@ class Module
     # since it's done in C-land.
     autoload_without_bootsnap(const, Bootsnap::LoadPathCache.load_path_cache.find(path) || path)
   rescue Bootsnap::LoadPathCache::ReturnFalse
-    return false
+    false
   rescue Bootsnap::LoadPathCache::FallbackScan
     autoload_without_bootsnap(const, path)
   end

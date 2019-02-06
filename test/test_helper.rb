@@ -1,12 +1,12 @@
-$LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
-require 'bundler/setup'
-require 'bootsnap'
+$LOAD_PATH.unshift(File.expand_path('../../lib', __FILE__))
+require('bundler/setup')
+require('bootsnap')
 
-require 'tmpdir'
-require 'fileutils'
+require('tmpdir')
+require('fileutils')
 
-require 'minitest/autorun'
-require 'mocha/minitest'
+require('minitest/autorun')
+require('mocha/minitest')
 
 cache_dir = File.expand_path('../../tmp/bootsnap-compile-cache', __FILE__)
 Bootsnap::CompileCache.setup(cache_dir: cache_dir, iseq: true, yaml: false)
@@ -21,7 +21,7 @@ module TestHandler
   end
 
   def self.input_to_output(_d)
-    raise 'but why tho'
+    raise('but why tho')
   end
 end
 

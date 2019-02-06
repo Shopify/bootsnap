@@ -1,6 +1,6 @@
-require_relative '../explicit_require'
+require_relative('../explicit_require')
 
-Bootsnap::ExplicitRequire.with_gems('msgpack') { require 'msgpack' }
+Bootsnap::ExplicitRequire.with_gems('msgpack') { require('msgpack') }
 Bootsnap::ExplicitRequire.from_rubylibdir('fileutils')
 
 module Bootsnap
@@ -21,7 +21,7 @@ module Bootsnap
       end
 
       def fetch(key)
-        raise SetOutsideTransactionNotAllowed unless @in_txn
+        raise(SetOutsideTransactionNotAllowed) unless @in_txn
         v = get(key)
         unless v
           @dirty = true
@@ -32,7 +32,7 @@ module Bootsnap
       end
 
       def set(key, value)
-        raise SetOutsideTransactionNotAllowed unless @in_txn
+        raise(SetOutsideTransactionNotAllowed) unless @in_txn
         if value != @data[key]
           @dirty = true
           @data[key] = value
@@ -40,7 +40,7 @@ module Bootsnap
       end
 
       def transaction
-        raise NestedTransactionError if @in_txn
+        raise(NestedTransactionError) if @in_txn
         @in_txn = true
         yield
       ensure
@@ -60,9 +60,9 @@ module Bootsnap
       def load_data
         @data = begin
           MessagePack.load(File.binread(@store_path))
-        # handle malformed data due to upgrade incompatability
-        rescue Errno::ENOENT, MessagePack::MalformedFormatError, MessagePack::UnknownExtTypeError, EOFError
-          {}
+                # handle malformed data due to upgrade incompatability
+                rescue Errno::ENOENT, MessagePack::MalformedFormatError, MessagePack::UnknownExtTypeError, EOFError
+                  {}
         end
       end
 
