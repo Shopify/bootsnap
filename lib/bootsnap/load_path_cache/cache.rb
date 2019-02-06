@@ -87,7 +87,7 @@ module Bootsnap
         # cases where the file doesn't appear to be on the load path. We should
         # be able to detect newly-created files without rebooting the
         # application.
-        raise(LoadPathCache::FallbackScan) if @development_mode
+        raise(LoadPathCache::FallbackScan, '', []) if @development_mode
       end
 
       if RbConfig::CONFIG['host_os'] =~ /mswin|mingw|cygwin/

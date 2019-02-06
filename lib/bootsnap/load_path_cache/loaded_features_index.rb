@@ -24,7 +24,6 @@ module Bootsnap
     class LoadedFeaturesIndex
       def initialize
         @lfi = {}
-        @deletion_lfi = Hash.new { |h, k| h[k] = [] }
         @mutex = defined?(::Mutex) ? ::Mutex.new : ::Thread::Mutex.new # TODO: Remove once Ruby 2.2 support is dropped.
 
         # In theory the user could mutate $LOADED_FEATURES and invalidate our
@@ -33,24 +32,26 @@ module Bootsnap
         # parallel the work done with ChangeObserver on $LOAD_PATH to mirror
         # updates to our @lfi.
         $LOADED_FEATURES.each do |feat|
+          hash = feat.hash
           $LOAD_PATH.each do |lpe|
             next unless feat.start_with?(lpe)
             # /a/b/lib/my/foo.rb
             #          ^^^^^^^^^
             short = feat[(lpe.length + 1)..-1]
             stripped = strip_extension(short)
-            @lfi[short] = true
-            @lfi[stripped] = true
-            @deletion_lfi[feat.hash] << short << stripped
+            @lfi[short] = hash
+            @lfi[stripped] = hash
           end
         end
       end
 
+      # We've optimized for initialize and register to be fast, and purge to be tolerable.
+      # If access patterns make this not-okay, we can lazy-invert the LFI on
+      # first purge and work from there.
       def purge(feature)
         @mutex.synchronize do
-          (@deletion_lfi.delete(feature.hash) || []).each do |lfi_entry|
-            @lfi.delete(lfi_entry)
-          end
+          feat_hash = feature.hash
+          @lfi.reject! { |_, hash| hash == feat_hash }
         end
       end
 
@@ -75,6 +76,8 @@ module Bootsnap
       def register(short, long = nil)
         ret = yield
 
+        hash = long.hash # N.B. this won't be "correct" when long is nil
+
         # do we have 'bundler' or 'bundler.rb'?
         altname = if File.extname(short) != ''
           # strip the path from 'bundler.rb' -> 'bundler'
@@ -86,11 +89,8 @@ module Bootsnap
         end
 
         @mutex.synchronize do
-          @lfi[short] = true
-          (@lfi[altname] = true) if altname
-
-          @deletion_lfi[long.hash] << short
-          @deletion_lfi[long.hash] << altname if altname
+          @lfi[short] = hash
+          (@lfi[altname] = hash) if altname
         end
 
         ret

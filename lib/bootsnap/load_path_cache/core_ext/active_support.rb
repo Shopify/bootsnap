@@ -30,6 +30,8 @@ module Bootsnap
               Bootsnap::LoadPathCache.autoload_paths_cache.find(path)
             rescue Bootsnap::LoadPathCache::ReturnFalse
               nil # doesn't really apply here
+            rescue Bootsnap::LoadPathCache::FallbackScan
+              nil # doesn't really apply here
             end
           end
 

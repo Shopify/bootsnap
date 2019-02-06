@@ -111,7 +111,9 @@ module Bootsnap
         refute(dev_no_cache.find('new'))
 
         dev_yes_cache.stubs(:now).returns(time + 28)
-        refute(dev_yes_cache.find('new'))
+        assert_raises(Bootsnap::LoadPathCache::FallbackScan) do
+          dev_yes_cache.find('new')
+        end
         dev_yes_cache.stubs(:now).returns(time + 31)
         assert(dev_yes_cache.find('new'))
       end
