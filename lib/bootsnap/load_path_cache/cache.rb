@@ -73,7 +73,8 @@ module Bootsnap
             x = search_index(feature[0..-4] + DLEXT)
             return x if x
             if DLEXT2
-              search_index(feature[0..-4] + DLEXT2)
+              x = search_index(feature[0..-4] + DLEXT2)
+              return x if x
             end
           else
             # other, unknown extension. For example, `.rake`. Since we haven't
@@ -81,6 +82,12 @@ module Bootsnap
             raise(LoadPathCache::FallbackScan, '', [])
           end
         end
+
+        # In development mode, we don't want to confidently return failures for
+        # cases where the file doesn't appear to be on the load path. We should
+        # be able to detect newly-created files without rebooting the
+        # application.
+        raise(LoadPathCache::FallbackScan) if @development_mode
       end
 
       if RbConfig::CONFIG['host_os'] =~ /mswin|mingw|cygwin/
