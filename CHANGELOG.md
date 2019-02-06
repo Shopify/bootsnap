@@ -1,3 +1,14 @@
+# 1.4.0
+
+* When running in development mode, always fall back to a full path scan on LoadError, making
+  bootsnap more able to detect newly-created files. (#230)
+* Respect `$LOADED_FEATURES.delete` in order to support code reloading, for integration with
+  Zeitwerk. (#230)
+* Minor performance improvement: flow-control exceptions no longer generate backtraces.
+* Better support for requiring from environments where some features are not supported (especially
+  JRuby). (#226)k
+* More robust handling of OS errors when creating files. (#225)
+
 # 1.3.2
 
 * Fix Spring + Bootsnap incompatibility when there are files with similar names.
