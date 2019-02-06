@@ -74,9 +74,16 @@ module Bootsnap
       # 2. Inspect $LOADED_FEATURES upon return from yield to find the matching
       #    entry.
       def register(short, long = nil)
-        ret = yield
+        if long.nil?
+          pat = %r{/#{Regexp.escape(short)}(\.[^/]+)?$}
+          len = $LOADED_FEATURES.size
+          ret = yield
+          long = $LOADED_FEATURES[len..-1].detect { |feat| feat =~ pat }
+        else
+          ret = yield
+        end
 
-        hash = long.hash # N.B. this won't be "correct" when long is nil
+        hash = long.hash
 
         # do we have 'bundler' or 'bundler.rb'?
         altname = if File.extname(short) != ''
