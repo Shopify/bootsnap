@@ -11,7 +11,7 @@ module Bootsnap
 end
 
 module Kernel
-  extend(self)
+  module_function # rubocop:disable Style/ModuleFunction
 
   alias_method(:require_without_bootsnap, :require)
 
