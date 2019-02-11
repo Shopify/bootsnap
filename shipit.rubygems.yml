@@ -1,4 +1,0 @@
-dependencies:
-  bundler:
-    without:
-      - development
