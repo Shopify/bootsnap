@@ -1,3 +1,7 @@
+# (unreleased)
+
+* Don't register change observers to frozen objects.
+
 # 1.4.0
 
 * When running in development mode, always fall back to a full path scan on LoadError, making
