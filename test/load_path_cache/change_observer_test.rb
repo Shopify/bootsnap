@@ -30,6 +30,11 @@ module Bootsnap
         assert_equal(%w(D E A B C F), @arr)
       end
 
+      def test_register_frozen
+        # just assert no crash
+        ChangeObserver.register(@observer, @arr.dup.freeze)
+      end
+
       def test_register_twice_observes_once
         ChangeObserver.register(@observer, @arr)
 

@@ -53,6 +53,7 @@ module Bootsnap
       end
 
       def self.register(observer, arr)
+        return if arr.frozen? # can't register observer, but no need to.
         arr.instance_variable_set(:@lpc_observer, observer)
         arr.extend(ArrayMixin)
       end
