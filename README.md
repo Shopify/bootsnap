@@ -41,11 +41,13 @@ Bootsnap.setup(
   development_mode:     env == 'development', # Current working environment, e.g. RACK_ENV, RAILS_ENV, etc
   load_path_cache:      true,                 # Optimize the LOAD_PATH with a cache
   autoload_paths_cache: true,                 # Optimize ActiveSupport autoloads with cache
-  disable_trace:        true,                 # (Alpha) Set `RubyVM::InstructionSequence.compile_option = { trace_instruction: false }`
+  disable_trace:        true,                 # Set `RubyVM::InstructionSequence.compile_option = { trace_instruction: false }`
   compile_cache_iseq:   true,                 # Compile Ruby code into ISeq cache, breaks coverage reporting.
   compile_cache_yaml:   true                  # Compile YAML into a cache
 )
 ```
+
+**Note that `disable_trace` will break debuggers and tracing.**
 
 **Protip:** You can replace `require 'bootsnap'` with `BootLib::Require.from_gem('bootsnap',
 'bootsnap')` using [this trick](https://github.com/Shopify/bootsnap/wiki/Bootlib::Require). This
