@@ -24,6 +24,10 @@ If you are using Rails, add this to `config/boot.rb` immediately after `require 
 require 'bootsnap/setup'
 ```
 
+Note that bootsnap writes to `tmp/cache`, and that directory *must* be writable. Rails will fail to
+boot if it is not. If this is unacceptable (e.g. you are running in a read-only container and
+unwilling to mount in a writable tmpdir), you should remove this line or wrap it in a conditional.
+
 It's technically possible to simply specify `gem 'bootsnap', require: 'bootsnap/setup'`, but it's
 important to load Bootsnap as early as possible to get maximum performance improvement.
 
