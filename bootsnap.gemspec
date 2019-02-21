@@ -40,6 +40,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency('rake-compiler', '~> 0')
   spec.add_development_dependency("minitest", "~> 5.0")
   spec.add_development_dependency("mocha", "~> 1.2")
+  spec.add_development_dependency("rb-readline", "~> 0.5.5")
 
   spec.add_runtime_dependency("msgpack", "~> 1.0")
 end
