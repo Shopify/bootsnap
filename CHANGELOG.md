@@ -1,4 +1,4 @@
-# (unreleased)
+# 1.4.1
 
 * Don't register change observers to frozen objects.
 
