@@ -27,7 +27,7 @@ class CompileCacheTest < Minitest::Test
     folder = File.dirname(Help.cache_path(@tmp_dir, path))
     FileUtils.mkdir_p(folder)
     FileUtils.chmod(0400, folder)
-    assert_raises(Errno::EACCES) { load(path) }
+    assert_raises(Bootsnap::CompileCache::PermissionError) { load(path) }
   end
 
   def test_can_open_read_only_cache

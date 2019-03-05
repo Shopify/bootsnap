@@ -46,11 +46,15 @@ module Bootsnap
 
         klass = class << ::YAML; self; end
         klass.send(:define_method, :load_file) do |path|
-          Bootsnap::CompileCache::Native.fetch(
-            cache_dir,
-            path,
-            Bootsnap::CompileCache::YAML
-          )
+          begin
+            Bootsnap::CompileCache::Native.fetch(
+              cache_dir,
+              path,
+              Bootsnap::CompileCache::YAML
+            )
+          rescue Errno::EACCES
+            Bootsnap::CompileCache.permission_error(path)
+          end
         end
       end
     end

@@ -1,5 +1,8 @@
 module Bootsnap
   module CompileCache
+    Error           = Class.new(StandardError)
+    PermissionError = Class.new(Error)
+
     def self.setup(cache_dir:, iseq:, yaml:)
       if iseq
         if supported?
@@ -18,6 +21,15 @@ module Bootsnap
           warn("[bootsnap/setup] YAML parsing caching is not supported on this implementation of Ruby")
         end
       end
+    end
+
+    def self.permission_error(path)
+      cpath = Bootsnap::CompileCache::ISeq.cache_dir
+      raise(
+        PermissionError,
+        "bootsnap doesn't have permission to write cache entries in '#{cpath}' " \
+        "(or, less likely, doesn't have permisison to read '#{path}')",
+      )
     end
 
     def self.supported?
