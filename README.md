@@ -284,3 +284,12 @@ open    /c/nope.bundle -> -1
 ```
 # (nothing!)
 ```
+
+## When not to use Bootsnap
+
+*Alternative engines*: Bootsnap is pretty reliant on MRI features, and parts are disabled entirely on alternative ruby
+engines.
+
+*Non-local filesystems*: Bootsnap depends on `tmp/cache` (or whatever you set its cache directory
+to) being on a relatively fast filesystem. If you put it on a network mount, bootsnap is very likely
+to slow your application down quite a lot.
