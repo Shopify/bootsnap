@@ -39,6 +39,8 @@ module Bootsnap
             path.to_s,
             Bootsnap::CompileCache::ISeq
           )
+        rescue Errno::EACCES
+          Bootsnap::CompileCache.permission_error(path)
         rescue RuntimeError => e
           if e.message =~ /unmatched platform/
             puts("unmatched platform for file #{path}")
