@@ -468,21 +468,21 @@ static int
 atomic_write_cache_file(char * path, struct bs_cache_key * key, VALUE data, char ** errno_provenance)
 {
   char template[MAX_CACHEPATH_SIZE + 20];
-  char * dest;
   char * tmp_path;
   int fd, ret;
   ssize_t nwrite;
 
-  dest = strncpy(template, path, MAX_CACHEPATH_SIZE);
-  strcat(dest, ".tmp.XXXXXX");
+  tmp_path = strncpy(template, path, MAX_CACHEPATH_SIZE);
+  strcat(tmp_path, ".tmp.XXXXXX");
 
-  tmp_path = mktemp(template);
-  fd = open(tmp_path, O_WRONLY | O_CREAT, 0664);
+  // mkstemp modifies the template to be the actual created path
+  fd = mkstemp(tmp_path);
   if (fd < 0) {
-    if (mkpath(path, 0775) < 0) {
+    if (mkpath(tmp_path, 0775) < 0) {
       *errno_provenance = (char *)"bs_fetch:atomic_write_cache_file:mkpath";
       return -1;
     }
+    close(fd);
     fd = open(tmp_path, O_WRONLY | O_CREAT, 0664);
     if (fd < 0) {
       *errno_provenance = (char *)"bs_fetch:atomic_write_cache_file:open";
