@@ -60,9 +60,11 @@ module Bootsnap
       def load_data
         @data = begin
           MessagePack.load(File.binread(@store_path))
-                # handle malformed data due to upgrade incompatability
-                rescue Errno::ENOENT, MessagePack::MalformedFormatError, MessagePack::UnknownExtTypeError, EOFError
-                  {}
+          # handle malformed data due to upgrade incompatability
+        rescue Errno::ENOENT, MessagePack::MalformedFormatError, MessagePack::UnknownExtTypeError, EOFError
+          {}
+        rescue ArgumentError => e
+          e.message =~ /negative array size/ ? {} : raise
         end
       end
 
