@@ -51,6 +51,16 @@ module Bootsnap
         assert_equal("#{@dir2}/b.rb", cache.find('b'))
       end
 
+      def test_extension_append_for_relative_paths
+        po = [@dir1]
+        cache = Cache.new(NullCache, po)
+        Dir.chdir(@dir1) do
+          assert_equal("#{@dir1}/a.rb",       cache.find('./a'))
+          assert_equal("#{@dir1}/dl#{DLEXT}", cache.find('./dl'))
+          assert_equal("#{@dir1}/enoent",     cache.find('./enoent'))
+        end
+      end
+
       def test_unshifted_paths_have_higher_precedence
         po = [@dir1]
         cache = Cache.new(NullCache, po)
