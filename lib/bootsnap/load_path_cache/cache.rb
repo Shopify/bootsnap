@@ -46,7 +46,7 @@ module Bootsnap
         reinitialize if (@has_relative_paths && dir_changed?) || stale?
         feature = feature.to_s
         return feature if absolute_path?(feature)
-        return File.expand_path(feature) if feature.start_with?('./')
+        return expand_path(feature) if feature.start_with?('./')
         @mutex.synchronize do
           x = search_index(feature)
           return x if x
@@ -162,6 +162,10 @@ module Bootsnap
         end
       end
 
+      def expand_path(feature)
+        maybe_append_extension(File.expand_path(feature))
+      end
+
       def stale?
         @development_mode && @generated_at + AGE_THRESHOLD < now
       end
@@ -174,9 +178,17 @@ module Bootsnap
         def search_index(f)
           try_index(f + DOT_RB) || try_index(f + DLEXT) || try_index(f + DLEXT2) || try_index(f)
         end
+
+        def maybe_append_extension(f)
+          try_ext(f + DOT_RB) || try_ext(f + DLEXT) || try_ext(f + DLEXT2) || f
+        end
       else
         def search_index(f)
           try_index(f + DOT_RB) || try_index(f + DLEXT) || try_index(f)
+        end
+
+        def maybe_append_extension(f)
+          try_ext(f + DOT_RB) || try_ext(f + DLEXT) || f
         end
       end
 
@@ -184,6 +196,10 @@ module Bootsnap
         if (p = @index[f])
           p + '/' + f
         end
+      end
+
+      def try_ext(f)
+        f if File.exist?(f)
       end
     end
   end
