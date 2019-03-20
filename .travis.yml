@@ -17,8 +17,5 @@ matrix:
     - rvm: jruby
       os: linux
       env: MINIMAL_SUPPORT=1
-    - rvm: truffleruby
-      os: linux
-      env: MINIMAL_SUPPORT=1
 
 script: bin/ci
