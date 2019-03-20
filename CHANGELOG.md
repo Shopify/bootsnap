@@ -1,3 +1,8 @@
+# 1.4.2
+
+* Fix bug when removing features loaded by relative path from `$LOADED_FEATURES`
+* Fix bug with propagation of `NameError` up from nested calls to `require`
+
 # 1.4.1
 
 * Don't register change observers to frozen objects.
