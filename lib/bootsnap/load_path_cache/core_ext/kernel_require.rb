@@ -3,6 +3,7 @@ module Bootsnap
     module CoreExt
       def self.make_load_error(path)
         err = LoadError.new("cannot load such file -- #{path}")
+        err.instance_variable_set(Bootsnap::LoadPathCache::ERROR_TAG_IVAR, true)
         err.define_singleton_method(:path) { path }
         err
       end
@@ -30,6 +31,9 @@ module Kernel
     end
 
     raise(Bootsnap::LoadPathCache::CoreExt.make_load_error(path))
+  rescue LoadError => e
+    e.instance_variable_set(Bootsnap::LoadPathCache::ERROR_TAG_IVAR, true)
+    raise(e)
   rescue Bootsnap::LoadPathCache::ReturnFalse
     false
   rescue Bootsnap::LoadPathCache::FallbackScan
@@ -56,6 +60,9 @@ module Kernel
     end
 
     raise(Bootsnap::LoadPathCache::CoreExt.make_load_error(path))
+  rescue LoadError => e
+    e.instance_variable_set(Bootsnap::LoadPathCache::ERROR_TAG_IVAR, true)
+    raise(e)
   rescue Bootsnap::LoadPathCache::ReturnFalse
     false
   rescue Bootsnap::LoadPathCache::FallbackScan
@@ -74,6 +81,9 @@ class Module
     # added to $LOADED_FEATURES and won't be able to hook that modification
     # since it's done in C-land.
     autoload_without_bootsnap(const, Bootsnap::LoadPathCache.load_path_cache.find(path) || path)
+  rescue LoadError => e
+    e.instance_variable_set(Bootsnap::LoadPathCache::ERROR_TAG_IVAR, true)
+    raise(e)
   rescue Bootsnap::LoadPathCache::ReturnFalse
     false
   rescue Bootsnap::LoadPathCache::FallbackScan
