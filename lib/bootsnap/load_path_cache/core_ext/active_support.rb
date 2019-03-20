@@ -18,11 +18,6 @@ module Bootsnap
           Thread.current[:without_bootsnap_retry] = prev
         end
 
-        # If a NameError happens several levels deep, don't re-handle it
-        # all the way up the chain: mark it once and bubble it up without
-        # more retries.
-        ERROR_TAG_IVAR = :@__bootsnap_rescued
-
         module ClassMethods
           def autoload_paths=(o)
             super
@@ -65,8 +60,8 @@ module Bootsnap
               super
             end
           rescue NameError => e
-            raise(e) if e.instance_variable_defined?(ERROR_TAG_IVAR)
-            e.instance_variable_set(ERROR_TAG_IVAR, true)
+            raise(e) if e.instance_variable_defined?(Bootsnap::LoadPathCache::ERROR_TAG_IVAR)
+            e.instance_variable_set(Bootsnap::LoadPathCache::ERROR_TAG_IVAR, true)
 
             # This function can end up called recursively, we only want to
             # retry at the top-level.
@@ -89,8 +84,8 @@ module Bootsnap
           def depend_on(*)
             super
           rescue LoadError => e
-            raise(e) if e.instance_variable_defined?(ERROR_TAG_IVAR)
-            e.instance_variable_set(ERROR_TAG_IVAR, true)
+            raise(e) if e.instance_variable_defined?(Bootsnap::LoadPathCache::ERROR_TAG_IVAR)
+            e.instance_variable_set(Bootsnap::LoadPathCache::ERROR_TAG_IVAR, true)
 
             # If we already had cache disabled, there's no use retrying
             raise(e) if Thread.current[:without_bootsnap_cache]
