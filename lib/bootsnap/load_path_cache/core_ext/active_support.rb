@@ -18,6 +18,11 @@ module Bootsnap
           Thread.current[:without_bootsnap_retry] = prev
         end
 
+        # If a NameError happens several levels deep, don't re-handle it
+        # all the way up the chain: mark it once and bubble it up without
+        # more retries.
+        ERROR_TAG_IVAR = :@__bootsnap_rescued
+
         module ClassMethods
           def autoload_paths=(o)
             super
@@ -60,19 +65,22 @@ module Bootsnap
               super
             end
           rescue NameError => e
+            raise(e) if e.instance_variable_defined?(ERROR_TAG_IVAR)
+            e.instance_variable_set(ERROR_TAG_IVAR, true)
+
             # This function can end up called recursively, we only want to
             # retry at the top-level.
-            raise if Thread.current[:without_bootsnap_retry]
+            raise(e) if Thread.current[:without_bootsnap_retry]
             # If we already had cache disabled, there's no use retrying
-            raise if Thread.current[:without_bootsnap_cache]
+            raise(e) if Thread.current[:without_bootsnap_cache]
             # NoMethodError is a NameError, but we only want to handle actual
             # NameError instances.
-            raise unless e.class == NameError
+            raise(e) unless e.class == NameError
             # We can only confidently handle cases when *this* constant fails
             # to load, not other constants referred to by it.
-            raise unless e.name == const_name
+            raise(e) unless e.name == const_name
             # If the constant was actually loaded, something else went wrong?
-            raise if from_mod.const_defined?(const_name)
+            raise(e) if from_mod.const_defined?(const_name)
             CoreExt::ActiveSupport.without_bootsnap_cache { super }
           end
 
@@ -80,9 +88,12 @@ module Bootsnap
           # reiterate it with version polymorphism here...
           def depend_on(*)
             super
-          rescue LoadError
+          rescue LoadError => e
+            raise(e) if e.instance_variable_defined?(ERROR_TAG_IVAR)
+            e.instance_variable_set(ERROR_TAG_IVAR, true)
+
             # If we already had cache disabled, there's no use retrying
-            raise if Thread.current[:without_bootsnap_cache]
+            raise(e) if Thread.current[:without_bootsnap_cache]
             CoreExt::ActiveSupport.without_bootsnap_cache { super }
           end
         end
