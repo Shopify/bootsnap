@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Bootsnap
   module LoadPathCache
     ReturnFalse = Class.new(StandardError)

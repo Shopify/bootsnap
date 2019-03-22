@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative('../explicit_require')
 
 module Bootsnap
@@ -11,7 +13,7 @@ module Bootsnap
       BUNDLE_PATH = if Bootsnap.bundler?
         (Bundler.bundle_path.cleanpath.to_s << LoadPathCache::SLASH).freeze
       else
-        ''.freeze
+        ''
       end
 
       def self.call(path)
