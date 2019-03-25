@@ -4,4 +4,14 @@ class << $LOADED_FEATURES
     Bootsnap::LoadPathCache.loaded_features_index.purge(key)
     delete_without_bootsnap(key)
   end
+
+  alias_method(:reject_without_bootsnap!, :reject!)
+  def reject!(&block)
+    backup = dup
+
+    # FIXME: if no block is passed we'd need to return a decorated iterator
+    reject_without_bootsnap!(&block)
+
+    Bootsnap::LoadPathCache.loaded_features_index.purge_multi(backup - self)
+  end
 end
