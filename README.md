@@ -33,6 +33,10 @@ Note that bootsnap writes to `tmp/cache`, and that directory *must* be writable.
 boot if it is not. If this is unacceptable (e.g. you are running in a read-only container and
 unwilling to mount in a writable tmpdir), you should remove this line or wrap it in a conditional.
 
+**Note also that bootsnap will never clean up its own cache: this is left up to you. Depending on your
+deployment strategy, you may need to periodically purge `tmp/cache/bootsnap*`. If you notice deploys
+getting progressively slower, this is almost certainly the cause.**
+
 It's technically possible to simply specify `gem 'bootsnap', require: 'bootsnap/setup'`, but it's
 important to load Bootsnap as early as possible to get maximum performance improvement.
 
