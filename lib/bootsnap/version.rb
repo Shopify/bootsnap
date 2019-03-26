@@ -1,3 +1,3 @@
 module Bootsnap
-  VERSION = "1.4.2.rc3"
+  VERSION = "1.4.2"
 end
