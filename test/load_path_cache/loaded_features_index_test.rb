@@ -65,6 +65,20 @@ module Bootsnap
         refute(@index.key?('foo'))
       end
 
+      def test_purge_multi_loaded_feature
+        refute(@index.key?('bundler'))
+        refute(@index.key?('bundler.rb'))
+        refute(@index.key?('foo'))
+        @index.register('bundler', '/a/b/bundler.rb') {}
+        assert(@index.key?('bundler'))
+        assert(@index.key?('bundler.rb'))
+        refute(@index.key?('foo'))
+        @index.purge_multi(['/a/b/bundler.rb', '/a/b/does-not-exist.rb'])
+        refute(@index.key?('bundler'))
+        refute(@index.key?('bundler.rb'))
+        refute(@index.key?('foo'))
+      end
+
       def test_register_finds_correct_feature
         refute(@index.key?('bundler'))
         refute(@index.key?('bundler.rb'))
