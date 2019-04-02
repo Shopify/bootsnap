@@ -521,6 +521,7 @@ atomic_write_cache_file(char * path, struct bs_cache_key * key, VALUE data, char
   ret = rename(tmp_path, path);
   if (ret < 0) {
     *errno_provenance = (char *)"bs_fetch:atomic_write_cache_file:rename";
+    return -1;
   }
   ret = chmod(path, 0664 & ~current_umask);
   if (ret < 0) {
