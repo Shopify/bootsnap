@@ -74,6 +74,8 @@ static uint32_t current_ruby_platform;
 static uint32_t current_ruby_revision;
 /* Invalidates cache when RubyVM::InstructionSequence.compile_option changes */
 static uint32_t current_compile_option_crc32 = 0;
+/* Current umask */
+static mode_t current_umask;
 
 /* Bootsnap::CompileCache::{Native, Uncompilable} */
 static VALUE rb_mBootsnap;
@@ -142,6 +144,9 @@ Init_bootsnap(void)
   rb_define_module_function(rb_mBootsnap_CompileCache_Native, "coverage_running?", bs_rb_coverage_running, 0);
   rb_define_module_function(rb_mBootsnap_CompileCache_Native, "fetch", bs_rb_fetch, 3);
   rb_define_module_function(rb_mBootsnap_CompileCache_Native, "compile_option_crc32=", bs_compile_option_crc32_set, 1);
+
+  current_umask = umask(0777);
+  umask(current_umask);
 }
 
 /*
@@ -482,7 +487,6 @@ atomic_write_cache_file(char * path, struct bs_cache_key * key, VALUE data, char
       *errno_provenance = (char *)"bs_fetch:atomic_write_cache_file:mkpath";
       return -1;
     }
-    close(fd);
     fd = open(tmp_path, O_WRONLY | O_CREAT, 0664);
     if (fd < 0) {
       *errno_provenance = (char *)"bs_fetch:atomic_write_cache_file:open";
@@ -517,6 +521,11 @@ atomic_write_cache_file(char * path, struct bs_cache_key * key, VALUE data, char
   ret = rename(tmp_path, path);
   if (ret < 0) {
     *errno_provenance = (char *)"bs_fetch:atomic_write_cache_file:rename";
+    return -1;
+  }
+  ret = chmod(path, 0664 & ~current_umask);
+  if (ret < 0) {
+    *errno_provenance = (char *)"bs_fetch:atomic_write_cache_file:chmod";
   }
   return ret;
 }
