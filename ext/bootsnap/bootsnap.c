@@ -518,6 +518,10 @@ atomic_write_cache_file(char * path, struct bs_cache_key * key, VALUE data, char
   if (ret < 0) {
     *errno_provenance = (char *)"bs_fetch:atomic_write_cache_file:rename";
   }
+  ret = chmod(path, 0664);
+  if (ret < 0) {
+    *errno_provenance = (char *)"bs_fetch:atomic_write_cache_file:chmod";
+  }
   return ret;
 }
 
