@@ -1,3 +1,7 @@
+# 1.4.3
+
+* Fix some cache permissions and umask issues after switch to mkstemp
+
 # 1.4.2
 
 * Fix bug when removing features loaded by relative path from `$LOADED_FEATURES`
