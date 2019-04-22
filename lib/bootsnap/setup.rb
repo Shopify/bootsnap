@@ -24,12 +24,15 @@ unless cache_dir
   cache_dir = File.join(app_root, 'tmp', 'cache')
 end
 
+ruby_version = Gem::Version.new(RUBY_VERSION)
+iseq_cache_enabled = ruby_version < Gem::Version.new('2.5.0') || ruby_version >= Gem::Version.new('2.6.0')
+
 Bootsnap.setup(
   cache_dir:            cache_dir,
   development_mode:     development_mode,
   load_path_cache:      true,
   autoload_paths_cache: true, # assume rails. open to PRs to impl. detection
   disable_trace:        false,
-  compile_cache_iseq:   true,
+  compile_cache_iseq:   iseq_cache_enabled,
   compile_cache_yaml:   true,
 )
