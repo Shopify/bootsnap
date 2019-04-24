@@ -1,3 +1,7 @@
+# 1.4.4
+
+* Disable ISeq cache in `bootsnap/setup` by default in Ruby 2.5
+
 # 1.4.3
 
 * Fix some cache permissions and umask issues after switch to mkstemp
