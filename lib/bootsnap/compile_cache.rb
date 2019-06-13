@@ -28,7 +28,7 @@ module Bootsnap
       raise(
         PermissionError,
         "bootsnap doesn't have permission to write cache entries in '#{cpath}' " \
-        "(or, less likely, doesn't have permisison to read '#{path}')",
+        "(or, less likely, doesn't have permission to read '#{path}')",
       )
     end
 
