@@ -24,6 +24,20 @@ module Bootsnap
         assert_equal('b', store2.get('a'))
       end
 
+      def test_deduplication
+        store.transaction do
+          store.set('a', 'foo')
+          store.set('b', 'foo')
+        end
+
+        store2 = Store.new(@path)
+        assert_equal('foo', store2.get('a'))
+        assert_equal('foo', store2.get('b'))
+
+        assert_same(store2.get('a'), store2.get('b'))
+        assert_same('foo'.freeze, store2.get('a'))
+      end
+
       def test_modification
         store.transaction { store.set('a', 'b') }
 

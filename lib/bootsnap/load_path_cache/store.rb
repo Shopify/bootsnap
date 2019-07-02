@@ -59,7 +59,7 @@ module Bootsnap
 
       def load_data
         @data = begin
-          MessagePack.load(File.binread(@store_path))
+          deduplicate!(MessagePack.load(File.binread(@store_path)))
           # handle malformed data due to upgrade incompatability
         rescue Errno::ENOENT, MessagePack::MalformedFormatError, MessagePack::UnknownExtTypeError, EOFError
           {}
@@ -80,6 +80,24 @@ module Bootsnap
         FileUtils.mv(tmp, @store_path)
       rescue Errno::EEXIST
         retry
+      end
+
+      def deduplicate!(value)
+        case value
+        when Hash
+          new_hash = {}
+          value.each_key do |key|
+            new_hash[deduplicate!(key)] = deduplicate!(value[key])
+          end
+          new_hash
+        when Array
+          value.map! { |v| deduplicate!(v) }
+          value
+        when String
+          -value
+        else
+          value
+        end
       end
     end
   end
