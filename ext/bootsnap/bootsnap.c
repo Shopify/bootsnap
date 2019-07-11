@@ -96,6 +96,7 @@ static int cache_key_equal(struct bs_cache_key * k1, struct bs_cache_key * k2);
 static VALUE bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler);
 static int open_current_file(char * path, struct bs_cache_key * key, char ** errno_provenance);
 static int fetch_cached_data(int fd, ssize_t data_size, VALUE handler, VALUE * output_data, int * exception_tag, char ** errno_provenance);
+static uint32_t get_ruby_revision(void);
 static uint32_t get_ruby_platform(void);
 
 /*
@@ -136,7 +137,7 @@ Init_bootsnap(void)
   rb_mBootsnap_CompileCache_Native = rb_define_module_under(rb_mBootsnap_CompileCache, "Native");
   rb_eBootsnap_CompileCache_Uncompilable = rb_define_class_under(rb_mBootsnap_CompileCache, "Uncompilable", rb_eStandardError);
 
-  current_ruby_revision = FIX2INT(rb_const_get(rb_cObject, rb_intern("RUBY_REVISION")));
+  current_ruby_revision = get_ruby_revision();
   current_ruby_platform = get_ruby_platform();
 
   uncompilable = rb_intern("__bootsnap_uncompilable__");
@@ -194,6 +195,26 @@ fnv1a_64(const char *str)
 {
   uint64_t h = (uint64_t)0xcbf29ce484222325ULL;
   return fnv1a_64_iter(h, str);
+}
+
+/*
+ * Ruby's revision may be Integer or String. CRuby 2.7 or later uses
+ * Git commit ID as revision. It's String.
+ */
+static uint32_t
+get_ruby_revision(void)
+{
+  VALUE ruby_revision;
+
+  ruby_revision = rb_const_get(rb_cObject, rb_intern("RUBY_REVISION"));
+  if (RB_TYPE_P(ruby_revision, RUBY_T_FIXNUM)) {
+    return FIX2INT(ruby_revision);
+  } else {
+    uint64_t hash;
+
+    hash = fnv1a_64(StringValueCStr(ruby_revision));
+    return (uint32_t)(hash >> 32);
+  }
 }
 
 /*
