@@ -35,7 +35,11 @@ class CompileCacheKeyFormatTest < Minitest::Test
 
   def test_key_ruby_revision
     key = cache_key_for_file(__FILE__)
-    exp = [RUBY_REVISION].pack("L")
+    if RUBY_REVISION.is_a?(String)
+      exp = [Help.fnv1a_64(RUBY_REVISION) >> 32].pack("L")
+    else
+      exp = [RUBY_REVISION].pack("L")
+    end
     assert_equal(exp, key[R[:ruby_revision]])
   end
 
