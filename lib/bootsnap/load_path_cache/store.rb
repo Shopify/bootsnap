@@ -11,7 +11,8 @@ module Bootsnap
 
       def initialize(store_path)
         @store_path = store_path
-        @in_txn = false
+        # TODO: Remove conditional once Ruby 2.2 support is dropped.
+        @txn_mutex =  defined?(::Mutex) ? ::Mutex.new : ::Thread::Mutex.new
         @dirty = false
         load_data
       end
@@ -21,7 +22,7 @@ module Bootsnap
       end
 
       def fetch(key)
-        raise(SetOutsideTransactionNotAllowed) unless @in_txn
+        raise(SetOutsideTransactionNotAllowed) unless @txn_mutex.owned?
         v = get(key)
         unless v
           @dirty = true
@@ -32,7 +33,7 @@ module Bootsnap
       end
 
       def set(key, value)
-        raise(SetOutsideTransactionNotAllowed) unless @in_txn
+        raise(SetOutsideTransactionNotAllowed) unless @txn_mutex.owned?
         if value != @data[key]
           @dirty = true
           @data[key] = value
@@ -40,12 +41,14 @@ module Bootsnap
       end
 
       def transaction
-        raise(NestedTransactionError) if @in_txn
-        @in_txn = true
-        yield
-      ensure
-        commit_transaction
-        @in_txn = false
+        raise(NestedTransactionError) if @txn_mutex.owned?
+        @txn_mutex.synchronize do
+          begin
+            yield
+          ensure
+            commit_transaction
+          end
+        end
       end
 
       private
