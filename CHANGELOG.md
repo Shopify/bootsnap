@@ -1,3 +1,8 @@
+# 1.4.5
+
+* MRI 2.7 support
+* Fixed concurrency bugs
+
 # 1.4.4
 
 * Disable ISeq cache in `bootsnap/setup` by default in Ruby 2.5
