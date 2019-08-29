@@ -41,6 +41,40 @@ module Bootsnap
         refute(@index.key?('foo'))
       end
 
+      def test_only_strip_elidable_ext
+        # It is only valid to strip a '.rb' or shared library extension from the
+        # end of a filename, not anything else.
+        #
+        # E.g. 'descriptor.pb.rb' if required via 'descriptor.pb'
+        # should never be shortened to merely 'descriptor'!
+        refute(@index.key?('descriptor.pb'))
+        refute(@index.key?('descriptor.pb.rb'))
+        refute(@index.key?('descriptor.rb'))
+        refute(@index.key?('descriptor'))
+        refute(@index.key?('foo'))
+        @index.register('descriptor.pb.rb') {}
+        assert(@index.key?('descriptor.pb'))
+        assert(@index.key?('descriptor.pb.rb'))
+        refute(@index.key?('descriptor.rb'))
+        refute(@index.key?('descriptor'))
+        refute(@index.key?('foo'))
+      end
+
+      def test_shared_library_ext_considered_elidable
+        # Check that '.dylib' (token shared library extension) is treated as elidable,
+        # and doesn't get mixed up with Ruby '.rb' files.
+        refute(@index.key?('libgit2.dylib'))
+        refute(@index.key?('libgit2.dylib.rb'))
+        refute(@index.key?('descriptor.rb'))
+        refute(@index.key?('descriptor'))
+        refute(@index.key?('foo'))
+        @index.register('libgit2.dylib') {}
+        assert(@index.key?('libgit2.dylib'))
+        refute(@index.key?('libgit2.dylib.rb'))
+        refute(@index.key?('libgit2.rb'))
+        refute(@index.key?('foo'))
+      end
+
       def test_cannot_infer_ext_from_base # Current limitation
         refute(@index.key?('bundler'))
         refute(@index.key?('bundler.rb'))
