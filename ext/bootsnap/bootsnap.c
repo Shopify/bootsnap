@@ -90,7 +90,7 @@ static VALUE bs_rb_fetch(VALUE self, VALUE cachedir_v, VALUE path_v, VALUE handl
 
 /* Helpers */
 static uint64_t fnv1a_64(const char *str);
-static void bs_cache_path(const char * cachedir, const char * path, char ** cache_path);
+static void bs_cache_path(const char * cachedir, const char * path, char (* cache_path)[MAX_CACHEPATH_SIZE]);
 static int bs_read_key(int fd, struct bs_cache_key * key);
 static int cache_key_equal(struct bs_cache_key * k1, struct bs_cache_key * k2);
 static VALUE bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler);
@@ -256,7 +256,7 @@ get_ruby_platform(void)
  * The path will look something like: <cachedir>/12/34567890abcdef
  */
 static void
-bs_cache_path(const char * cachedir, const char * path, char ** cache_path)
+bs_cache_path(const char * cachedir, const char * path, char (* cache_path)[MAX_CACHEPATH_SIZE])
 {
   uint64_t hash = fnv1a_64(path);
 
@@ -308,10 +308,8 @@ bs_rb_fetch(VALUE self, VALUE cachedir_v, VALUE path_v, VALUE handler)
   char * path     = RSTRING_PTR(path_v);
   char cache_path[MAX_CACHEPATH_SIZE];
 
-  { /* generate cache path to cache_path */
-    char * tmp = (char *)&cache_path;
-    bs_cache_path(cachedir, path, &tmp);
-  }
+  /* generate cache path to cache_path */
+  bs_cache_path(cachedir, path, &cache_path);
 
   return bs_fetch(path, path_v, cache_path, handler);
 }
