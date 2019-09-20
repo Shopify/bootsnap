@@ -94,8 +94,8 @@ static void bs_cache_path(const char * cachedir, const char * path, char (* cach
 static int bs_read_key(int fd, struct bs_cache_key * key);
 static int cache_key_equal(struct bs_cache_key * k1, struct bs_cache_key * k2);
 static VALUE bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler);
-static int open_current_file(char * path, struct bs_cache_key * key, char ** errno_provenance);
-static int fetch_cached_data(int fd, ssize_t data_size, VALUE handler, VALUE * output_data, int * exception_tag, char ** errno_provenance);
+static int open_current_file(char * path, struct bs_cache_key * key, const char ** errno_provenance);
+static int fetch_cached_data(int fd, ssize_t data_size, VALUE handler, VALUE * output_data, int * exception_tag, const char ** errno_provenance);
 static uint32_t get_ruby_revision(void);
 static uint32_t get_ruby_platform(void);
 
@@ -319,14 +319,14 @@ bs_rb_fetch(VALUE self, VALUE cachedir_v, VALUE path_v, VALUE handler)
  * was loaded.
  */
 static int
-open_current_file(char * path, struct bs_cache_key * key, char ** errno_provenance)
+open_current_file(char * path, struct bs_cache_key * key, const char ** errno_provenance)
 {
   struct stat statbuf;
   int fd;
 
   fd = open(path, O_RDONLY);
   if (fd < 0) {
-    *errno_provenance = (char *)"bs_fetch:open_current_file:open";
+    *errno_provenance = "bs_fetch:open_current_file:open";
     return fd;
   }
   #ifdef _WIN32
@@ -334,7 +334,7 @@ open_current_file(char * path, struct bs_cache_key * key, char ** errno_provenan
   #endif
 
   if (fstat(fd, &statbuf) < 0) {
-    *errno_provenance = (char *)"bs_fetch:open_current_file:fstat";
+    *errno_provenance = "bs_fetch:open_current_file:fstat";
     close(fd);
     return -1;
   }
@@ -380,13 +380,13 @@ bs_read_key(int fd, struct bs_cache_key * key)
  *   - ERROR_WITH_ERRNO (-1, errno is set)
  */
 static int
-open_cache_file(const char * path, struct bs_cache_key * key, char ** errno_provenance)
+open_cache_file(const char * path, struct bs_cache_key * key, const char ** errno_provenance)
 {
   int fd, res;
 
   fd = open(path, O_RDONLY);
   if (fd < 0) {
-    *errno_provenance = (char *)"bs_fetch:open_cache_file:open";
+    *errno_provenance = "bs_fetch:open_cache_file:open";
     if (errno == ENOENT) return CACHE_MISSING_OR_INVALID;
     return ERROR_WITH_ERRNO;
   }
@@ -396,7 +396,7 @@ open_cache_file(const char * path, struct bs_cache_key * key, char ** errno_prov
 
   res = bs_read_key(fd, key);
   if (res < 0) {
-    *errno_provenance = (char *)"bs_fetch:open_cache_file:read";
+    *errno_provenance = "bs_fetch:open_cache_file:read";
     close(fd);
     return res;
   }
@@ -420,7 +420,7 @@ open_cache_file(const char * path, struct bs_cache_key * key, char ** errno_prov
  * or exception, will be the final data returnable to the user.
  */
 static int
-fetch_cached_data(int fd, ssize_t data_size, VALUE handler, VALUE * output_data, int * exception_tag, char ** errno_provenance)
+fetch_cached_data(int fd, ssize_t data_size, VALUE handler, VALUE * output_data, int * exception_tag, const char ** errno_provenance)
 {
   char * data = NULL;
   ssize_t nread;
@@ -429,7 +429,7 @@ fetch_cached_data(int fd, ssize_t data_size, VALUE handler, VALUE * output_data,
   VALUE storage_data;
 
   if (data_size > 100000000000) {
-    *errno_provenance = (char *)"bs_fetch:fetch_cached_data:datasize";
+    *errno_provenance = "bs_fetch:fetch_cached_data:datasize";
     errno = EINVAL; /* because wtf? */
     ret = -1;
     goto done;
@@ -437,7 +437,7 @@ fetch_cached_data(int fd, ssize_t data_size, VALUE handler, VALUE * output_data,
   data = ALLOC_N(char, data_size);
   nread = read(fd, data, data_size);
   if (nread < 0) {
-    *errno_provenance = (char *)"bs_fetch:fetch_cached_data:read";
+    *errno_provenance = "bs_fetch:fetch_cached_data:read";
     ret = -1;
     goto done;
   }
@@ -489,7 +489,7 @@ mkpath(char * file_path, mode_t mode)
  * path.
  */
 static int
-atomic_write_cache_file(char * path, struct bs_cache_key * key, VALUE data, char ** errno_provenance)
+atomic_write_cache_file(char * path, struct bs_cache_key * key, VALUE data, const char ** errno_provenance)
 {
   char template[MAX_CACHEPATH_SIZE + 20];
   char * tmp_path;
@@ -503,12 +503,12 @@ atomic_write_cache_file(char * path, struct bs_cache_key * key, VALUE data, char
   fd = mkstemp(tmp_path);
   if (fd < 0) {
     if (mkpath(tmp_path, 0775) < 0) {
-      *errno_provenance = (char *)"bs_fetch:atomic_write_cache_file:mkpath";
+      *errno_provenance = "bs_fetch:atomic_write_cache_file:mkpath";
       return -1;
     }
     fd = open(tmp_path, O_WRONLY | O_CREAT, 0664);
     if (fd < 0) {
-      *errno_provenance = (char *)"bs_fetch:atomic_write_cache_file:open";
+      *errno_provenance = "bs_fetch:atomic_write_cache_file:open";
       return -1;
     }
   }
@@ -519,11 +519,11 @@ atomic_write_cache_file(char * path, struct bs_cache_key * key, VALUE data, char
   key->data_size = RSTRING_LEN(data);
   nwrite = write(fd, key, KEY_SIZE);
   if (nwrite < 0) {
-    *errno_provenance = (char *)"bs_fetch:atomic_write_cache_file:write";
+    *errno_provenance = "bs_fetch:atomic_write_cache_file:write";
     return -1;
   }
   if (nwrite != KEY_SIZE) {
-    *errno_provenance = (char *)"bs_fetch:atomic_write_cache_file:keysize";
+    *errno_provenance = "bs_fetch:atomic_write_cache_file:keysize";
     errno = EIO; /* Lies but whatever */
     return -1;
   }
@@ -531,7 +531,7 @@ atomic_write_cache_file(char * path, struct bs_cache_key * key, VALUE data, char
   nwrite = write(fd, RSTRING_PTR(data), RSTRING_LEN(data));
   if (nwrite < 0) return -1;
   if (nwrite != RSTRING_LEN(data)) {
-    *errno_provenance = (char *)"bs_fetch:atomic_write_cache_file:writelength";
+    *errno_provenance = "bs_fetch:atomic_write_cache_file:writelength";
     errno = EIO; /* Lies but whatever */
     return -1;
   }
@@ -539,12 +539,12 @@ atomic_write_cache_file(char * path, struct bs_cache_key * key, VALUE data, char
   close(fd);
   ret = rename(tmp_path, path);
   if (ret < 0) {
-    *errno_provenance = (char *)"bs_fetch:atomic_write_cache_file:rename";
+    *errno_provenance = "bs_fetch:atomic_write_cache_file:rename";
     return -1;
   }
   ret = chmod(path, 0664 & ~current_umask);
   if (ret < 0) {
-    *errno_provenance = (char *)"bs_fetch:atomic_write_cache_file:chmod";
+    *errno_provenance = "bs_fetch:atomic_write_cache_file:chmod";
   }
   return ret;
 }
@@ -553,13 +553,13 @@ atomic_write_cache_file(char * path, struct bs_cache_key * key, VALUE data, char
 /* Read contents from an fd, whose contents are asserted to be +size+ bytes
  * long, into a buffer */
 static ssize_t
-bs_read_contents(int fd, size_t size, char ** contents, char ** errno_provenance)
+bs_read_contents(int fd, size_t size, char ** contents, const char ** errno_provenance)
 {
   ssize_t nread;
   *contents = ALLOC_N(char, size);
   nread = read(fd, *contents, size);
   if (nread < 0) {
-    *errno_provenance = (char *)"bs_fetch:bs_read_contents:read";
+    *errno_provenance = "bs_fetch:bs_read_contents:read";
   }
   return nread;
 }
@@ -615,7 +615,7 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler)
   char * contents = NULL;
   int cache_fd = -1, current_fd = -1;
   int res, valid_cache = 0, exception_tag = 0;
-  char * errno_provenance = NULL;
+  const char * errno_provenance = NULL;
 
   VALUE input_data;   /* data read from source file, e.g. YAML or ruby source */
   VALUE storage_data; /* compiled data, e.g. msgpack / binary iseq */
@@ -683,7 +683,7 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler)
    * using input_to_output */
   if (NIL_P(output_data)) {
     if (unlink(cache_path) < 0) {
-      errno_provenance = (char *)"bs_fetch:unlink";
+      errno_provenance = "bs_fetch:unlink";
       goto fail_errno;
     }
     bs_input_to_output(handler, input_data, &output_data, &exception_tag);
