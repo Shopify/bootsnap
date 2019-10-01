@@ -33,7 +33,7 @@ Gem::Specification.new do |spec|
     spec.platform = 'java'
   else
     spec.platform    = Gem::Platform::RUBY
-    spec.extensions  = ['ext/bootsnap/extconf.rb']
+    spec.extensions  = ['ext/bootsnap/extconf.rb', 'ext/dirscanner/extconf.rb']
   end
 
   spec.add_development_dependency("bundler")

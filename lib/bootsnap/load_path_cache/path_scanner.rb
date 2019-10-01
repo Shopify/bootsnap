@@ -32,7 +32,7 @@ module Bootsnap
         dirs = []
         requirables = []
 
-        Dir.glob(path + ALL_FILES).each do |absolute_path|
+        process_path = ->(absolute_path) do
           next if contains_bundle_path && absolute_path.start_with?(BUNDLE_PATH)
           relative_path = absolute_path.slice(relative_slice)
 
@@ -41,6 +41,15 @@ module Bootsnap
           elsif REQUIRABLE_EXTENSIONS.include?(File.extname(relative_path))
             requirables << relative_path
           end
+        end
+
+        if Bootsnap::LoadPathCache.exclude_dirs || ENV['ENABLE_EXPERIMENTAL']
+          require 'bootsnap/dirscanner'
+          DirScanner.scan(path, excluded: Bootsnap::LoadPathCache.exclude_dirs || []) do |path|
+            process_path.(path)
+          end
+        else
+          Dir.glob(path + ALL_FILES).each(&process_path)
         end
 
         [requirables, dirs]

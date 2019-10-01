@@ -14,7 +14,8 @@ module Bootsnap
     autoload_paths_cache: true,
     disable_trace: false,
     compile_cache_iseq: true,
-    compile_cache_yaml: true
+    compile_cache_yaml: true,
+    exclude_dirs: nil
   )
     if autoload_paths_cache && !load_path_cache
       raise(InvalidConfiguration, "feature 'autoload_paths_cache' depends on feature 'load_path_cache'")
@@ -25,7 +26,8 @@ module Bootsnap
     Bootsnap::LoadPathCache.setup(
       cache_path:       cache_dir + '/bootsnap-load-path-cache',
       development_mode: development_mode,
-      active_support:   autoload_paths_cache
+      active_support:   autoload_paths_cache,
+      exclude_dirs:     exclude_dirs
     ) if load_path_cache
 
     Bootsnap::CompileCache.setup(
