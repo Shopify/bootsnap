@@ -134,6 +134,13 @@ module Bootsnap
         assert(index.key?('minitest/autorun.rb'))
         refute(index.key?('minitest/autorun.so'))
       end
+
+      def test_works_with_pathname
+        path = '/tmp/bundler.rb'
+        pathname = Pathname.new(path)
+        @index.register(pathname, path) { true }
+        assert(@index.key?(pathname))
+      end
     end
   end
 end
