@@ -100,7 +100,7 @@ void bs_dirscanner_scan_recursively(char *base_path, char **exclusions, int num_
     closedir(dir);
 }
 
-int bs_driscanner_is_prefix(const char *pre, const char *str)
+int bs_dirscanner_is_prefix(const char *pre, const char *str)
 {
     return strncmp(pre, str, strlen(pre)) == 0;
 }

@@ -16,7 +16,7 @@ module Bootsnap
         ''
       end
 
-      def self.call(path)
+      def self.call(path, excluded_paths: Bootsnap::LoadPathCache.exclude_dirs)
         path = path.to_s
 
         relative_slice = (path.size + 1)..-1
@@ -43,13 +43,18 @@ module Bootsnap
           end
         end
 
-        if Bootsnap::LoadPathCache.exclude_dirs || ENV['ENABLE_EXPERIMENTAL']
+        excluded = excluded_paths || []
+
+        if ENV['ENABLE_EXPERIMENTAL']
           require 'bootsnap/dirscanner'
-          DirScanner.scan(path, excluded: Bootsnap::LoadPathCache.exclude_dirs || []) do |path|
+          DirScanner.scan(path, excluded: excluded) do |path|
             process_path.(path)
           end
         else
-          Dir.glob(path + ALL_FILES).each(&process_path)
+          Dir.glob(path + ALL_FILES).each do |path|
+            next if excluded.any?{ |excl| path.start_with?(excl) }
+            process_path.(path)
+          end
         end
 
         [requirables, dirs]
