@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative('../explicit_require')
+require 'bootsnap/dirscanner'
 
 module Bootsnap
   module LoadPathCache
@@ -16,7 +17,7 @@ module Bootsnap
         ''
       end
 
-      def self.call(path, excluded_paths: Bootsnap::LoadPathCache.exclude_dirs)
+      def self.call(path, excluded_paths: Bootsnap::LoadPathCache.exclude_paths)
         path = path.to_s
 
         relative_slice = (path.size + 1)..-1
@@ -45,8 +46,7 @@ module Bootsnap
 
         excluded = excluded_paths || []
 
-        if ENV['ENABLE_EXPERIMENTAL']
-          require 'bootsnap/dirscanner'
+        if ENV['BOOTSNAP_EXPERIMENTAL']
           DirScanner.scan(path, excluded: excluded) do |path|
             process_path.(path)
           end

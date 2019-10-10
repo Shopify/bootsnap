@@ -10,7 +10,7 @@ rvm:
   - ruby-2.5
   - ruby-head
 env:
-  - ENABLE_EXPERIMENTAL=1
+  - BOOTSNAP_EXPERIMENTAL=1
   - ''
 
 matrix:
