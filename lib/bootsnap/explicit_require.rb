@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module Bootsnap
   module ExplicitRequire
     ARCHDIR    = RbConfig::CONFIG['archdir']

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require_relative('../bootsnap')
 
 env = ENV['RAILS_ENV'] || ENV['RACK_ENV'] || ENV['ENV']

@@ -96,7 +96,7 @@ module Bootsnap
 
         # Do we have a filename with an elidable extension, e.g.,
         # 'bundler.rb', or 'libgit2.so'?
-        altname = if is_extension_elidable(short)
+        altname = if extension_elidable?(short)
           # Strip the extension off, e.g. 'bundler.rb' -> 'bundler'.
           strip_extension_if_elidable(short)
         elsif long && (ext = File.extname(long))
@@ -132,12 +132,12 @@ module Bootsnap
       # with callling a Ruby file 'x.dylib.rb' and then requiring it as 'x.dylib'.)
       #
       # See <https://ruby-doc.org/core-2.6.4/Kernel.html#method-i-require>.
-      def is_extension_elidable(f)
+      def extension_elidable?(f)
         f.end_with?('.rb', '.so', '.o', '.dll', '.dylib')
       end
 
       def strip_extension_if_elidable(f)
-        if is_extension_elidable(f)
+        if extension_elidable?(f)
           f.sub(STRIP_EXTENSION, '')
         else
           f

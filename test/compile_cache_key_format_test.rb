@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require('test_helper')
 require('tempfile')
 require('tmpdir')
@@ -35,10 +36,10 @@ class CompileCacheKeyFormatTest < Minitest::Test
 
   def test_key_ruby_revision
     key = cache_key_for_file(__FILE__)
-    if RUBY_REVISION.is_a?(String)
-      exp = [Help.fnv1a_64(RUBY_REVISION) >> 32].pack("L")
+    exp = if RUBY_REVISION.is_a?(String)
+      [Help.fnv1a_64(RUBY_REVISION) >> 32].pack("L")
     else
-      exp = [RUBY_REVISION].pack("L")
+      [RUBY_REVISION].pack("L")
     end
     assert_equal(exp, key[R[:ruby_revision]])
   end
