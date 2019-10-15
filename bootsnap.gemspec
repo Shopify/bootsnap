@@ -1,4 +1,5 @@
 # coding: utf-8
+# frozen_string_literal: true
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require('bootsnap/version')
@@ -26,7 +27,7 @@ Gem::Specification.new do |spec|
   end
   spec.require_paths = %w(lib)
 
-  spec.required_ruby_version = '>= 2.0.0'
+  spec.required_ruby_version = '>= 2.3.0'
 
   if RUBY_PLATFORM =~ /java/
     spec.platform = 'java'

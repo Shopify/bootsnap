@@ -67,7 +67,7 @@ module Bootsnap
           # native dynamic extension, e.g. .bundle or .so), we know it was a
           # failure and there's nothing more we can do to find the file.
           # no extension, .rb, (.bundle or .so)
-          when '', *CACHED_EXTENSIONS # rubocop:disable Performance/CaseWhenSplat
+          when '', *CACHED_EXTENSIONS
             nil
           # Ruby allows specifying native extensions as '.so' even when DLEXT
           # is '.bundle'. This is where we handle that case.
@@ -144,7 +144,7 @@ module Bootsnap
             expanded_path = p.expanded_path
             entries, dirs = p.entries_and_dirs(@store)
             # push -> low precedence -> set only if unset
-            dirs.each    { |dir| @dirs[dir]  ||= path }
+            dirs.each    { |dir| @dirs[dir] ||= path }
             entries.each { |rel| @index[rel] ||= expanded_path }
           end
         end
