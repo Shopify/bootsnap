@@ -133,7 +133,7 @@ module Bootsnap
       #
       # See <https://ruby-doc.org/core-2.6.4/Kernel.html#method-i-require>.
       def extension_elidable?(f)
-        f.end_with?('.rb', '.so', '.o', '.dll', '.dylib')
+        f.to_s.end_with?('.rb', '.so', '.o', '.dll', '.dylib')
       end
 
       def strip_extension_if_elidable(f)
