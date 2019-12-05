@@ -9,7 +9,7 @@ class CompileCacheKeyFormatTest < Minitest::Test
 
   R = {
     version: 0...4,
-    os_version: 4...8,
+    ruby_platform: 4...8,
     compile_option: 8...12,
     ruby_revision: 12...16,
     size: 16...24,
