@@ -152,7 +152,7 @@ close     n
 Bootsnap は、64バイトのヘッダーとそれに続くキャッシュの内容を含んだキャッシュファイルを書き込みます。ヘッダーは、次のいくつかのフィールドで構成されるキャッシュキーです。
 
 - `version`、Bootsnapにハードコードされる基本的なスキーマのバージョン
-- `ruby_platform`、`RUBY_PLATFORM`（x86_64-linux-gnuなど）変数とOSバージョンのハッシュ（Linux、BSD、macOSでは` uname -v`）
+- `ruby_platform`、`RUBY_PLATFORM`（x86_64-linux-gnuなど）変数とglibcバージョン（Linuxの場合）またはOSバージョン（BSD、macOSの場合は` uname -v`）のハッシュ
 - `compile_option`、`RubyVM::InstructionSequence.compile_option` の返り値
 - `ruby_revision`、コンパイルされたRubyのバージョン
 - `size`、ソースファイルのサイズ
