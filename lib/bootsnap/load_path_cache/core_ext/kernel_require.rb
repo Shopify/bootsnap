@@ -3,7 +3,7 @@ module Bootsnap
   module LoadPathCache
     module CoreExt
       def self.make_load_error(path)
-        err = LoadError.new("cannot load such file -- #{path}")
+        err = LoadError.new(+"cannot load such file -- #{path}")
         err.instance_variable_set(Bootsnap::LoadPathCache::ERROR_TAG_IVAR, true)
         err.define_singleton_method(:path) { path }
         err
