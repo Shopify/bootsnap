@@ -21,6 +21,9 @@
 #ifndef _WIN32
 #include <sys/utsname.h>
 #endif
+#ifdef __GLIBC__
+#include <gnu/libc-version.h>
+#endif
 
 /* 1000 is an arbitrary limit; FNV64 plus some slashes brings the cap down to
  * 981 for the cache dir */
@@ -236,6 +239,9 @@ get_ruby_platform(void)
 
 #ifdef _WIN32
   return (uint32_t)(hash >> 32) ^ (uint32_t)GetVersion();
+#elif defined(__GLIBC__)
+  hash = fnv1a_64_iter(hash, gnu_get_libc_version());
+  return (uint32_t)(hash >> 32);
 #else
   struct utsname utsname;
 

@@ -214,7 +214,7 @@ Bootsnap writes a cache file containing a 64 byte header followed by the cache c
 is a cache key including several fields:
 
 * `version`, hardcoded in bootsnap. Essentially a schema version;
-* `ruby_platform`, A hash of `RUBY_PLATFORM` (e.g. x86_64-linux-gnu) variable and OS version (`uname -v` on Linux, BSD, macOS)
+* `ruby_platform`, A hash of `RUBY_PLATFORM` (e.g. x86_64-linux-gnu) variable and glibc version (on Linux) or OS version (`uname -v` on BSD, macOS)
 * `compile_option`, which changes with `RubyVM::InstructionSequence.compile_option` does;
 * `ruby_revision`, the version of Ruby this was compiled with;
 * `size`, the size of the source file;
