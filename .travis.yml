@@ -9,10 +9,14 @@ rvm:
   - ruby-2.4
   - ruby-2.5
   - ruby-head
+  - truffleruby
+  - truffleruby-head
 
 matrix:
   allow_failures:
     - rvm: ruby-head
+    - rvm: truffleruby
+    - rvm: truffleruby-head
   include:
     - rvm: jruby
       os: linux
