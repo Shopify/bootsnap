@@ -26,7 +26,7 @@ module Bootsnap
           super
         end
 
-        # uniq! keeps the first occurance of each path, otherwise preserving
+        # uniq! keeps the first occurrence of each path, otherwise preserving
         # order, preserving the effective load path
         def uniq!(*args)
           ret = super
