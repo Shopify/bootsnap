@@ -129,7 +129,7 @@ module Bootsnap
       # to name files in a way that assumes otherwise.
       # (E.g. It's unlikely that someone will know that their code
       # will _never_ run on MacOS, and therefore think they can get away
-      # with callling a Ruby file 'x.dylib.rb' and then requiring it as 'x.dylib'.)
+      # with calling a Ruby file 'x.dylib.rb' and then requiring it as 'x.dylib'.)
       #
       # See <https://ruby-doc.org/core-2.6.4/Kernel.html#method-i-require>.
       def extension_elidable?(f)
