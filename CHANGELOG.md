@@ -1,3 +1,17 @@
+# 1.4.6
+
+* Fix bug that was erroneously considering that files containing `.` in the names were being
+  required if a different file with the same name was already being required
+
+  Example:
+  
+      require 'foo'
+      require 'foo.en'
+
+  Before bootsnap was considering `foo.en` to be the same file as `foo`
+
+* Use glibc as part of the ruby_platform cache key
+
 # 1.4.5
 
 * MRI 2.7 support
