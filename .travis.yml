@@ -9,6 +9,9 @@ rvm:
   - ruby-2.4
   - ruby-2.5
   - ruby-head
+env:
+  - BOOTSNAP_EXPERIMENTAL=1
+  - ''
 
 matrix:
   allow_failures:

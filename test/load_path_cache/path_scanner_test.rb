@@ -29,6 +29,34 @@ module Bootsnap
           assert_equal(["a", "b", "b/c", "h", "h/i", "l", "l/m"], dirs.sort)
         end
       end
+
+      def test_path_exclusion
+        Dir.mktmpdir do |dir|
+          excluded_paths = [
+            File.join(dir, 'node_modules'),
+            File.join(dir, 'tmp', 'cache'),
+            File.join(dir, 'excludeme.rb'),
+            File.join(dir, 'excludemetoo.rb')
+          ]
+
+          %w[ruby/tmp/cache tmp/in_temp tmp/cache node_modules].each do |directory|
+            FileUtils.mkdir_p(File.join(dir, directory))
+          end
+
+          FileUtils.touch("#{dir}/ruby/a")
+          FileUtils.touch("#{dir}/ruby/d.rb")
+          FileUtils.touch("#{dir}/bundle.rb")
+          FileUtils.touch("#{dir}/excludeme.rb")
+          FileUtils.touch("#{dir}/tmp/in_temp/tmp.rb")
+          FileUtils.touch("#{dir}/tmp/cache/tmp.rb")
+          FileUtils.touch("#{dir}/ruby/tmp/cache/tmp.rb")
+          FileUtils.touch("#{dir}/node_modules/d.rb")
+
+          entries, dirs = PathScanner.call(dir, excluded_paths: excluded_paths)
+          assert_equal(%w[bundle.rb ruby/d.rb ruby/tmp/cache/tmp.rb tmp/in_temp/tmp.rb], entries.sort)
+          assert_equal(%w[ruby ruby/tmp ruby/tmp/cache tmp tmp/in_temp], dirs.sort)
+        end
+      end
     end
   end
 end

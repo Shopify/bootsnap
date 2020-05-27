@@ -29,14 +29,15 @@ module Bootsnap
 
     class << self
       attr_reader(:load_path_cache, :autoload_paths_cache,
-        :loaded_features_index, :realpath_cache)
+        :loaded_features_index, :realpath_cache, :exclude_paths)
 
-      def setup(cache_path:, development_mode:, active_support: true)
+      def setup(cache_path:, development_mode:, active_support: true, exclude_paths: nil)
         unless supported?
           warn("[bootsnap/setup] Load path caching is not supported on this implementation of Ruby") if $VERBOSE
           return
         end
 
+        @exclude_paths = exclude_paths
         store = Store.new(cache_path)
 
         @loaded_features_index = LoadedFeaturesIndex.new

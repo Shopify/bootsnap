@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative('../explicit_require')
+require 'bootsnap/dirscanner'
 
 module Bootsnap
   module LoadPathCache
@@ -16,7 +17,7 @@ module Bootsnap
         ''
       end
 
-      def self.call(path)
+      def self.call(path, excluded_paths: Bootsnap::LoadPathCache.exclude_paths)
         path = path.to_s
 
         relative_slice = (path.size + 1)..-1
@@ -32,7 +33,7 @@ module Bootsnap
         dirs = []
         requirables = []
 
-        Dir.glob(path + ALL_FILES).each do |absolute_path|
+        process_path = ->(absolute_path) do
           next if contains_bundle_path && absolute_path.start_with?(BUNDLE_PATH)
           relative_path = absolute_path.slice(relative_slice)
 
@@ -40,6 +41,19 @@ module Bootsnap
             dirs << relative_path
           elsif REQUIRABLE_EXTENSIONS.include?(File.extname(relative_path))
             requirables << relative_path
+          end
+        end
+
+        excluded = excluded_paths || []
+
+        if ENV['BOOTSNAP_EXPERIMENTAL']
+          DirScanner.scan(path, excluded: excluded) do |path|
+            process_path.(path)
+          end
+        else
+          Dir.glob(path + ALL_FILES).each do |path|
+            next if excluded.any?{ |excl| path.start_with?(excl) }
+            process_path.(path)
           end
         end
 

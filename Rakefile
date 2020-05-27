@@ -9,5 +9,11 @@ Rake::ExtensionTask.new do |ext|
   ext.lib_dir = 'lib/bootsnap'
   ext.gem_spec = gemspec
 end
+Rake::ExtensionTask.new do |ext|
+  ext.name = 'dirscanner'
+  ext.ext_dir = 'ext/dirscanner'
+  ext.lib_dir = 'lib/bootsnap'
+  ext.gem_spec = gemspec
+end
 
 task(default: :compile)
