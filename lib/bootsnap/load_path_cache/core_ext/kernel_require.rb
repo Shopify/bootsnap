@@ -56,7 +56,7 @@ module Kernel
     end
 
     # load also allows relative paths from pwd even when not in $:
-    if File.exist?(relative = File.expand_path(path))
+    if File.exist?(relative = File.expand_path(path).freeze)
       return load_without_bootsnap(relative, wrap)
     end
 

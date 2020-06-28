@@ -21,7 +21,7 @@ module Bootsnap
       attr_reader(:path)
 
       def initialize(path)
-        @path = path.to_s
+        @path = path.to_s.freeze
       end
 
       # True if the path exists, but represents a non-directory object
@@ -60,7 +60,7 @@ module Bootsnap
       end
 
       def expanded_path
-        File.expand_path(path)
+        File.expand_path(path).freeze
       end
 
       private

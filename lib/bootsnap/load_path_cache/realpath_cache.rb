@@ -15,15 +15,15 @@ module Bootsnap
 
       def realpath(caller_location, path)
         base = File.dirname(caller_location)
-        file = find_file(File.expand_path(path, base))
-        dir = File.dirname(file)
-        File.join(dir, File.basename(file))
+        abspath = File.expand_path(path, base).freeze
+        find_file(abspath)
       end
 
       def find_file(name)
-        ['', *CACHED_EXTENSIONS].each do |ext|
+        return File.realpath(name).freeze if File.exist?(name)
+        CACHED_EXTENSIONS.each do |ext|
           filename = "#{name}#{ext}"
-          return File.realpath(filename) if File.exist?(filename)
+          return File.realpath(filename).freeze if File.exist?(filename)
         end
         name
       end
