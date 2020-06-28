@@ -10,4 +10,8 @@ Rake::ExtensionTask.new do |ext|
   ext.gem_spec = gemspec
 end
 
-task(default: :compile)
+task :test do
+  sh 'bin/testunit'
+end
+
+task(default: %i(compile test))
