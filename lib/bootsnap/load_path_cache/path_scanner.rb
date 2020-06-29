@@ -33,8 +33,9 @@ module Bootsnap
         requirables = []
 
         Dir.glob(path + ALL_FILES).each do |absolute_path|
+          absolute_path.freeze
           next if contains_bundle_path && absolute_path.start_with?(BUNDLE_PATH)
-          relative_path = absolute_path.slice(relative_slice)
+          relative_path = absolute_path.slice(relative_slice).freeze
 
           if File.directory?(absolute_path)
             dirs << relative_path

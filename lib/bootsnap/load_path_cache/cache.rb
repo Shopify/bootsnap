@@ -46,7 +46,7 @@ module Bootsnap
       # loadpath.
       def find(feature)
         reinitialize if (@has_relative_paths && dir_changed?) || stale?
-        feature = feature.to_s
+        feature = feature.to_s.freeze
         return feature if absolute_path?(feature)
         return expand_path(feature) if feature.start_with?('./')
         @mutex.synchronize do
@@ -178,25 +178,25 @@ module Bootsnap
 
       if DLEXT2
         def search_index(f)
-          try_index(f + DOT_RB) || try_index(f + DLEXT) || try_index(f + DLEXT2) || try_index(f)
+          try_index("#{f}#{DOT_RB}") || try_index("#{f}#{DLEXT}") || try_index("#{f}#{DLEXT2}") || try_index(f)
         end
 
         def maybe_append_extension(f)
-          try_ext(f + DOT_RB) || try_ext(f + DLEXT) || try_ext(f + DLEXT2) || f
+          try_ext("#{f}#{DOT_RB}") || try_ext("#{f}#{DLEXT}") || try_ext("#{f}#{DLEXT2}") || f
         end
       else
         def search_index(f)
-          try_index(f + DOT_RB) || try_index(f + DLEXT) || try_index(f)
+          try_index("#{f}#{DOT_RB}") || try_index("#{f}#{DLEXT}") || try_index(f)
         end
 
         def maybe_append_extension(f)
-          try_ext(f + DOT_RB) || try_ext(f + DLEXT) || f
+          try_ext("#{f}#{DOT_RB}") || try_ext("#{f}#{DLEXT}") || f
         end
       end
 
       def try_index(f)
         if (p = @index[f])
-          p + '/' + f
+          "#{p}/#{f}"
         end
       end
 

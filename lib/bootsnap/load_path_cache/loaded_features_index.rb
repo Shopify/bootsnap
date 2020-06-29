@@ -99,7 +99,7 @@ module Bootsnap
         altname = if extension_elidable?(short)
           # Strip the extension off, e.g. 'bundler.rb' -> 'bundler'.
           strip_extension_if_elidable(short)
-        elsif long && (ext = File.extname(long))
+        elsif long && (ext = File.extname(long.freeze))
           # We already know the extension of the actual file this
           # resolves to, so put that back on.
           short + ext
