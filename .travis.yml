@@ -6,8 +6,10 @@ os:
   - osx
 
 rvm:
-  - ruby-2.4
-  - ruby-2.5
+  - '2.4'
+  - '2.5'
+  - '2.6'
+  - '2.7'
   - ruby-head
 
 matrix:

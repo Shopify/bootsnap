@@ -800,7 +800,7 @@ try_input_to_storage(VALUE arg)
 }
 
 static VALUE
-rescue_input_to_storage(VALUE arg)
+rescue_input_to_storage(VALUE arg, VALUE e)
 {
   return uncompilable;
 }
