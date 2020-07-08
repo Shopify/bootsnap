@@ -66,6 +66,7 @@ module Bootsnap
         @realpath_cache = nil
         @load_path_cache = nil
         @autoload_paths_cache = nil
+        ChangeObserver.unregister($LOAD_PATH)
       end
 
       def supported?

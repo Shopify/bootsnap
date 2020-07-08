@@ -2,6 +2,19 @@
 module Bootsnap
   module LoadPathCache
     module ChangeObserver
+      module Unsubscribed
+        class << self
+          def push_paths(_, _)
+          end
+
+          def unshift_paths(_, _)
+          end
+
+          def reinitialize
+          end
+        end
+      end
+
       module ArrayMixin
         # For each method that adds items to one end or another of the array
         # (<<, push, unshift, concat), override that method to also notify the
@@ -57,6 +70,12 @@ module Bootsnap
         return if arr.frozen? # can't register observer, but no need to.
         arr.instance_variable_set(:@lpc_observer, observer)
         arr.extend(ArrayMixin)
+      end
+
+      def self.unregister(arr)
+        return if arr.frozen?
+        return unless arr.is_a?(ArrayMixin)
+        arr.instance_variable_set(:@lpc_observer, Unsubscribed)
       end
     end
   end
