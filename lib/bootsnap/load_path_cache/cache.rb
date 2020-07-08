@@ -16,6 +16,15 @@ module Bootsnap
         reinitialize
       end
 
+      def clear
+        ChangeObserver.unregister(@path_obj)
+        @path_obj = nil
+        @store.clear
+        @store = nil
+        @dirs.clear
+        @index.clear
+      end
+
       # What is the path item that contains the dir as child?
       # e.g. given "/a/b/c/d" exists, and the path is ["/a/b"], load_dir("c/d")
       # is "/a/b".

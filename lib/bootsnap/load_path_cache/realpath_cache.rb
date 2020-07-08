@@ -11,6 +11,11 @@ module Bootsnap
         @cache[key]
       end
 
+      def clear
+        @cache.clear
+        @cache = nil
+      end
+
       private
 
       def realpath(caller_location, path)

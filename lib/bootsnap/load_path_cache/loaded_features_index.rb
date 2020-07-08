@@ -68,6 +68,11 @@ module Bootsnap
         @mutex.synchronize { @lfi.key?(feature) }
       end
 
+      def clear
+        @lfi.clear
+        @lfi = nil
+      end
+
       # There is a relatively uncommon case where we could miss adding an
       # entry:
       #

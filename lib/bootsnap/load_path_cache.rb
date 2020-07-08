@@ -62,11 +62,14 @@ module Bootsnap
       end
 
       def clear!
+        @loaded_features_index&.clear
         @loaded_features_index = nil
+        @realpath_cache&.clear
         @realpath_cache = nil
+        @load_path_cache&.clear
         @load_path_cache = nil
+        @autoload_paths_cache&.clear
         @autoload_paths_cache = nil
-        ChangeObserver.unregister($LOAD_PATH)
       end
 
       def supported?

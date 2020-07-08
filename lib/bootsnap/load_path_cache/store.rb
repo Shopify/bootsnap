@@ -18,6 +18,11 @@ module Bootsnap
         load_data
       end
 
+      def clear
+        @data.clear
+        @data = nil
+      end
+
       def get(key)
         @data[key]
       end
