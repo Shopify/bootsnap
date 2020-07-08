@@ -15,8 +15,6 @@ end
 module Kernel
   module_function # rubocop:disable Style/ModuleFunction
 
-  alias_method(:require_without_bootsnap, :require)
-
   # Note that require registers to $LOADED_FEATURES while load does not.
   def require_with_bootsnap_lfi(path, resolved = nil)
     Bootsnap::LoadPathCache.loaded_features_index.register(path, resolved) do
@@ -24,7 +22,8 @@ module Kernel
     end
   end
 
-  def require(path)
+  alias_method(:require_without_bootsnap, :require)
+  def require_with_bootsnap(path)
     return false if Bootsnap::LoadPathCache.loaded_features_index.key?(path)
 
     if (resolved = Bootsnap::LoadPathCache.load_path_cache.find(path))
@@ -42,7 +41,7 @@ module Kernel
   end
 
   alias_method(:require_relative_without_bootsnap, :require_relative)
-  def require_relative(path)
+  def require_relative_with_bootsnap(path)
     realpath = Bootsnap::LoadPathCache.realpath_cache.call(
       caller_locations(1..1).first.absolute_path, path
     )
@@ -50,7 +49,7 @@ module Kernel
   end
 
   alias_method(:load_without_bootsnap, :load)
-  def load(path, wrap = false)
+  def load_with_bootsnap(path, wrap = false)
     if (resolved = Bootsnap::LoadPathCache.load_path_cache.find(path))
       return load_without_bootsnap(resolved, wrap)
     end
@@ -73,7 +72,7 @@ end
 
 class Module
   alias_method(:autoload_without_bootsnap, :autoload)
-  def autoload(const, path)
+  def autoload_with_bootsnap(const, path)
     # NOTE: This may defeat LoadedFeaturesIndex, but it's not immediately
     # obvious how to make it work. This feels like a pretty niche case, unclear
     # if it will ever burn anyone.

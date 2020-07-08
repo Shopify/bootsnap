@@ -18,6 +18,7 @@ module Bootsnap
       class << self
         def call(path)
           path = File.expand_path(path.to_s).freeze
+          return [[], []] unless File.directory?(path)
 
           # If the bundle path is a descendent of this path, we do additional
           # checks to prevent recursing into the bundle path as we recurse
