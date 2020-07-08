@@ -45,7 +45,8 @@ module Bootsnap
         @realpath_cache = RealpathCache.new
 
         @load_path_cache = Cache.new(store, $LOAD_PATH, development_mode: development_mode)
-        install_hooks!
+        require_relative('load_path_cache/core_ext/kernel_require')
+        require_relative('load_path_cache/core_ext/loaded_features')
 
         if active_support
           # this should happen after setting up the initial cache because it
@@ -60,51 +61,7 @@ module Bootsnap
         end
       end
 
-      def install_hooks!
-        return if @installed
-
-        require_relative('load_path_cache/core_ext/kernel_require')
-        require_relative('load_path_cache/core_ext/loaded_features')
-
-        ::Kernel.module_eval do
-          module_function # rubocop:disable Style/ModuleFunction
-          alias_method(:require, :require_with_bootsnap)
-          alias_method(:require_relative, :require_relative_with_bootsnap)
-          alias_method(:load, :load_with_bootsnap)
-
-          if private_method_defined?(:zeitwerk_original_require)
-            alias_method :zeitwerk_original_require, :require
-          end
-        end
-        ::Module.class_eval do
-          alias_method(:autoload, :autoload_with_bootsnap)
-        end
-
-        @installed = true
-      end
-
-      def uninstall_hooks!
-        return unless @installed
-
-        ::Kernel.module_eval do
-          module_function # rubocop:disable Style/ModuleFunction
-          alias_method(:require, :require_without_bootsnap)
-          alias_method(:require_relative, :require_relative_without_bootsnap)
-          alias_method(:load, :load_without_bootsnap)
-
-          if private_method_defined?(:zeitwerk_original_require)
-            alias_method :zeitwerk_original_require, :require
-          end
-        end
-        ::Module.class_eval do
-          alias_method(:autoload, :autoload_without_bootsnap)
-        end
-
-        @installed = false
-      end
-
       def clear!
-        uninstall_hooks!
         @loaded_features_index = nil
         @realpath_cache = nil
         @load_path_cache = nil
