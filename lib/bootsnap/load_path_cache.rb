@@ -72,6 +72,10 @@ module Bootsnap
         @autoload_paths_cache = nil
       end
 
+      def active?
+        load_path_cache && loaded_features_index && realpath_cache
+      end
+
       def supported?
         RUBY_ENGINE == 'ruby' &&
         RUBY_PLATFORM =~ /darwin|linux|bsd/

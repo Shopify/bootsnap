@@ -25,7 +25,7 @@ module Kernel
   end
 
   def require(path)
-    if Bootsnap::LoadPathCache.load_path_cache
+    if Bootsnap::LoadPathCache.active?
       begin
         return false if Bootsnap::LoadPathCache.loaded_features_index.key?(path)
 
@@ -49,7 +49,7 @@ module Kernel
 
   alias_method(:require_relative_without_bootsnap, :require_relative)
   def require_relative(path)
-    if Bootsnap::LoadPathCache.realpath_cache
+    if Bootsnap::LoadPathCache.active?
       realpath = Bootsnap::LoadPathCache.realpath_cache.call(
         caller_locations(1..1).first.absolute_path, path
       )
@@ -61,7 +61,7 @@ module Kernel
 
   alias_method(:load_without_bootsnap, :load)
   def load(path, wrap = false)
-    if Bootsnap::LoadPathCache.load_path_cache
+    if Bootsnap::LoadPathCache.active?
       begin
         if (resolved = Bootsnap::LoadPathCache.load_path_cache.find(path))
           return load_without_bootsnap(resolved, wrap)
@@ -90,7 +90,7 @@ end
 class Module
   alias_method(:autoload_without_bootsnap, :autoload)
   def autoload(const, path)
-    if Bootsnap::LoadPathCache.load_path_cache
+    if Bootsnap::LoadPathCache.active?
       begin
         # NOTE: This may defeat LoadedFeaturesIndex, but it's not immediately
         # obvious how to make it work. This feels like a pretty niche case, unclear
