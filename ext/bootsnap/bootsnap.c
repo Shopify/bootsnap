@@ -32,6 +32,8 @@
 
 #define KEY_SIZE 64
 
+#define MAX_CREATE_TEMPFILE_ATTEMPT 3
+
 /*
  * An instance of this key is written as the first 64 bytes of each cache file.
  * The mtime and size members track whether the file contents have changed, and
@@ -499,25 +501,32 @@ atomic_write_cache_file(char * path, struct bs_cache_key * key, VALUE data, cons
 {
   char template[MAX_CACHEPATH_SIZE + 20];
   char * tmp_path;
-  int fd, ret;
+  int fd, ret, attempt;
   ssize_t nwrite;
 
-  tmp_path = strncpy(template, path, MAX_CACHEPATH_SIZE);
-  strcat(tmp_path, ".tmp.XXXXXX");
+  for (attempt = 0; attempt < MAX_CREATE_TEMPFILE_ATTEMPT; ++attempt) {
+    tmp_path = strncpy(template, path, MAX_CACHEPATH_SIZE);
+    strcat(tmp_path, ".tmp.XXXXXX");
 
-  // mkstemp modifies the template to be the actual created path
-  fd = mkstemp(tmp_path);
-  if (fd < 0) {
-    if (mkpath(tmp_path, 0775) < 0) {
+    // mkstemp modifies the template to be the actual created path
+    fd = mkstemp(tmp_path);
+    if (fd > 0) break;
+
+    if (attempt == 0 && mkpath(tmp_path, 0775) < 0) {
       *errno_provenance = "bs_fetch:atomic_write_cache_file:mkpath";
       return -1;
     }
-    fd = open(tmp_path, O_WRONLY | O_CREAT, 0664);
-    if (fd < 0) {
-      *errno_provenance = "bs_fetch:atomic_write_cache_file:open";
-      return -1;
-    }
   }
+  if (fd < 0) {
+    *errno_provenance = "bs_fetch:atomic_write_cache_file:mkstemp";
+    return -1;
+  }
+
+  if (chmod(tmp_path, 0644) < 0) {
+    *errno_provenance = "bs_fetch:atomic_write_cache_file:chmod";
+    return -1;
+  }
+
   #ifdef _WIN32
   setmode(fd, O_BINARY);
   #endif
