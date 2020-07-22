@@ -1,3 +1,8 @@
+# 1.4.7
+
+* Various performance enhancements
+* Fix race condition in heavy concurrent load scenarios that would cause bootsnap to raise
+
 # 1.4.6
 
 * Fix bug that was erroneously considering that files containing `.` in the names were being
