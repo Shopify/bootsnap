@@ -46,13 +46,13 @@ module Bootsnap
         Bootsnap::CompileCache::YAML.msgpack_factory = factory
 
         klass = class << ::YAML; self; end
-        klass.send(:define_method, :load_file) do |path|
+        klass.send(:define_method, :load_file) do |path, fallback: false|
           begin
             Bootsnap::CompileCache::Native.fetch(
               cache_dir,
               path,
               Bootsnap::CompileCache::YAML
-            )
+            ) || fallback
           rescue Errno::EACCES
             Bootsnap::CompileCache.permission_error(path)
           end
