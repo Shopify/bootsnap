@@ -38,7 +38,11 @@ module Kernel
   rescue Bootsnap::LoadPathCache::ReturnFalse
     false
   rescue Bootsnap::LoadPathCache::FallbackScan
-    require_with_bootsnap_lfi(path)
+    fallback = true
+  ensure
+    if fallback
+      require_with_bootsnap_lfi(path)
+    end
   end
 
   alias_method(:require_relative_without_bootsnap, :require_relative)
@@ -67,7 +71,11 @@ module Kernel
   rescue Bootsnap::LoadPathCache::ReturnFalse
     false
   rescue Bootsnap::LoadPathCache::FallbackScan
-    load_without_bootsnap(path, wrap)
+    fallback = true
+  ensure
+    if fallback
+      load_without_bootsnap(path, wrap)
+    end
   end
 end
 
@@ -88,6 +96,10 @@ class Module
   rescue Bootsnap::LoadPathCache::ReturnFalse
     false
   rescue Bootsnap::LoadPathCache::FallbackScan
-    autoload_without_bootsnap(const, path)
+    fallback = true
+  ensure
+    if fallback
+      autoload_without_bootsnap(const, path)
+    end
   end
 end
