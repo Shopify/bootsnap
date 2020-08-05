@@ -22,9 +22,7 @@ Gem::Specification.new do |spec|
     'source_code_uri' => 'https://github.com/Shopify/bootsnap',
   }
 
-  spec.files = %x(git ls-files -z).split("\x0").reject do |f|
-    f.match(%r{^(test|spec|features)/})
-  end
+  spec.files = %x(git ls-files -z ext lib).split("\x0") + %w(CHANGELOG.md LICENSE.txt README.md)
   spec.require_paths = %w(lib)
 
   spec.required_ruby_version = '>= 2.3.0'
