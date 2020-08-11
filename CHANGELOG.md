@@ -1,3 +1,7 @@
+# 1.4.8
+
+* [Prevent FallbackScan from polluting exception cause](https://github.com/Shopify/bootsnap/pull/314)
+
 # 1.4.7
 
 * Various performance enhancements
