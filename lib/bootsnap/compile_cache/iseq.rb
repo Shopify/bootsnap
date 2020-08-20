@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 require('bootsnap/bootsnap')
+require_relative('lmdb')
 require('zlib')
 
 module Bootsnap
@@ -35,7 +36,7 @@ module Bootsnap
           # Having coverage enabled prevents iseq dumping/loading.
           return nil if defined?(Coverage) && Bootsnap::CompileCache::Native.coverage_running?
 
-          Bootsnap::CompileCache::Native.fetch(
+          Bootsnap::CompileCache::LMDB.fetch(
             Bootsnap::CompileCache::ISeq.cache_dir,
             path.to_s,
             Bootsnap::CompileCache::ISeq
