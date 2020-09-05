@@ -16,13 +16,13 @@ module Bootsnap
         @symlinked_dir = "#{@base_dir}/symlink"
         FileUtils.ln_s(@absolute_dir, @symlinked_dir)
 
-        real_caller = File.new("#{@absolute_dir}/real_caller.rb", 'w').path
+        real_caller = File.new("#{@absolute_dir}/real_caller.rb", 'w').tap(&:close).path
         symlinked_caller = "#{@absolute_dir}/symlinked_caller.rb"
 
         FileUtils.ln_s(real_caller, symlinked_caller)
 
         EXTENSIONS.each do |ext|
-          real_required = File.new("#{@absolute_dir}/real_required#{ext}", 'w').path
+          real_required = File.new("#{@absolute_dir}/real_required#{ext}", 'w').tap(&:close).path
 
           symlinked_required = "#{@absolute_dir}/symlinked_required#{ext}"
           FileUtils.ln_s(real_required, symlinked_required)

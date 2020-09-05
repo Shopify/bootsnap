@@ -24,11 +24,24 @@ class CompileCacheTest < Minitest::Test
   end
 
   def test_no_write_permission_to_cache
-    path = Help.set_file('a.rb', 'a = 3', 100)
-    folder = File.dirname(Help.cache_path(@tmp_dir, path))
-    FileUtils.mkdir_p(folder)
-    FileUtils.chmod(0400, folder)
-    assert_raises(Bootsnap::CompileCache::PermissionError) { load(path) }
+    if RbConfig::CONFIG['host_os'] =~ /mswin|mingw|cygwin/
+      # Always pass this test on Windows because directories aren't read, only
+      # listed. You can restrict the ability to list directory contents on
+      # Windows or you can set ACLS on a folder such that it is not allowed to
+      # list contents.
+      #
+      # Since we can't read directories on windows, this specific test doesn't
+      # make sense. In addtion we test read-only files in
+      # `test_can_open_read_only_cache` so we are covered testing reading
+      # read-only files.
+      pass
+    else
+      path = Help.set_file('a.rb', 'a = 3', 100)
+      folder = File.dirname(Help.cache_path(@tmp_dir, path))
+      FileUtils.mkdir_p(folder)
+      FileUtils.chmod(0400, folder)
+      assert_raises(Bootsnap::CompileCache::PermissionError) { load(path) }
+    end
   end
 
   def test_can_open_read_only_cache
