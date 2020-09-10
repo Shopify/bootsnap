@@ -59,24 +59,24 @@ class CompileCacheKeyFormatTest < Minitest::Test
   end
 
   def test_fetch
-    actual = Bootsnap::CompileCache::Native.fetch(@tmp_dir, '/dev/null', TestHandler)
+    actual = Bootsnap::CompileCache::Native.fetch(@tmp_dir, '/dev/null', TestHandler, nil)
     assert_equal('NEATO /DEV/NULL', actual)
     data = File.read("#{@tmp_dir}/8c/d2d180bbd995df")
     assert_equal("neato /dev/null", data.force_encoding(Encoding::BINARY)[64..-1])
-    actual = Bootsnap::CompileCache::Native.fetch(@tmp_dir, '/dev/null', TestHandler)
+    actual = Bootsnap::CompileCache::Native.fetch(@tmp_dir, '/dev/null', TestHandler, nil)
     assert_equal('NEATO /DEV/NULL', actual)
   end
 
   def test_unexistent_fetch
     assert_raises(Errno::ENOENT) do
-      Bootsnap::CompileCache::Native.fetch(@tmp_dir, '123', Bootsnap::CompileCache::ISeq)
+      Bootsnap::CompileCache::Native.fetch(@tmp_dir, '123', Bootsnap::CompileCache::ISeq, nil)
     end
   end
 
   private
 
   def cache_key_for_file(file)
-    Bootsnap::CompileCache::Native.fetch(@tmp_dir, file, TestHandler)
+    Bootsnap::CompileCache::Native.fetch(@tmp_dir, file, TestHandler, nil)
     data = File.read(Help.cache_path(@tmp_dir, file))
     Help.binary(data[0..31])
   end

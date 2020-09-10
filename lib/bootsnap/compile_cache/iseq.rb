@@ -9,13 +9,13 @@ module Bootsnap
         attr_accessor(:cache_dir)
       end
 
-      def self.input_to_storage(_, path)
+      def self.input_to_storage(_, path, _args)
         RubyVM::InstructionSequence.compile_file(path).to_binary
       rescue SyntaxError
         raise(Uncompilable, 'syntax error')
       end
 
-      def self.storage_to_output(binary)
+      def self.storage_to_output(binary, _args)
         RubyVM::InstructionSequence.load_from_binary(binary)
       rescue RuntimeError => e
         if e.message == 'broken binary format'
@@ -26,7 +26,7 @@ module Bootsnap
         end
       end
 
-      def self.input_to_output(_)
+      def self.input_to_output(_, _)
         nil # ruby handles this
       end
 
@@ -38,7 +38,8 @@ module Bootsnap
           Bootsnap::CompileCache::Native.fetch(
             Bootsnap::CompileCache::ISeq.cache_dir,
             path.to_s,
-            Bootsnap::CompileCache::ISeq
+            Bootsnap::CompileCache::ISeq,
+            nil,
           )
         rescue Errno::EACCES
           Bootsnap::CompileCache.permission_error(path)
