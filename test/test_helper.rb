@@ -2,6 +2,7 @@
 $LOAD_PATH.unshift(File.expand_path('../../lib', __FILE__))
 require('bundler/setup')
 require('bootsnap')
+require('bootsnap/compile_cache/yaml')
 
 require('tmpdir')
 require('fileutils')
@@ -13,15 +14,15 @@ cache_dir = File.expand_path('../../tmp/bootsnap-compile-cache', __FILE__)
 Bootsnap::CompileCache.setup(cache_dir: cache_dir, iseq: true, yaml: false)
 
 module TestHandler
-  def self.input_to_storage(_i, p)
+  def self.input_to_storage(_i, p, _a)
     'neato ' + p
   end
 
-  def self.storage_to_output(d)
+  def self.storage_to_output(d, _a)
     d.upcase
   end
 
-  def self.input_to_output(_d)
+  def self.input_to_output(_d, _a)
     raise('but why tho')
   end
 end
@@ -50,8 +51,13 @@ module MiniTest
           str.force_encoding(Encoding::BINARY)
         end
 
-        def cache_path(dir, file)
-          hex = fnv1a_64(file).to_s(16)
+        def cache_path(dir, file, args = nil)
+          hash = fnv1a_64(file)
+          unless args.nil?
+            hash ^= fnv1a_64(Marshal.dump(args))
+          end
+
+          hex = hash.to_s(16)
           "#{dir}/#{hex[0..1]}/#{hex[2..-1]}"
         end
 
@@ -82,6 +88,7 @@ module TmpdirHelper
     Dir.chdir(@tmp_dir)
     @prev = Bootsnap::CompileCache::ISeq.cache_dir
     Bootsnap::CompileCache::ISeq.cache_dir = @tmp_dir
+    Bootsnap::CompileCache::YAML.cache_dir = @tmp_dir
   end
 
   def teardown
@@ -89,5 +96,6 @@ module TmpdirHelper
     Dir.chdir(@prev_dir)
     FileUtils.remove_entry(@tmp_dir)
     Bootsnap::CompileCache::ISeq.cache_dir = @prev
+    Bootsnap::CompileCache::YAML.cache_dir = @prev
   end
 end
