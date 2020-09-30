@@ -19,3 +19,17 @@ If you're stuck, ask questions!
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
 5. Create a new Pull Request
+
+## Running Tests on Windows
+
+### Setup
+
+1. Ensure you've installed Ruby and the MSYS2 devkit and have ran `ridk enable` in your shell. The `ridk enable` command adds make to the path so the compile rake task works.
+
+1. Open your shell as Administrator (`Run as Administrator`), as the tests create and delete symlinks
+
+### Running Tests
+
+> ridk enable
+> bundle install
+> bundle exec rake
