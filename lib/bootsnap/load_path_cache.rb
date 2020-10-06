@@ -61,7 +61,7 @@ module Bootsnap
 
       def supported?
         RUBY_ENGINE == 'ruby' &&
-        RUBY_PLATFORM =~ /darwin|linux|bsd/
+        RUBY_PLATFORM =~ /darwin|linux|bsd|mswin|mingw|cygwin/
       end
     end
   end

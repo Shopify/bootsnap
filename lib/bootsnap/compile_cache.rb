@@ -34,9 +34,9 @@ module Bootsnap
     end
 
     def self.supported?
-      # only enable on 'ruby' (MRI), POSIX (darwin, linux, *bsd), and >= 2.3.0
+      # only enable on 'ruby' (MRI), POSIX (darwin, linux, *bsd), Windows (RubyInstaller2) and >= 2.3.0
       RUBY_ENGINE == 'ruby' &&
-      RUBY_PLATFORM =~ /darwin|linux|bsd/ &&
+      RUBY_PLATFORM =~ /darwin|linux|bsd|mswin|mingw|cygwin/ &&
       Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("2.3.0")
     end
   end
