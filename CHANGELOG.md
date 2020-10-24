@@ -1,3 +1,8 @@
+# 1.4.9
+
+* [Windows support](https://github.com/Shopify/bootsnap/pull/319)
+* [Fix potential crash](https://github.com/Shopify/bootsnap/pull/322)
+
 # 1.4.8
 
 * [Prevent FallbackScan from polluting exception cause](https://github.com/Shopify/bootsnap/pull/314)
