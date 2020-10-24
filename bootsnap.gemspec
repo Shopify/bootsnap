@@ -20,6 +20,7 @@ Gem::Specification.new do |spec|
     'bug_tracker_uri' => 'https://github.com/Shopify/bootsnap/issues',
     'changelog_uri' => 'https://github.com/Shopify/bootsnap/blob/master/CHANGELOG.md',
     'source_code_uri' => 'https://github.com/Shopify/bootsnap',
+    'allowed_push_host' => 'https://rubygems.org'
   }
 
   spec.files = %x(git ls-files -z ext lib).split("\x0") + %w(CHANGELOG.md LICENSE.txt README.md)
