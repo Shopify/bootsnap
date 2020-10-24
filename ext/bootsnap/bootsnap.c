@@ -462,7 +462,7 @@ fetch_cached_data(int fd, ssize_t data_size, VALUE handler, VALUE args, VALUE * 
     goto done;
   }
 
-  storage_data = rb_str_new_static(data, data_size);
+  storage_data = rb_str_new(data, data_size);
 
   *exception_tag = bs_storage_to_output(handler, args, storage_data, output_data);
   ret = 0;
@@ -679,7 +679,7 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args
 
   /* Read the contents of the source file into a buffer */
   if (bs_read_contents(current_fd, current_key.size, &contents, &errno_provenance) < 0) goto fail_errno;
-  input_data = rb_str_new_static(contents, current_key.size);
+  input_data = rb_str_new(contents, current_key.size);
 
   /* Try to compile the input_data using input_to_storage(input_data) */
   exception_tag = bs_input_to_storage(handler, args, input_data, path_v, &storage_data);
