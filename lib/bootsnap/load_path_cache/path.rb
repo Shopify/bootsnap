@@ -27,7 +27,7 @@ module Bootsnap
       # True if the path exists, but represents a non-directory object
       def non_directory?
         !File.stat(path).directory?
-      rescue Errno::ENOENT, Errno::ENOTDIR
+      rescue Errno::ENOENT, Errno::ENOTDIR, Errno::EINVAL
         false
       end
 
@@ -77,7 +77,7 @@ module Bootsnap
         ["", *dirs].each do |dir|
           curr = begin
             File.mtime("#{path}/#{dir}").to_i
-                 rescue Errno::ENOENT, Errno::ENOTDIR
+                 rescue Errno::ENOENT, Errno::ENOTDIR, Errno::EINVAL
                    -1
           end
           max = curr if curr > max
