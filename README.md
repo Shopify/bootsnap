@@ -294,6 +294,19 @@ open    /c/nope.bundle -> -1
 # (nothing!)
 ```
 
+## Precompilation
+
+In development environments the bootsnap compilation cache is generated on the fly when source files are loaded.
+But in production environments, such as docker images, you might need to precompile the cache.
+
+To do so you can use the `bootsnap precompile` command.
+
+Example:
+
+```bash
+$ bundle exec bootsnap precompile --gemfile app/ lib/
+```
+
 ## When not to use Bootsnap
 
 *Alternative engines*: Bootsnap is pretty reliant on MRI features, and parts are disabled entirely on alternative ruby

@@ -26,6 +26,9 @@ Gem::Specification.new do |spec|
   spec.files = %x(git ls-files -z ext lib).split("\x0") + %w(CHANGELOG.md LICENSE.txt README.md)
   spec.require_paths = %w(lib)
 
+  spec.bindir        = 'exe'
+  spec.executables   = %w(bootsnap)
+
   spec.required_ruby_version = '>= 2.3.0'
 
   if RUBY_PLATFORM =~ /java/

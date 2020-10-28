@@ -71,6 +71,7 @@ module MiniTest
         end
 
         def set_file(path, contents, mtime)
+          FileUtils.mkdir_p(File.dirname(path))
           File.write(path, contents)
           FileUtils.touch(path, mtime: mtime)
           path
