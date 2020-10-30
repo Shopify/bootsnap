@@ -26,6 +26,15 @@ module Bootsnap
         end
       end
 
+      def self.fetch(path, cache_dir: ISeq.cache_dir)
+        Bootsnap::CompileCache::Native.fetch(
+          cache_dir,
+          path.to_s,
+          Bootsnap::CompileCache::ISeq,
+          nil,
+        )
+      end
+
       def self.input_to_output(_, _)
         nil # ruby handles this
       end
@@ -35,12 +44,7 @@ module Bootsnap
           # Having coverage enabled prevents iseq dumping/loading.
           return nil if defined?(Coverage) && Bootsnap::CompileCache::Native.coverage_running?
 
-          Bootsnap::CompileCache::Native.fetch(
-            Bootsnap::CompileCache::ISeq.cache_dir,
-            path.to_s,
-            Bootsnap::CompileCache::ISeq,
-            nil,
-          )
+          Bootsnap::CompileCache::ISeq.fetch(path.to_s)
         rescue Errno::EACCES
           Bootsnap::CompileCache.permission_error(path)
         rescue RuntimeError => e
@@ -61,6 +65,7 @@ module Bootsnap
         crc = Zlib.crc32(option.inspect)
         Bootsnap::CompileCache::Native.compile_option_crc32 = crc
       end
+      compile_option_updated
 
       def self.install!(cache_dir)
         Bootsnap::CompileCache::ISeq.cache_dir = cache_dir
