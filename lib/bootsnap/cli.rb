@@ -52,7 +52,7 @@ module Bootsnap
     dir_sort = begin
       Dir['.', sort: false]
       true
-    rescue ArgumentError
+    rescue ArgumentError, TypeError
       false
     end
 

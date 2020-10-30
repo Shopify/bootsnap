@@ -1,4 +1,4 @@
-# Bootsnap [![Build Status](https://travis-ci.org/Shopify/bootsnap.svg?branch=master)](https://travis-ci.org/Shopify/bootsnap)
+# Bootsnap [![Actions Status](https://github.com/Shopify/bootsnap/workflows/ci/badge.svg)](https://github.com/Shopify/bootsnap/actions)
 
 Bootsnap is a library that plugs into Ruby, with optional support for `ActiveSupport` and `YAML`,
 to optimize and cache expensive computations. See [How Does This Work](#how-does-this-work).
