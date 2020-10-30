@@ -9,7 +9,7 @@ on:
       - master
 
 jobs:
-  test:
+  platforms:
     strategy:
       matrix:
         os: [ubuntu, macos, windows]
@@ -22,3 +22,30 @@ jobs:
           ruby-version: ${{ matrix.ruby }}
       - run: bundle install
       - run: bundle exec rake
+  rubies:
+    strategy:
+      matrix:
+        os: [ubuntu]
+        ruby: [2.4, 2.5, 2.6, 2.7, 'ruby-head']
+    runs-on: ${{ matrix.os }}-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+      - run: bundle install
+      - run: bundle exec rake
+
+  minimal:
+    strategy:
+      matrix:
+        os: [ubuntu]
+        ruby: ['jruby', 'truffleruby']
+    runs-on: ${{ matrix.os }}-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+      - run: bundle install
+      - run: bin/test-minimal-support
