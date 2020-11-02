@@ -26,7 +26,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu]
-        ruby: [2.4, 2.5, 2.6, 2.7, 'ruby-head']
+        ruby: [2.3, 2.4, 2.5, 2.6, 2.7, 'ruby-head']
     runs-on: ${{ matrix.os }}-latest
     steps:
       - uses: actions/checkout@v2

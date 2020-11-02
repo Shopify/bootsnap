@@ -8,7 +8,7 @@ module Bootsnap
   class CLI
     unless Regexp.method_defined?(:match?)
       module RegexpMatchBackport
-        refine Regepx do
+        refine Regexp do
           def match?(string)
             !!match(string)
           end
