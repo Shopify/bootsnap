@@ -1,3 +1,7 @@
+# 1.5.0
+
+* Add a command line to statically precompile the ISeq cache. (#326)
+
 # 1.4.9
 
 * [Windows support](https://github.com/Shopify/bootsnap/pull/319)

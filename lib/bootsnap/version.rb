@@ -1,4 +1,4 @@
 # frozen_string_literal: true
 module Bootsnap
-  VERSION = "1.4.9"
+  VERSION = "1.5.0"
 end
