@@ -23,7 +23,7 @@ module Bootsnap
 
     def initialize(argv)
       @argv = argv
-      self.cache_dir = 'tmp/cache'
+      self.cache_dir = ENV.fetch('BOOTSNAP_CACHE_DIR', 'tmp/cache')
       self.compile_gemfile = false
       self.exclude = nil
     end
