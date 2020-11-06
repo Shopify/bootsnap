@@ -31,17 +31,19 @@ module Bootsnap
     def precompile_command(*sources)
       require 'bootsnap/compile_cache/iseq'
 
-      Bootsnap::CompileCache::ISeq.cache_dir = self.cache_dir
+      fix_default_encoding do
+        Bootsnap::CompileCache::ISeq.cache_dir = self.cache_dir
 
-      if compile_gemfile
-        sources += $LOAD_PATH
-      end
+        if compile_gemfile
+          sources += $LOAD_PATH
+        end
 
-      sources.map { |d| File.expand_path(d) }.each do |path|
-        if !exclude || !exclude.match?(path)
-          list_ruby_files(path).each do |ruby_file|
-            if !exclude || !exclude.match?(ruby_file)
-              CompileCache::ISeq.fetch(ruby_file, cache_dir: cache_dir)
+        sources.map { |d| File.expand_path(d) }.each do |path|
+          if !exclude || !exclude.match?(path)
+            list_ruby_files(path).each do |ruby_file|
+              if !exclude || !exclude.match?(ruby_file)
+                CompileCache::ISeq.fetch(ruby_file, cache_dir: cache_dir)
+              end
             end
           end
         end
@@ -90,6 +92,19 @@ module Bootsnap
     end
 
     private
+
+    def fix_default_encoding
+      if Encoding.default_external == Encoding::US_ASCII
+        Encoding.default_external = Encoding::UTF_8
+        begin
+          yield
+        ensure
+          Encoding.default_external = Encoding::US_ASCII
+        end
+      else
+        yield
+      end
+    end
 
     def invalid_usage!(message)
       STDERR.puts message
