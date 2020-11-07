@@ -35,7 +35,7 @@ module Bootsnap
         )
       end
 
-      def self.input_to_output(_, _)
+      def self.input_to_output(_data, _kwargs)
         nil # ruby handles this
       end
 
