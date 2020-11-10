@@ -1,3 +1,7 @@
+# 1.5.1
+
+* Workaround a Ruby bug in InstructionSequence.compile_file. (#332)
+
 # 1.5.0
 
 * Add a command line to statically precompile the ISeq cache. (#326)
