@@ -8,7 +8,7 @@ module Bootsnap
 
     def setup
       super
-      @cache_dir = File.expand_path('tmp/cache/bootsnap-compile-cache')
+      @cache_dir = File.expand_path('tmp/cache/bootsnap/compile-cache')
     end
 
     def test_precompile_single_file

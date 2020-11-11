@@ -24,13 +24,13 @@ module Bootsnap
     setup_disable_trace if disable_trace
 
     Bootsnap::LoadPathCache.setup(
-      cache_path:       cache_dir + '/bootsnap-load-path-cache',
+      cache_path:       cache_dir + '/bootsnap/load-path-cache',
       development_mode: development_mode,
       active_support:   autoload_paths_cache
     ) if load_path_cache
 
     Bootsnap::CompileCache.setup(
-      cache_dir: cache_dir + '/bootsnap-compile-cache',
+      cache_dir: cache_dir + '/bootsnap/compile-cache',
       iseq: compile_cache_iseq,
       yaml: compile_cache_yaml
     )
