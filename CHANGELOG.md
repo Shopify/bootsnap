@@ -1,3 +1,8 @@
+# Unreleased
+
+* Changed the load path cache directory from `$BOOTSNAP_CACHE_DIR/bootsnap-load-path-cache` to `$BOOTSNAP_CACHE_DIR/bootsnap/load-path-cache` for ease of use (#334)
+* Changed the compile cache directory from `$BOOTSNAP_CACHE_DIR/bootsnap-compile-cache` to `$BOOTSNAP_CACHE_DIR/bootsnap/compile-cache` for ease of use (#334)
+
 # 1.5.1
 
 * Workaround a Ruby bug in InstructionSequence.compile_file. (#332)

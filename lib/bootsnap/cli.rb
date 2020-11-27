@@ -114,7 +114,7 @@ module Bootsnap
     end
 
     def cache_dir=(dir)
-      @cache_dir = File.expand_path(File.join(dir, 'bootsnap-compile-cache'))
+      @cache_dir = File.expand_path(File.join(dir, 'bootsnap/compile-cache'))
     end
 
     def parser

@@ -10,7 +10,7 @@ require('fileutils')
 require('minitest/autorun')
 require('mocha/minitest')
 
-cache_dir = File.expand_path('../../tmp/bootsnap-compile-cache', __FILE__)
+cache_dir = File.expand_path('../../tmp/bootsnap/compile-cache', __FILE__)
 Bootsnap::CompileCache.setup(cache_dir: cache_dir, iseq: true, yaml: false)
 
 module TestHandler
