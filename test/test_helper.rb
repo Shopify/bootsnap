@@ -51,10 +51,10 @@ module MiniTest
           str.force_encoding(Encoding::BINARY)
         end
 
-        def cache_path(dir, file, args = nil)
+        def cache_path(dir, file, args_key = nil)
           hash = fnv1a_64(file)
-          unless args.nil?
-            hash ^= fnv1a_64(Marshal.dump(args))
+          unless args_key.nil?
+            hash ^= fnv1a_64(args_key)
           end
 
           hex = hash.to_s(16)

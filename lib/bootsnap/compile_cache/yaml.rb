@@ -74,12 +74,21 @@ module Bootsnap
             return super unless (kwargs.keys - ::Bootsnap::CompileCache::YAML.supported_options).empty?
           end
 
+          args_key = nil
+          if kwargs && kwargs[:symbolize_names]
+            # symbolize_names and freeze are the only two supported options.
+            # But freeze doesn't impact the cache, so symbolize_names is the only
+            # one that needs to be part of the cache key
+            args_key = 'symbolize_names=true'
+          end
+
           begin
             ::Bootsnap::CompileCache::Native.fetch(
               Bootsnap::CompileCache::YAML.cache_dir,
               path,
               ::Bootsnap::CompileCache::YAML,
               kwargs,
+              args_key,
             )
           rescue Errno::EACCES
             ::Bootsnap::CompileCache.permission_error(path)

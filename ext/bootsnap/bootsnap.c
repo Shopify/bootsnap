@@ -91,7 +91,7 @@ static ID uncompilable;
 
 /* Functions exposed as module functions on Bootsnap::CompileCache::Native */
 static VALUE bs_compile_option_crc32_set(VALUE self, VALUE crc32_v);
-static VALUE bs_rb_fetch(VALUE self, VALUE cachedir_v, VALUE path_v, VALUE handler, VALUE args);
+static VALUE bs_rb_fetch(VALUE self, VALUE cachedir_v, VALUE path_v, VALUE handler, VALUE args, VALUE args_key);
 
 /* Helpers */
 static uint64_t fnv1a_64(const char *str);
@@ -148,7 +148,7 @@ Init_bootsnap(void)
   uncompilable = rb_intern("__bootsnap_uncompilable__");
 
   rb_define_module_function(rb_mBootsnap_CompileCache_Native, "coverage_running?", bs_rb_coverage_running, 0);
-  rb_define_module_function(rb_mBootsnap_CompileCache_Native, "fetch", bs_rb_fetch, 4);
+  rb_define_module_function(rb_mBootsnap_CompileCache_Native, "fetch", bs_rb_fetch, 5);
   rb_define_module_function(rb_mBootsnap_CompileCache_Native, "compile_option_crc32=", bs_compile_option_crc32_set, 1);
 
   current_umask = umask(0777);
@@ -304,7 +304,7 @@ cache_key_equal(struct bs_cache_key * k1, struct bs_cache_key * k2)
  * conversions on the ruby VALUE arguments before passing them along.
  */
 static VALUE
-bs_rb_fetch(VALUE self, VALUE cachedir_v, VALUE path_v, VALUE handler, VALUE args)
+bs_rb_fetch(VALUE self, VALUE cachedir_v, VALUE path_v, VALUE handler, VALUE args, VALUE args_key)
 {
   FilePathValue(path_v);
 
@@ -319,9 +319,10 @@ bs_rb_fetch(VALUE self, VALUE cachedir_v, VALUE path_v, VALUE handler, VALUE arg
   char * path     = RSTRING_PTR(path_v);
   char cache_path[MAX_CACHEPATH_SIZE];
   char * extra    = NULL;
-  if (!NIL_P(args)) {
-    VALUE args_serial = rb_marshal_dump(args, Qnil);
-    extra = RSTRING_PTR(args_serial);
+
+  if (!NIL_P(args_key)) {
+    Check_Type(args_key, T_STRING);
+    extra = RSTRING_PTR(args_key);
   }
 
   /* generate cache path to cache_path */
