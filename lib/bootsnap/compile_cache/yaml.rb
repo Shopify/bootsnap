@@ -23,7 +23,13 @@ module Bootsnap
           # about it. -- but a leading 0x04 would indicate the contents of the YAML
           # is a positive integer, which is rare, to say the least.
           if data[0] == 0x04.chr && data[1] == 0x08.chr
-            Marshal.load(data)
+            begin
+              Marshal.load(data)
+            rescue ArgumentError => e
+              p e
+              p data
+              raise
+            end
           else
             msgpack_factory.load(data, **(kwargs || {}))
           end
@@ -31,6 +37,14 @@ module Bootsnap
 
         def input_to_output(data, kwargs)
           ::YAML.load(data, **(kwargs || {}))
+        end
+
+        def precompile(path, cache_dir: YAML.cache_dir)
+          Bootsnap::CompileCache::Native.precompile(
+            cache_dir,
+            path.to_s,
+            Bootsnap::CompileCache::YAML,
+          )
         end
 
         def install!(cache_dir)

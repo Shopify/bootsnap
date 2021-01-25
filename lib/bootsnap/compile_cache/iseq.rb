@@ -36,6 +36,14 @@ module Bootsnap
         )
       end
 
+      def self.precompile(path, cache_dir: ISeq.cache_dir)
+        Bootsnap::CompileCache::Native.precompile(
+          cache_dir,
+          path.to_s,
+          Bootsnap::CompileCache::ISeq,
+        )
+      end
+
       def self.input_to_output(_data, _kwargs)
         nil # ruby handles this
       end
