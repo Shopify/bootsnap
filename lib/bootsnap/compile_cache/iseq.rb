@@ -32,6 +32,7 @@ module Bootsnap
           path.to_s,
           Bootsnap::CompileCache::ISeq,
           nil,
+          nil,
         )
       end
 
