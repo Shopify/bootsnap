@@ -14,13 +14,13 @@ module Bootsnap
     def test_precompile_single_file
       path = Help.set_file('a.rb', 'a = a = 3', 100)
       CompileCache::ISeq.expects(:precompile).with(File.expand_path(path), cache_dir: @cache_dir)
-      assert_equal 0, CLI.new(['precompile', path]).run
+      assert_equal 0, CLI.new(['precompile', '-j', '0', path]).run
     end
 
     def test_no_iseq
       path = Help.set_file('a.rb', 'a = a = 3', 100)
       CompileCache::ISeq.expects(:precompile).never
-      assert_equal 0, CLI.new(['precompile', '--no-iseq', path]).run
+      assert_equal 0, CLI.new(['precompile', '-j', '0', '--no-iseq', path]).run
     end
 
     def test_precompile_directory
@@ -29,7 +29,7 @@ module Bootsnap
 
       CompileCache::ISeq.expects(:precompile).with(File.expand_path(path_a), cache_dir: @cache_dir)
       CompileCache::ISeq.expects(:precompile).with(File.expand_path(path_b), cache_dir: @cache_dir)
-      assert_equal 0, CLI.new(['precompile', 'foo']).run
+      assert_equal 0, CLI.new(['precompile', '-j', '0', 'foo']).run
     end
 
     def test_precompile_exclude
@@ -37,7 +37,7 @@ module Bootsnap
       Help.set_file('foo/b.rb', 'b = b = 3', 100)
 
       CompileCache::ISeq.expects(:precompile).with(File.expand_path(path_a), cache_dir: @cache_dir)
-      assert_equal 0, CLI.new(['precompile', '--exclude', 'b.rb', 'foo']).run
+      assert_equal 0, CLI.new(['precompile', '-j', '0', '--exclude', 'b.rb', 'foo']).run
     end
 
     def test_precompile_gemfile
@@ -47,13 +47,13 @@ module Bootsnap
     def test_precompile_yaml
       path = Help.set_file('a.yaml', 'foo: bar', 100)
       CompileCache::YAML.expects(:precompile).with(File.expand_path(path), cache_dir: @cache_dir)
-      assert_equal 0, CLI.new(['precompile', path]).run
+      assert_equal 0, CLI.new(['precompile', '-j', '0', path]).run
     end
 
     def test_no_yaml
       path = Help.set_file('a.yaml', 'foo: bar', 100)
       CompileCache::YAML.expects(:precompile).never
-      assert_equal 0, CLI.new(['precompile', '--no-yaml', path]).run
+      assert_equal 0, CLI.new(['precompile', '-j', '0', '--no-yaml', path]).run
     end
   end
 end

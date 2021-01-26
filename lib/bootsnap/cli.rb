@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
 require 'bootsnap'
+require 'bootsnap/cli/worker_pool'
 require 'optparse'
 require 'fileutils'
+require 'etc'
 
 module Bootsnap
   class CLI
@@ -19,7 +21,7 @@ module Bootsnap
 
     attr_reader :cache_dir, :argv
 
-    attr_accessor :compile_gemfile, :exclude, :verbose, :iseq, :yaml
+    attr_accessor :compile_gemfile, :exclude, :verbose, :iseq, :yaml, :jobs
 
     def initialize(argv)
       @argv = argv
@@ -27,6 +29,7 @@ module Bootsnap
       self.compile_gemfile = false
       self.exclude = nil
       self.verbose = false
+      self.jobs = Etc.nprocessors
       self.iseq = true
       self.yaml = true
     end
@@ -39,6 +42,12 @@ module Bootsnap
         Bootsnap::CompileCache::ISeq.cache_dir = self.cache_dir
         Bootsnap::CompileCache::YAML.init!
         Bootsnap::CompileCache::YAML.cache_dir = self.cache_dir
+
+        @work_pool = WorkerPool.create(size: jobs, jobs: {
+          ruby: method(:precompile_ruby),
+          yaml: method(:precompile_yaml),
+        })
+        @work_pool.spawn
 
         main_sources = sources.map { |d| File.expand_path(d) }
         precompile_ruby_files(main_sources)
@@ -54,6 +63,10 @@ module Bootsnap
           gem_pattern = %r{^#{Regexp.escape(Bundler.bundle_path.to_s)}/?(?:bundler/)?gem\/[^/]+}
           gem_paths = $LOAD_PATH.map { |p| p[gem_pattern] }.compact.uniq
           precompile_yaml_files(gem_paths, exclude: gem_exclude)
+        end
+
+        if exitstatus = @work_pool.shutdown
+          exit(exitstatus)
         end
       end
       0
@@ -109,11 +122,17 @@ module Bootsnap
           list_files(path, '**/*.{yml,yaml}').each do |yaml_file|
             # We ignore hidden files to not match the various .ci.yml files
             if !yaml_file.include?('/.') && (!exclude || !exclude.match?(yaml_file))
-              if CompileCache::YAML.precompile(yaml_file, cache_dir: cache_dir)
-                STDERR.puts(yaml_file) if verbose
-              end
+              @work_pool.push(:yaml, yaml_file)
             end
           end
+        end
+      end
+    end
+
+    def precompile_yaml(*yaml_files)
+      Array(yaml_files).each do |yaml_file|
+        if CompileCache::YAML.precompile(yaml_file, cache_dir: cache_dir)
+          STDERR.puts(yaml_file) if verbose
         end
       end
     end
@@ -125,11 +144,17 @@ module Bootsnap
         if !exclude || !exclude.match?(path)
           list_files(path, '**/*.rb').each do |ruby_file|
             if !exclude || !exclude.match?(ruby_file)
-              if CompileCache::ISeq.precompile(ruby_file, cache_dir: cache_dir)
-                STDERR.puts(ruby_file) if verbose
-              end
+              @work_pool.push(:ruby, ruby_file)
             end
           end
+        end
+      end
+    end
+
+    def precompile_ruby(*ruby_files)
+      Array(ruby_files).each do |ruby_file|
+        if CompileCache::ISeq.precompile(ruby_file, cache_dir: cache_dir)
+          STDERR.puts(ruby_file) if verbose
         end
       end
     end
@@ -182,6 +207,13 @@ module Bootsnap
         EOS
         opts.on('--verbose', '-v', help.strip) do
           self.verbose = true
+        end
+
+        help = <<~EOS
+          Number of workers to use. Default to number of processors, set to 0 to disable multi-processing.
+        EOS
+        opts.on('--jobs JOBS', '-j', help.strip) do |jobs|
+          self.jobs = Integer(jobs)
         end
 
         opts.separator ""
