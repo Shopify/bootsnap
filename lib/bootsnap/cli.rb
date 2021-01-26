@@ -45,8 +45,15 @@ module Bootsnap
         precompile_yaml_files(main_sources)
 
         if compile_gemfile
-          precompile_ruby_files($LOAD_PATH.map { |d| File.expand_path(d) })
-          precompile_yaml_files($LOAD_PATH.flat_map { |p| p.scan(/.*\/gems\/[^\/]+\//) }.uniq)
+          # Some gems embed their tests, they're very unlikely to be loaded, so not worth precompiling.
+          gem_exclude = Regexp.union([exclude, '/spec/', '/test/'].compact)
+          precompile_ruby_files($LOAD_PATH.map { |d| File.expand_path(d) }, exclude: gem_exclude)
+
+          # Gems that include YAML files usually don't put them in `lib/`.
+          # So we look at the gem root.
+          gem_pattern = %r{^#{Regexp.escape(Bundler.bundle_path.to_s)}/?(?:bundler/)?gem\/[^/]+}
+          gem_paths = $LOAD_PATH.map { |p| p[gem_pattern] }.compact.uniq
+          precompile_yaml_files(gem_paths, exclude: gem_exclude)
         end
       end
       0
@@ -94,7 +101,7 @@ module Bootsnap
 
     private
 
-    def precompile_yaml_files(load_paths)
+    def precompile_yaml_files(load_paths, exclude: self.exclude)
       return unless yaml
 
       load_paths.each do |path|
@@ -111,7 +118,7 @@ module Bootsnap
       end
     end
 
-    def precompile_ruby_files(load_paths)
+    def precompile_ruby_files(load_paths, exclude: self.exclude)
       return unless iseq
 
       load_paths.each do |path|
@@ -151,6 +158,11 @@ module Bootsnap
       @cache_dir = File.expand_path(File.join(dir, 'bootsnap/compile-cache'))
     end
 
+    def exclude_pattern(pattern)
+      (@exclude_patterns ||= []) << Regexp.new(pattern)
+      self.exclude = Regexp.union(@exclude_patterns)
+    end
+
     def parser
       @parser ||= OptionParser.new do |opts|
         opts.banner = "Usage: bootsnap COMMAND [ARGS]"
@@ -165,6 +177,9 @@ module Bootsnap
           self.cache_dir = dir
         end
 
+        help = <<~EOS
+          Print precompiled paths.
+        EOS
         opts.on('--verbose', '-v', help.strip) do
           self.verbose = true
         end
@@ -182,10 +197,10 @@ module Bootsnap
         help = <<~EOS
           Path pattern to not precompile. e.g. --exclude 'aws-sdk|google-api'
         EOS
-        opts.on('--exclude PATTERN', help) { |pattern| self.exclude = Regexp.new(pattern) }
+        opts.on('--exclude PATTERN', help) { |pattern| exclude_pattern(pattern) }
 
         help = <<~EOS
-          Disable Iseq (.rb) precompilation.
+          Disable ISeq (.rb) precompilation.
         EOS
         opts.on('--no-iseq', help) { self.iseq = false }
 

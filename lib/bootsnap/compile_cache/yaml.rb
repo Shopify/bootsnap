@@ -23,13 +23,7 @@ module Bootsnap
           # about it. -- but a leading 0x04 would indicate the contents of the YAML
           # is a positive integer, which is rare, to say the least.
           if data[0] == 0x04.chr && data[1] == 0x08.chr
-            begin
-              Marshal.load(data)
-            rescue ArgumentError => e
-              p e
-              p data
-              raise
-            end
+            Marshal.load(data)
           else
             msgpack_factory.load(data, **(kwargs || {}))
           end
