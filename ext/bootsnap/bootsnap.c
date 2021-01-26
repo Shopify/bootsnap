@@ -92,6 +92,7 @@ static ID uncompilable;
 /* Functions exposed as module functions on Bootsnap::CompileCache::Native */
 static VALUE bs_compile_option_crc32_set(VALUE self, VALUE crc32_v);
 static VALUE bs_rb_fetch(VALUE self, VALUE cachedir_v, VALUE path_v, VALUE handler, VALUE args, VALUE args_key);
+static VALUE bs_rb_precompile(VALUE self, VALUE cachedir_v, VALUE path_v, VALUE handler);
 
 /* Helpers */
 static uint64_t fnv1a_64(const char *str);
@@ -99,6 +100,7 @@ static void bs_cache_path(const char * cachedir, const char * path, const char *
 static int bs_read_key(int fd, struct bs_cache_key * key);
 static int cache_key_equal(struct bs_cache_key * k1, struct bs_cache_key * k2);
 static VALUE bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args);
+static VALUE bs_precompile(char * path, VALUE path_v, char * cache_path, VALUE handler);
 static int open_current_file(char * path, struct bs_cache_key * key, const char ** errno_provenance);
 static int fetch_cached_data(int fd, ssize_t data_size, VALUE handler, VALUE args, VALUE * output_data, int * exception_tag, const char ** errno_provenance);
 static uint32_t get_ruby_revision(void);
@@ -149,6 +151,7 @@ Init_bootsnap(void)
 
   rb_define_module_function(rb_mBootsnap_CompileCache_Native, "coverage_running?", bs_rb_coverage_running, 0);
   rb_define_module_function(rb_mBootsnap_CompileCache_Native, "fetch", bs_rb_fetch, 5);
+  rb_define_module_function(rb_mBootsnap_CompileCache_Native, "precompile", bs_rb_precompile, 3);
   rb_define_module_function(rb_mBootsnap_CompileCache_Native, "compile_option_crc32=", bs_compile_option_crc32_set, 1);
 
   current_umask = umask(0777);
@@ -331,6 +334,32 @@ bs_rb_fetch(VALUE self, VALUE cachedir_v, VALUE path_v, VALUE handler, VALUE arg
   return bs_fetch(path, path_v, cache_path, handler, args);
 }
 
+/*
+ * Entrypoint for Bootsnap::CompileCache::Native.precompile.
+ * Similar to fetch, but it only generate the cache if missing
+ * and doesn't return the content.
+ */
+static VALUE
+bs_rb_precompile(VALUE self, VALUE cachedir_v, VALUE path_v, VALUE handler)
+{
+  FilePathValue(path_v);
+
+  Check_Type(cachedir_v, T_STRING);
+  Check_Type(path_v, T_STRING);
+
+  if (RSTRING_LEN(cachedir_v) > MAX_CACHEDIR_SIZE) {
+    rb_raise(rb_eArgError, "cachedir too long");
+  }
+
+  char * cachedir = RSTRING_PTR(cachedir_v);
+  char * path     = RSTRING_PTR(path_v);
+  char cache_path[MAX_CACHEPATH_SIZE];
+
+  /* generate cache path to cache_path */
+  bs_cache_path(cachedir, path, NULL, &cache_path);
+
+  return bs_precompile(path, path_v, cache_path, handler);
+}
 /*
  * Open the file we want to load/cache and generate a cache key for it if it
  * was loaded.
@@ -740,6 +769,79 @@ invalid_type_storage_data:
 
 #undef CLEANUP
 }
+
+static VALUE
+bs_precompile(char * path, VALUE path_v, char * cache_path, VALUE handler)
+{
+  struct bs_cache_key cached_key, current_key;
+  char * contents = NULL;
+  int cache_fd = -1, current_fd = -1;
+  int res, valid_cache = 0, exception_tag = 0;
+  const char * errno_provenance = NULL;
+
+  VALUE input_data;   /* data read from source file, e.g. YAML or ruby source */
+  VALUE storage_data; /* compiled data, e.g. msgpack / binary iseq */
+
+  /* Open the source file and generate a cache key for it */
+  current_fd = open_current_file(path, &current_key, &errno_provenance);
+  if (current_fd < 0) goto fail;
+
+  /* Open the cache key if it exists, and read its cache key in */
+  cache_fd = open_cache_file(cache_path, &cached_key, &errno_provenance);
+  if (cache_fd == CACHE_MISSING_OR_INVALID) {
+    /* This is ok: valid_cache remains false, we re-populate it. */
+  } else if (cache_fd < 0) {
+    goto fail;
+  } else {
+    /* True if the cache existed and no invalidating changes have occurred since
+     * it was generated. */
+    valid_cache = cache_key_equal(&current_key, &cached_key);
+  }
+
+  if (valid_cache) {
+    goto succeed;
+  }
+
+  close(cache_fd);
+  cache_fd = -1;
+  /* Cache is stale, invalid, or missing. Regenerate and write it out. */
+
+  /* Read the contents of the source file into a buffer */
+  if (bs_read_contents(current_fd, current_key.size, &contents, &errno_provenance) < 0) goto fail;
+  input_data = rb_str_new(contents, current_key.size);
+
+  /* Try to compile the input_data using input_to_storage(input_data) */
+  exception_tag = bs_input_to_storage(handler, Qnil, input_data, path_v, &storage_data);
+  if (exception_tag != 0) goto fail;
+
+  /* If input_to_storage raised Bootsnap::CompileCache::Uncompilable, don't try
+   * to cache anything; just return false */
+  if (storage_data == uncompilable) {
+    goto fail;
+  }
+  /* If storage_data isn't a string, we can't cache it */
+  if (!RB_TYPE_P(storage_data, T_STRING)) goto fail;
+
+  /* Write the cache key and storage_data to the cache directory */
+  res = atomic_write_cache_file(cache_path, &current_key, storage_data, &errno_provenance);
+  if (res < 0) goto fail;
+
+  goto succeed;
+
+#define CLEANUP \
+  if (contents != NULL) xfree(contents);   \
+  if (current_fd >= 0)  close(current_fd); \
+  if (cache_fd >= 0)    close(cache_fd);
+
+succeed:
+  CLEANUP;
+  return Qtrue;
+fail:
+  CLEANUP;
+  return Qfalse;
+#undef CLEANUP
+}
+
 
 /*****************************************************************************/
 /********************* Handler Wrappers **************************************/

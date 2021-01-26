@@ -19,49 +19,57 @@ module Bootsnap
 
     attr_reader :cache_dir, :argv
 
-    attr_accessor :compile_gemfile, :exclude
+    attr_accessor :compile_gemfile, :exclude, :verbose, :iseq, :yaml
 
     def initialize(argv)
       @argv = argv
       self.cache_dir = ENV.fetch('BOOTSNAP_CACHE_DIR', 'tmp/cache')
       self.compile_gemfile = false
       self.exclude = nil
+      self.verbose = false
+      self.iseq = true
+      self.yaml = true
     end
 
     def precompile_command(*sources)
       require 'bootsnap/compile_cache/iseq'
+      require 'bootsnap/compile_cache/yaml'
 
       fix_default_encoding do
         Bootsnap::CompileCache::ISeq.cache_dir = self.cache_dir
+        Bootsnap::CompileCache::YAML.init!
+        Bootsnap::CompileCache::YAML.cache_dir = self.cache_dir
+
+        main_sources = sources.map { |d| File.expand_path(d) }
+        precompile_ruby_files(main_sources)
+        precompile_yaml_files(main_sources)
 
         if compile_gemfile
-          sources += $LOAD_PATH
-        end
+          # Some gems embed their tests, they're very unlikely to be loaded, so not worth precompiling.
+          gem_exclude = Regexp.union([exclude, '/spec/', '/test/'].compact)
+          precompile_ruby_files($LOAD_PATH.map { |d| File.expand_path(d) }, exclude: gem_exclude)
 
-        sources.map { |d| File.expand_path(d) }.each do |path|
-          if !exclude || !exclude.match?(path)
-            list_ruby_files(path).each do |ruby_file|
-              if !exclude || !exclude.match?(ruby_file)
-                CompileCache::ISeq.fetch(ruby_file, cache_dir: cache_dir)
-              end
-            end
-          end
+          # Gems that include YAML files usually don't put them in `lib/`.
+          # So we look at the gem root.
+          gem_pattern = %r{^#{Regexp.escape(Bundler.bundle_path.to_s)}/?(?:bundler/)?gem\/[^/]+}
+          gem_paths = $LOAD_PATH.map { |p| p[gem_pattern] }.compact.uniq
+          precompile_yaml_files(gem_paths, exclude: gem_exclude)
         end
       end
       0
     end
 
     dir_sort = begin
-      Dir['.', sort: false]
+      Dir[__FILE__, sort: false]
       true
     rescue ArgumentError, TypeError
       false
     end
 
     if dir_sort
-      def list_ruby_files(path)
+      def list_files(path, pattern)
         if File.directory?(path)
-          Dir[File.join(path, '**/*.rb'), sort: false]
+          Dir[File.join(path,  pattern), sort: false]
         elsif File.exist?(path)
           [path]
         else
@@ -69,9 +77,9 @@ module Bootsnap
         end
       end
     else
-      def list_ruby_files(path)
+      def list_files(path, pattern)
         if File.directory?(path)
-          Dir[File.join(path, '**/*.rb')]
+          Dir[File.join(path,  pattern)]
         elsif File.exist?(path)
           [path]
         else
@@ -92,6 +100,39 @@ module Bootsnap
     end
 
     private
+
+    def precompile_yaml_files(load_paths, exclude: self.exclude)
+      return unless yaml
+
+      load_paths.each do |path|
+        if !exclude || !exclude.match?(path)
+          list_files(path, '**/*.{yml,yaml}').each do |yaml_file|
+            # We ignore hidden files to not match the various .ci.yml files
+            if !yaml_file.include?('/.') && (!exclude || !exclude.match?(yaml_file))
+              if CompileCache::YAML.precompile(yaml_file, cache_dir: cache_dir)
+                STDERR.puts(yaml_file) if verbose
+              end
+            end
+          end
+        end
+      end
+    end
+
+    def precompile_ruby_files(load_paths, exclude: self.exclude)
+      return unless iseq
+
+      load_paths.each do |path|
+        if !exclude || !exclude.match?(path)
+          list_files(path, '**/*.rb').each do |ruby_file|
+            if !exclude || !exclude.match?(ruby_file)
+              if CompileCache::ISeq.precompile(ruby_file, cache_dir: cache_dir)
+                STDERR.puts(ruby_file) if verbose
+              end
+            end
+          end
+        end
+      end
+    end
 
     def fix_default_encoding
       if Encoding.default_external == Encoding::US_ASCII
@@ -117,6 +158,11 @@ module Bootsnap
       @cache_dir = File.expand_path(File.join(dir, 'bootsnap/compile-cache'))
     end
 
+    def exclude_pattern(pattern)
+      (@exclude_patterns ||= []) << Regexp.new(pattern)
+      self.exclude = Regexp.union(@exclude_patterns)
+    end
+
     def parser
       @parser ||= OptionParser.new do |opts|
         opts.banner = "Usage: bootsnap COMMAND [ARGS]"
@@ -129,6 +175,13 @@ module Bootsnap
         EOS
         opts.on('--cache-dir DIR', help.strip) do |dir|
           self.cache_dir = dir
+        end
+
+        help = <<~EOS
+          Print precompiled paths.
+        EOS
+        opts.on('--verbose', '-v', help.strip) do
+          self.verbose = true
         end
 
         opts.separator ""
@@ -144,7 +197,17 @@ module Bootsnap
         help = <<~EOS
           Path pattern to not precompile. e.g. --exclude 'aws-sdk|google-api'
         EOS
-        opts.on('--exclude PATTERN', help) { |pattern| self.exclude = Regexp.new(pattern) }
+        opts.on('--exclude PATTERN', help) { |pattern| exclude_pattern(pattern) }
+
+        help = <<~EOS
+          Disable ISeq (.rb) precompilation.
+        EOS
+        opts.on('--no-iseq', help) { self.iseq = false }
+
+        help = <<~EOS
+          Disable YAML precompilation.
+        EOS
+        opts.on('--no-yaml', help) { self.yaml = false }
       end
     end
   end

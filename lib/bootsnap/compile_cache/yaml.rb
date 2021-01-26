@@ -33,6 +33,14 @@ module Bootsnap
           ::YAML.load(data, **(kwargs || {}))
         end
 
+        def precompile(path, cache_dir: YAML.cache_dir)
+          Bootsnap::CompileCache::Native.precompile(
+            cache_dir,
+            path.to_s,
+            Bootsnap::CompileCache::YAML,
+          )
+        end
+
         def install!(cache_dir)
           self.cache_dir = cache_dir
           init!
