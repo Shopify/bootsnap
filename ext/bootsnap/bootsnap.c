@@ -681,9 +681,7 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args
     /* True if the cache existed and no invalidating changes have occurred since
      * it was generated. */
     valid_cache = cache_key_equal(&current_key, &cached_key);
-    if (valid_cache) {
-      printf("[Bootsnap] hit %s\n", path);
-    } else {
+    if (!valid_cache) {
       printf("[Bootsnap] stale %s\n", path);
     }
   }
