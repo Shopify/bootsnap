@@ -9,7 +9,7 @@ module Bootsnap
         attr_accessor(:cache_dir)
       end
 
-      def self.input_to_storage(_, path, _args)
+      def self.input_to_storage(_, path)
         RubyVM::InstructionSequence.compile_file(path).to_binary
       rescue SyntaxError
         raise(Uncompilable, 'syntax error')
@@ -31,7 +31,6 @@ module Bootsnap
           cache_dir,
           path.to_s,
           Bootsnap::CompileCache::ISeq,
-          nil,
           nil,
         )
       end
