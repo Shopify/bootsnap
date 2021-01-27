@@ -1,7 +1,12 @@
 # Unreleased
 
-* Changed the load path cache directory from `$BOOTSNAP_CACHE_DIR/bootsnap-load-path-cache` to `$BOOTSNAP_CACHE_DIR/bootsnap/load-path-cache` for ease of use (#334)
-* Changed the compile cache directory from `$BOOTSNAP_CACHE_DIR/bootsnap-compile-cache` to `$BOOTSNAP_CACHE_DIR/bootsnap/compile-cache` for ease of use (#334)
+# 1.6.0
+
+* Fix a Ruby 2.7/3.0 issue with `YAML.load_file` keyword arguments. (#342)
+* `bootsnap precompile` CLI use multiple processes to complete faster. (#341)
+* `bootsnap precompile` CLI also precompile YAML files. (#340)
+* Changed the load path cache directory from `$BOOTSNAP_CACHE_DIR/bootsnap-load-path-cache` to `$BOOTSNAP_CACHE_DIR/bootsnap/load-path-cache` for ease of use. (#334)
+* Changed the compile cache directory from `$BOOTSNAP_CACHE_DIR/bootsnap-compile-cache` to `$BOOTSNAP_CACHE_DIR/bootsnap/compile-cache` for ease of use. (#334)
 
 # 1.5.1
 
