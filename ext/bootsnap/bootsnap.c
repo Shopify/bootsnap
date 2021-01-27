@@ -673,6 +673,7 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args
   /* Open the cache key if it exists, and read its cache key in */
   cache_fd = open_cache_file(cache_path, &cached_key, &errno_provenance);
   if (cache_fd == CACHE_MISSING_OR_INVALID) {
+    printf("[Bootsnap] miss %s\n", path);
     /* This is ok: valid_cache remains false, we re-populate it. */
   } else if (cache_fd < 0) {
     goto fail_errno;
@@ -680,6 +681,11 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args
     /* True if the cache existed and no invalidating changes have occurred since
      * it was generated. */
     valid_cache = cache_key_equal(&current_key, &cached_key);
+    if (valid_cache) {
+      printf("[Bootsnap] hit %s\n", path);
+    } else {
+      printf("[Bootsnap] stale %s\n", path);
+    }
   }
 
   if (valid_cache) {
@@ -691,7 +697,9 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args
     if (exception_tag != 0)                   goto raise;
     else if (res == CACHE_MISSING_OR_INVALID) valid_cache = 0;
     else if (res == ERROR_WITH_ERRNO)         goto fail_errno;
-    else if (!NIL_P(output_data))             goto succeed; /* fast-path, goal */
+    else if (!NIL_P(output_data)) {
+      goto succeed; /* fast-path, goal */
+    }
   }
   close(cache_fd);
   cache_fd = -1;
