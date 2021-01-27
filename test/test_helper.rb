@@ -1,5 +1,12 @@
 # frozen_string_literal: true
 $LOAD_PATH.unshift(File.expand_path('../../lib', __FILE__))
+
+if defined? Warning
+  if Warning.respond_to?(:[]=)
+    Warning[:deprecated] = true
+  end
+end
+
 require('bundler/setup')
 require('bootsnap')
 require('bootsnap/compile_cache/yaml')
@@ -14,7 +21,7 @@ cache_dir = File.expand_path('../../tmp/bootsnap/compile-cache', __FILE__)
 Bootsnap::CompileCache.setup(cache_dir: cache_dir, iseq: true, yaml: false)
 
 module TestHandler
-  def self.input_to_storage(_i, p, _a)
+  def self.input_to_storage(_i, p)
     'neato ' + p
   end
 

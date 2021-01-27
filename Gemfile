@@ -6,4 +6,5 @@ gemspec
 
 group :development do
   gem 'rubocop'
+  gem 'byebug', platform: :ruby
 end
