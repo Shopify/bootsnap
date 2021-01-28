@@ -96,7 +96,7 @@ module Bootsnap
           begin
             ::Bootsnap::CompileCache::Native.fetch(
               Bootsnap::CompileCache::YAML.cache_dir,
-              path,
+              File.realpath(path),
               ::Bootsnap::CompileCache::YAML,
               kwargs,
             )
