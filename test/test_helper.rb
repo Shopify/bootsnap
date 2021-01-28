@@ -20,6 +20,12 @@ require('mocha/minitest')
 cache_dir = File.expand_path('../../tmp/bootsnap/compile-cache', __FILE__)
 Bootsnap::CompileCache.setup(cache_dir: cache_dir, iseq: true, yaml: false)
 
+if GC.respond_to?(:verify_compaction_references)
+  # This method was added in Ruby 3.0.0. Calling it this way asks the GC to
+  # move objects around, helping to find object movement bugs.
+  GC.verify_compaction_references(double_heap: true, toward: :empty)
+end
+
 module TestHandler
   def self.input_to_storage(_i, p)
     'neato ' + p
