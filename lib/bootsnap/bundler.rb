@@ -12,4 +12,10 @@ module Bootsnap
 
     false
   end
+
+  BUNDLE_PATH = if bundler?
+    -(Bundler.bundle_path.cleanpath.to_s << '/')
+  else
+    nil
+  end
 end

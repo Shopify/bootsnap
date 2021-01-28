@@ -9,12 +9,6 @@ module Bootsnap
       NORMALIZE_NATIVE_EXTENSIONS = !DL_EXTENSIONS.include?(LoadPathCache::DOT_SO)
       ALTERNATIVE_NATIVE_EXTENSIONS_PATTERN = /\.(o|bundle|dylib)\z/
 
-      BUNDLE_PATH = if Bootsnap.bundler?
-        (Bundler.bundle_path.cleanpath.to_s << LoadPathCache::SLASH).freeze
-      else
-        ''
-      end
-
       class << self
         def call(path)
           path = File.expand_path(path.to_s).freeze
@@ -27,7 +21,7 @@ module Bootsnap
           #
           # This can happen if, for example, the user adds '.' to the load path,
           # and the bundle path is '.bundle'.
-          contains_bundle_path = BUNDLE_PATH.start_with?(path)
+          contains_bundle_path = BUNDLE_PATH&.start_with?(path)
 
           dirs = []
           requirables = []
