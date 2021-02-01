@@ -37,7 +37,6 @@ Bootsnap.setup(
   cache_dir:            'tmp/cache',          # キャッシュファイルを保存する path
   development_mode:     env == 'development', # 現在の作業環境、例えば RACK_ENV, RAILS_ENV など。
   load_path_cache:      true,                 # キャッシュで LOAD_PATH を最適化する。
-  disable_trace:        true,                 # (アルファ) `RubyVM::InstructionSequence.compile_option = { trace_instruction: false }`をセットする。
   compile_cache_iseq:   true,                 # ISeq キャッシュをコンパイルする
   compile_cache_yaml:   true                  # YAML キャッシュをコンパイルする
 )

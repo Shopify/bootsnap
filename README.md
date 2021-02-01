@@ -11,7 +11,7 @@ to optimize and cache expensive computations. See [How Does This Work](#how-does
 - The core Shopify platform -- a rather large monolithic application -- boots about 75% faster,
   dropping from around 25s to 6.5s.
 * In Shopify core (a large app), about 25% of this gain can be attributed to `compile_cache_*`
-  features; 75% to path caching, and ~1% to `disable_trace`. This is fairly representative.
+  features; 75% to path caching. This is fairly representative.
 
 ## Usage
 
@@ -54,13 +54,10 @@ Bootsnap.setup(
   cache_dir:            'tmp/cache',          # Path to your cache
   development_mode:     env == 'development', # Current working environment, e.g. RACK_ENV, RAILS_ENV, etc
   load_path_cache:      true,                 # Optimize the LOAD_PATH with a cache
-  disable_trace:        true,                 # Set `RubyVM::InstructionSequence.compile_option = { trace_instruction: false }`
   compile_cache_iseq:   true,                 # Compile Ruby code into ISeq cache, breaks coverage reporting.
   compile_cache_yaml:   true                  # Compile YAML into a cache
 )
 ```
-
-**Note that `disable_trace` will break debuggers and tracing.**
 
 **Protip:** You can replace `require 'bootsnap'` with `BootLib::Require.from_gem('bootsnap',
 'bootsnap')` using [this trick](https://github.com/Shopify/bootsnap/wiki/Bootlib::Require). This

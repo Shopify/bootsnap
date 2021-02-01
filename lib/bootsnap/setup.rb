@@ -33,7 +33,6 @@ unless ENV['DISABLE_BOOTSNAP']
     cache_dir:            cache_dir,
     development_mode:     development_mode,
     load_path_cache:      !ENV['DISABLE_BOOTSNAP_LOAD_PATH_CACHE'],
-    disable_trace:        false,
     compile_cache_iseq:   !ENV['DISABLE_BOOTSNAP_COMPILE_CACHE'] && iseq_cache_enabled,
     compile_cache_yaml:   !ENV['DISABLE_BOOTSNAP_COMPILE_CACHE'],
   )

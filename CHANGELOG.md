@@ -1,5 +1,6 @@
 # Unreleased
 
+* Deprecate the `disable_trace` option.
 * Deprecate the `ActiveSupport::Dependencies` (AKA Classic autoloader) integration. (#344) 
 
 # 1.6.0
