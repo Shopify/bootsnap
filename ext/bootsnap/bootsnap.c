@@ -34,6 +34,7 @@
 
 #define MAX_CREATE_TEMPFILE_ATTEMPT 3
 
+#define BUNDLE_PATH "$BUNDLE_PATH/"
 /*
  * An instance of this key is written as the first 64 bytes of each cache file.
  * The mtime and size members track whether the file contents have changed, and
@@ -87,6 +88,8 @@ static VALUE rb_mBootsnap;
 static VALUE rb_mBootsnap_CompileCache;
 static VALUE rb_mBootsnap_CompileCache_Native;
 static VALUE rb_eBootsnap_CompileCache_Uncompilable;
+static char * bundle_path = NULL;
+static size_t bundle_path_size = 0;
 static ID uncompilable;
 
 /* Functions exposed as module functions on Bootsnap::CompileCache::Native */
@@ -96,7 +99,7 @@ static VALUE bs_rb_precompile(VALUE self, VALUE cachedir_v, VALUE path_v, VALUE 
 
 /* Helpers */
 static uint64_t fnv1a_64(const char *str);
-static void bs_cache_path(const char * cachedir, const char * path, char (* cache_path)[MAX_CACHEPATH_SIZE]);
+static void bs_cache_path(const char * cachedir, const char * path, const long path_length, char (* cache_path)[MAX_CACHEPATH_SIZE]);
 static int bs_read_key(int fd, struct bs_cache_key * key);
 static int cache_key_equal(struct bs_cache_key * k1, struct bs_cache_key * k2);
 static VALUE bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args);
@@ -143,6 +146,13 @@ Init_bootsnap(void)
   rb_mBootsnap_CompileCache = rb_define_module_under(rb_mBootsnap, "CompileCache");
   rb_mBootsnap_CompileCache_Native = rb_define_module_under(rb_mBootsnap_CompileCache, "Native");
   rb_eBootsnap_CompileCache_Uncompilable = rb_define_class_under(rb_mBootsnap_CompileCache, "Uncompilable", rb_eStandardError);
+
+  VALUE rb_bundle_path = rb_const_get(rb_mBootsnap, rb_intern("BUNDLE_PATH"));
+  if (RTEST(rb_bundle_path)) {
+    bundle_path = ALLOC_N(char, RSTRING_LEN(rb_bundle_path) + 1);
+    memcpy(bundle_path, RSTRING_PTR(rb_bundle_path), RSTRING_LEN(rb_bundle_path) + 1);
+    bundle_path_size = strlen(bundle_path);
+  }
 
   current_ruby_revision = get_ruby_revision();
   current_ruby_platform = get_ruby_platform();
@@ -267,9 +277,18 @@ get_ruby_platform(void)
  * The path will look something like: <cachedir>/12/34567890abcdef
  */
 static void
-bs_cache_path(const char * cachedir, const char * path, char (* cache_path)[MAX_CACHEPATH_SIZE])
+bs_cache_path(const char * cachedir, const char * path, const long path_length, char (* cache_path)[MAX_CACHEPATH_SIZE])
 {
-  uint64_t hash = fnv1a_64(path);
+  uint64_t hash;
+  if (bundle_path && !strncmp(bundle_path, path, bundle_path_size)) {
+    long canonical_path_size = path_length + strlen(BUNDLE_PATH) - bundle_path_size + 1;
+    char * canonical_path = ALLOCA_N(char, canonical_path_size);
+    memcpy(canonical_path, BUNDLE_PATH, strlen(BUNDLE_PATH));
+    memcpy(canonical_path + strlen(BUNDLE_PATH), path + bundle_path_size, path_length - bundle_path_size + 1);
+    hash = fnv1a_64(canonical_path);
+  } else {
+    hash = fnv1a_64(path);
+  }
   uint8_t first_byte = (hash >> (64 - 8));
   uint64_t remainder = hash & 0x00ffffffffffffff;
 
@@ -314,12 +333,13 @@ bs_rb_fetch(VALUE self, VALUE cachedir_v, VALUE path_v, VALUE handler, VALUE arg
     rb_raise(rb_eArgError, "cachedir too long");
   }
 
-  char * cachedir = RSTRING_PTR(cachedir_v);
-  char * path     = RSTRING_PTR(path_v);
+  char * cachedir  = RSTRING_PTR(cachedir_v);
+  char * path      = RSTRING_PTR(path_v);
+  long path_length = RSTRING_LEN(path_v);
   char cache_path[MAX_CACHEPATH_SIZE];
 
   /* generate cache path to cache_path */
-  bs_cache_path(cachedir, path, &cache_path);
+  bs_cache_path(cachedir, path, path_length, &cache_path);
 
   return bs_fetch(path, path_v, cache_path, handler, args);
 }
@@ -341,12 +361,13 @@ bs_rb_precompile(VALUE self, VALUE cachedir_v, VALUE path_v, VALUE handler)
     rb_raise(rb_eArgError, "cachedir too long");
   }
 
-  char * cachedir = RSTRING_PTR(cachedir_v);
-  char * path     = RSTRING_PTR(path_v);
+  char * cachedir  = RSTRING_PTR(cachedir_v);
+  char * path      = RSTRING_PTR(path_v);
+  long path_length = RSTRING_LEN(path_v);
   char cache_path[MAX_CACHEPATH_SIZE];
 
   /* generate cache path to cache_path */
-  bs_cache_path(cachedir, path, &cache_path);
+  bs_cache_path(cachedir, path, path_length, &cache_path);
 
   return bs_precompile(path, path_v, cache_path, handler);
 }
