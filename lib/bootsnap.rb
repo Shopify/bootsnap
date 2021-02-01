@@ -54,6 +54,11 @@ module Bootsnap
         "If you use Ruby 2.5 or newer this option is useless, if not upgrading is recommended."
     end
 
+    if compile_cache_iseq && !iseq_cache_supported?
+      warn "Ruby 2.5 has a bug that break code tracing when code is loaded from cache. It is recommened " \
+        "to turn `compile_cache_iseq` off on Ruby 2.5"
+    end
+
     Bootsnap::LoadPathCache.setup(
       cache_path:       cache_dir + '/bootsnap/load-path-cache',
       development_mode: development_mode,

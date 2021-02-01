@@ -1,5 +1,6 @@
 # Unreleased
 
+* Warn Ruby 2.5 users if they turn ISeq caching on. (#327, #244)
 * Disable ISeq caching for the whole 2.5.x series again.
 * Better handle hashing of Ruby strings. (#318)
 
