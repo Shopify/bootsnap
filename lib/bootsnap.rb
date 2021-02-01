@@ -67,7 +67,7 @@ module Bootsnap
       end
 
       ruby_version = Gem::Version.new(RUBY_VERSION)
-      iseq_cache_enabled = ruby_version < Gem::Version.new('2.5.0') || ruby_version >= Gem::Version.new('2.6.0')
+      iseq_cache_enabled = ruby_version < Gem::Version.new('2.5.0') || ruby_version >= Gem::Version.new('2.5.4')
 
       setup(
         cache_dir:            cache_dir,
