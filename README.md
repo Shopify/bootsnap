@@ -76,12 +76,30 @@ well together, and are both included in a newly-generated Rails applications by 
 - `DISABLE_BOOTSNAP` allows to entirely disable bootsnap.
 - `DISABLE_BOOTSNAP_LOAD_PATH_CACHE` allows to disable load path caching.
 - `DISABLE_BOOTSNAP_COMPILE_CACHE` allows to disable ISeq and YAML caches.
+- `BOOTSNAP_LOG` configure bootsnap to log all caches misses to STDERR.
 
 ### Environments
 
 All Bootsnap features are enabled in development, test, production, and all other environments according to the configuration in the setup. At Shopify, we use this gem safely in all environments without issue.
 
 If you would like to disable any feature for a certain environment, we suggest changing the configuration to take into account the appropriate ENV var or configuration according to your needs.
+
+### Instrumentation
+
+Bootsnap cache misses can be monitored though a callback:
+
+```ruby
+Bootsnap.instrumentation = ->(event, path) { puts "#{event} #{path}" }
+```
+
+`event` is either `:miss` or `:stale`. You can also call `Bootsnap.log!` as a shortcut to
+log all events to STDERR.
+
+To turn instrumentation back off you can set it to nil:
+
+```ruby
+Bootsnap.instrumentation = nil
+```
 
 ## How does this work?
 

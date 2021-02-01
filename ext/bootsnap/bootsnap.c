@@ -14,6 +14,7 @@
 #include "bootsnap.h"
 #include "ruby.h"
 #include <stdint.h>
+#include <stdbool.h>
 #include <sys/types.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -33,6 +34,10 @@
 #define KEY_SIZE 64
 
 #define MAX_CREATE_TEMPFILE_ATTEMPT 3
+
+#ifndef RB_UNLIKELY
+  #define RB_UNLIKELY(x) (x)
+#endif
 
 /*
  * An instance of this key is written as the first 64 bytes of each cache file.
@@ -88,8 +93,13 @@ static VALUE rb_mBootsnap_CompileCache;
 static VALUE rb_mBootsnap_CompileCache_Native;
 static VALUE rb_eBootsnap_CompileCache_Uncompilable;
 static ID uncompilable;
+static ID instrumentation_method;
+static VALUE sym_miss;
+static VALUE sym_stale;
+static bool instrumentation_enabled = false;
 
 /* Functions exposed as module functions on Bootsnap::CompileCache::Native */
+static VALUE bs_instrumentation_enabled_set(VALUE self, VALUE enabled);
 static VALUE bs_compile_option_crc32_set(VALUE self, VALUE crc32_v);
 static VALUE bs_rb_fetch(VALUE self, VALUE cachedir_v, VALUE path_v, VALUE handler, VALUE args);
 static VALUE bs_rb_precompile(VALUE self, VALUE cachedir_v, VALUE path_v, VALUE handler);
@@ -148,7 +158,15 @@ Init_bootsnap(void)
   current_ruby_platform = get_ruby_platform();
 
   uncompilable = rb_intern("__bootsnap_uncompilable__");
+  instrumentation_method = rb_intern("_instrument");
 
+  sym_miss = ID2SYM(rb_intern("miss"));
+  rb_global_variable(&sym_miss);
+
+  sym_stale = ID2SYM(rb_intern("stale"));
+  rb_global_variable(&sym_stale);
+
+  rb_define_module_function(rb_mBootsnap, "instrumentation_enabled=", bs_instrumentation_enabled_set, 1);
   rb_define_module_function(rb_mBootsnap_CompileCache_Native, "coverage_running?", bs_rb_coverage_running, 0);
   rb_define_module_function(rb_mBootsnap_CompileCache_Native, "fetch", bs_rb_fetch, 4);
   rb_define_module_function(rb_mBootsnap_CompileCache_Native, "precompile", bs_rb_precompile, 3);
@@ -156,6 +174,13 @@ Init_bootsnap(void)
 
   current_umask = umask(0777);
   umask(current_umask);
+}
+
+static VALUE
+bs_instrumentation_enabled_set(VALUE self, VALUE enabled)
+{
+  instrumentation_enabled = RTEST(enabled);
+  return enabled;
 }
 
 /*
@@ -386,7 +411,8 @@ open_current_file(char * path, struct bs_cache_key * key, const char ** errno_pr
 }
 
 #define ERROR_WITH_ERRNO -1
-#define CACHE_MISSING_OR_INVALID -2
+#define CACHE_MISS -2
+#define CACHE_STALE -3
 
 /*
  * Read the cache key from the given fd, which must have position 0 (e.g.
@@ -394,15 +420,16 @@ open_current_file(char * path, struct bs_cache_key * key, const char ** errno_pr
  *
  * Possible return values:
  *   - 0 (OK, key was loaded)
- *   - CACHE_MISSING_OR_INVALID (-2)
  *   - ERROR_WITH_ERRNO (-1, errno is set)
+ *   - CACHE_MISS (-2)
+ *   - CACHE_STALE (-3)
  */
 static int
 bs_read_key(int fd, struct bs_cache_key * key)
 {
   ssize_t nread = read(fd, key, KEY_SIZE);
   if (nread < 0)        return ERROR_WITH_ERRNO;
-  if (nread < KEY_SIZE) return CACHE_MISSING_OR_INVALID;
+  if (nread < KEY_SIZE) return CACHE_STALE;
   return 0;
 }
 
@@ -412,7 +439,8 @@ bs_read_key(int fd, struct bs_cache_key * key)
  *
  * Possible return values:
  *   - 0 (OK, key was loaded)
- *   - CACHE_MISSING_OR_INVALID (-2)
+ *   - CACHE_MISS (-2)
+ *   - CACHE_STALE (-3)
  *   - ERROR_WITH_ERRNO (-1, errno is set)
  */
 static int
@@ -423,7 +451,7 @@ open_cache_file(const char * path, struct bs_cache_key * key, const char ** errn
   fd = open(path, O_RDONLY);
   if (fd < 0) {
     *errno_provenance = "bs_fetch:open_cache_file:open";
-    if (errno == ENOENT) return CACHE_MISSING_OR_INVALID;
+    if (errno == ENOENT) return CACHE_MISS;
     return ERROR_WITH_ERRNO;
   }
   #ifdef _WIN32
@@ -478,7 +506,7 @@ fetch_cached_data(int fd, ssize_t data_size, VALUE handler, VALUE args, VALUE * 
     goto done;
   }
   if (nread != data_size) {
-    ret = CACHE_MISSING_OR_INVALID;
+    ret = CACHE_STALE;
     goto done;
   }
 
@@ -672,14 +700,22 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args
 
   /* Open the cache key if it exists, and read its cache key in */
   cache_fd = open_cache_file(cache_path, &cached_key, &errno_provenance);
-  if (cache_fd == CACHE_MISSING_OR_INVALID) {
+  if (cache_fd == CACHE_MISS || cache_fd == CACHE_STALE) {
     /* This is ok: valid_cache remains false, we re-populate it. */
+    if (RB_UNLIKELY(instrumentation_enabled)) {
+      rb_funcall(rb_mBootsnap, instrumentation_method, 2, cache_fd == CACHE_MISS ? sym_miss : sym_stale, path_v);
+    }
   } else if (cache_fd < 0) {
     goto fail_errno;
   } else {
     /* True if the cache existed and no invalidating changes have occurred since
      * it was generated. */
     valid_cache = cache_key_equal(&current_key, &cached_key);
+    if (RB_UNLIKELY(instrumentation_enabled)) {
+      if (!valid_cache) {
+        rb_funcall(rb_mBootsnap, instrumentation_method, 2, sym_stale, path_v);
+      }
+    }
   }
 
   if (valid_cache) {
@@ -688,10 +724,10 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args
       cache_fd, (ssize_t)cached_key.data_size, handler, args,
       &output_data, &exception_tag, &errno_provenance
     );
-    if (exception_tag != 0)                   goto raise;
-    else if (res == CACHE_MISSING_OR_INVALID) valid_cache = 0;
-    else if (res == ERROR_WITH_ERRNO)         goto fail_errno;
-    else if (!NIL_P(output_data))             goto succeed; /* fast-path, goal */
+    if (exception_tag != 0) goto raise;
+    else if (res == CACHE_MISS || res == CACHE_STALE) valid_cache = 0;
+    else if (res == ERROR_WITH_ERRNO) goto fail_errno;
+    else if (!NIL_P(output_data)) goto succeed; /* fast-path, goal */
   }
   close(cache_fd);
   cache_fd = -1;
@@ -778,7 +814,7 @@ bs_precompile(char * path, VALUE path_v, char * cache_path, VALUE handler)
 
   /* Open the cache key if it exists, and read its cache key in */
   cache_fd = open_cache_file(cache_path, &cached_key, &errno_provenance);
-  if (cache_fd == CACHE_MISSING_OR_INVALID) {
+  if (cache_fd == CACHE_MISS || cache_fd == CACHE_STALE) {
     /* This is ok: valid_cache remains false, we re-populate it. */
   } else if (cache_fd < 0) {
     goto fail;

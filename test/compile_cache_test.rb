@@ -119,4 +119,46 @@ class CompileCacheTest < Minitest::Test
     load(path)
     assert(File.size(cp) > 32) # cache was overwritten
   end
+
+  def test_instrumentation_hit
+    path = Help.set_file('a.rb', 'a = a = 3', 100)
+    load(path)
+
+    calls = []
+    Bootsnap.instrumentation = ->(event, path) { calls << [event, path] }
+
+    load(path)
+
+    assert_equal [], calls
+  ensure
+    Bootsnap.instrumentation = nil
+  end
+
+  def test_instrumentation_miss
+    path = Help.set_file('a.rb', 'a = a = 3', 100)
+
+    calls = []
+    Bootsnap.instrumentation = ->(event, path) { calls << [event, path] }
+
+    load(path)
+
+    assert_equal [[:miss, 'a.rb']], calls
+  ensure
+    Bootsnap.instrumentation = nil
+  end
+
+  def test_instrumentation_stale
+    path = Help.set_file('a.rb', 'a = a = 3', 100)
+    load(path)
+    path = Help.set_file('a.rb', 'a = a = 4', 101)
+
+    calls = []
+    Bootsnap.instrumentation = ->(event, path) { calls << [event, path] }
+
+    load(path)
+
+    assert_equal [[:stale, 'a.rb']], calls
+  ensure
+    Bootsnap.instrumentation = nil
+  end
 end

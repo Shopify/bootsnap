@@ -8,6 +8,32 @@ require_relative('bootsnap/compile_cache')
 module Bootsnap
   InvalidConfiguration = Class.new(StandardError)
 
+  class << self
+    attr_reader :logger
+  end
+
+  def self.log!
+    self.logger = $stderr.method(:puts)
+  end
+
+  def self.logger=(logger)
+    @logger = logger
+    if logger.respond_to?(:debug)
+      self.instrumentation = ->(event, path) { @logger.debug("[Bootsnap] #{event} #{path}") }
+    else
+      self.instrumentation = ->(event, path) { @logger.call("[Bootsnap] #{event} #{path}") }
+    end
+  end
+
+  def self.instrumentation=(callback)
+    @instrumentation = callback
+    self.instrumentation_enabled = !!callback
+  end
+
+  def self._instrument(event, path)
+    @instrumentation.call(event, path)
+  end
+
   def self.setup(
     cache_dir:,
     development_mode: true,
@@ -76,6 +102,10 @@ module Bootsnap
         compile_cache_iseq:   !ENV['DISABLE_BOOTSNAP_COMPILE_CACHE'] && iseq_cache_enabled,
         compile_cache_yaml:   !ENV['DISABLE_BOOTSNAP_COMPILE_CACHE'],
       )
+
+      if ENV['BOOTSNAP_LOG']
+        log!
+      end
     end
   end
 end
