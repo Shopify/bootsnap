@@ -105,8 +105,7 @@ static VALUE bs_rb_fetch(VALUE self, VALUE cachedir_v, VALUE path_v, VALUE handl
 static VALUE bs_rb_precompile(VALUE self, VALUE cachedir_v, VALUE path_v, VALUE handler);
 
 /* Helpers */
-static uint64_t fnv1a_64(const char *str);
-static void bs_cache_path(const char * cachedir, const char * path, char (* cache_path)[MAX_CACHEPATH_SIZE]);
+static void bs_cache_path(const char * cachedir, const VALUE path, char (* cache_path)[MAX_CACHEPATH_SIZE]);
 static int bs_read_key(int fd, struct bs_cache_key * key);
 static int cache_key_equal(struct bs_cache_key * k1, struct bs_cache_key * k2);
 static VALUE bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args);
@@ -211,7 +210,7 @@ bs_compile_option_crc32_set(VALUE self, VALUE crc32_v)
  *   - 32 bits doesn't feel collision-resistant enough; 64 is nice.
  */
 static uint64_t
-fnv1a_64_iter(uint64_t h, const char *str)
+fnv1a_64_iter_cstr(uint64_t h, const char *str)
 {
   unsigned char *s = (unsigned char *)str;
 
@@ -224,7 +223,21 @@ fnv1a_64_iter(uint64_t h, const char *str)
 }
 
 static uint64_t
-fnv1a_64(const char *str)
+fnv1a_64_iter(uint64_t h, const VALUE str)
+{
+  unsigned char *s = (unsigned char *)RSTRING_PTR(str);
+  unsigned char *str_end = (unsigned char *)RSTRING_PTR(str) + RSTRING_LEN(str);
+
+  while (s < str_end) {
+    h ^= (uint64_t)*s++;
+    h += (h << 1) + (h << 4) + (h << 5) + (h << 7) + (h << 8) + (h << 40);
+  }
+
+  return h;
+}
+
+static uint64_t
+fnv1a_64(const VALUE str)
 {
   uint64_t h = (uint64_t)0xcbf29ce484222325ULL;
   return fnv1a_64_iter(h, str);
@@ -245,7 +258,7 @@ get_ruby_revision(void)
   } else {
     uint64_t hash;
 
-    hash = fnv1a_64(StringValueCStr(ruby_revision));
+    hash = fnv1a_64(ruby_revision);
     return (uint32_t)(hash >> 32);
   }
 }
@@ -265,19 +278,19 @@ get_ruby_platform(void)
   VALUE ruby_platform;
 
   ruby_platform = rb_const_get(rb_cObject, rb_intern("RUBY_PLATFORM"));
-  hash = fnv1a_64(RSTRING_PTR(ruby_platform));
+  hash = fnv1a_64(ruby_platform);
 
 #ifdef _WIN32
   return (uint32_t)(hash >> 32) ^ (uint32_t)GetVersion();
 #elif defined(__GLIBC__)
-  hash = fnv1a_64_iter(hash, gnu_get_libc_version());
+  hash = fnv1a_64_iter_cstr(hash, gnu_get_libc_version());
   return (uint32_t)(hash >> 32);
 #else
   struct utsname utsname;
 
   /* Not worth crashing if this fails; lose extra cache invalidation potential */
   if (uname(&utsname) >= 0) {
-    hash = fnv1a_64_iter(hash, utsname.version);
+    hash = fnv1a_64_iter_cstr(hash, utsname.version);
   }
 
   return (uint32_t)(hash >> 32);
@@ -292,7 +305,7 @@ get_ruby_platform(void)
  * The path will look something like: <cachedir>/12/34567890abcdef
  */
 static void
-bs_cache_path(const char * cachedir, const char * path, char (* cache_path)[MAX_CACHEPATH_SIZE])
+bs_cache_path(const char * cachedir, const VALUE path, char (* cache_path)[MAX_CACHEPATH_SIZE])
 {
   uint64_t hash = fnv1a_64(path);
   uint8_t first_byte = (hash >> (64 - 8));
@@ -344,7 +357,7 @@ bs_rb_fetch(VALUE self, VALUE cachedir_v, VALUE path_v, VALUE handler, VALUE arg
   char cache_path[MAX_CACHEPATH_SIZE];
 
   /* generate cache path to cache_path */
-  bs_cache_path(cachedir, path, &cache_path);
+  bs_cache_path(cachedir, path_v, &cache_path);
 
   return bs_fetch(path, path_v, cache_path, handler, args);
 }
@@ -371,7 +384,7 @@ bs_rb_precompile(VALUE self, VALUE cachedir_v, VALUE path_v, VALUE handler)
   char cache_path[MAX_CACHEPATH_SIZE];
 
   /* generate cache path to cache_path */
-  bs_cache_path(cachedir, path, &cache_path);
+  bs_cache_path(cachedir, path_v, &cache_path);
 
   return bs_precompile(path, path_v, cache_path, handler);
 }
