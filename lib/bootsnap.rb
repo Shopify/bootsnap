@@ -66,6 +66,13 @@ module Bootsnap
     )
   end
 
+  def self.iseq_cache_supported?
+    return @iseq_cache_supported if defined? @iseq_cache_supported
+
+    ruby_version = Gem::Version.new(RUBY_VERSION)
+    @iseq_cache_supported = ruby_version < Gem::Version.new('2.5.0') || ruby_version >= Gem::Version.new('2.6.0')
+  end
+
   def self.default_setup
     env = ENV['RAILS_ENV'] || ENV['RACK_ENV'] || ENV['ENV']
     development_mode = ['', nil, 'development'].include?(env)
@@ -92,14 +99,12 @@ module Bootsnap
         cache_dir = File.join(app_root, 'tmp', 'cache')
       end
 
-      ruby_version = Gem::Version.new(RUBY_VERSION)
-      iseq_cache_enabled = ruby_version < Gem::Version.new('2.5.0') || ruby_version >= Gem::Version.new('2.5.4')
 
       setup(
         cache_dir:            cache_dir,
         development_mode:     development_mode,
         load_path_cache:      !ENV['DISABLE_BOOTSNAP_LOAD_PATH_CACHE'],
-        compile_cache_iseq:   !ENV['DISABLE_BOOTSNAP_COMPILE_CACHE'] && iseq_cache_enabled,
+        compile_cache_iseq:   !ENV['DISABLE_BOOTSNAP_COMPILE_CACHE'] && iseq_cache_supported?,
         compile_cache_yaml:   !ENV['DISABLE_BOOTSNAP_COMPILE_CACHE'],
       )
 

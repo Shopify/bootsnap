@@ -1,5 +1,8 @@
 # Unreleased
 
+* Disable ISeq caching for the whole 2.5.x series again.
+* Better handle hashing of Ruby strings. (#318)
+
 # 1.7.0
 
 * Fix detection of YAML files in gems.
