@@ -29,7 +29,7 @@ If you are using Rails, add this to `config/boot.rb` immediately after `require 
 require 'bootsnap/setup'
 ```
 
-Note that bootsnap writes to `tmp/cache` (or the path specified by `ENV['BOOTSNAP_CACHE_DIR']`), 
+Note that bootsnap writes to `tmp/cache` (or the path specified by `ENV['BOOTSNAP_CACHE_DIR']`),
 and that directory *must* be writable. Rails will fail to
 boot if it is not. If this is unacceptable (e.g. you are running in a read-only container and
 unwilling to mount in a writable tmpdir), you should remove this line or wrap it in a conditional.
@@ -67,6 +67,15 @@ Note: Bootsnap and [Spring](https://github.com/rails/spring) are orthogonal tool
 speeds up the loading of individual source files, Spring keeps a copy of a pre-booted Rails process
 on hand to completely skip parts of the boot process the next time it's needed. The two tools work
 well together, and are both included in a newly-generated Rails applications by default.
+
+### Environment variables
+
+`require 'bootsnap/setup'` behavior can be changed using environment variables:
+
+- `BOOTSNAP_CACHE_DIR` allows to define the cache location.
+- `DISABLE_BOOTSNAP` allows to entirely disable bootsnap.
+- `DISABLE_BOOTSNAP_LOAD_PATH_CACHE` allows to disable load path caching.
+- `DISABLE_BOOTSNAP_COMPILE_CACHE` allows to disable ISeq and YAML caches.
 
 ### Environments
 

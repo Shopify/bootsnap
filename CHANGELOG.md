@@ -1,5 +1,6 @@
 # Unreleased
 
+* Allow to control the behavior of `require 'bootsnap/setup'` using environment variables.
 * Deprecate the `disable_trace` option.
 * Deprecate the `ActiveSupport::Dependencies` (AKA Classic autoloader) integration. (#344) 
 
