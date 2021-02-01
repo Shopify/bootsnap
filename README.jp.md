@@ -1,6 +1,6 @@
 # Bootsnap [![Build Status](https://travis-ci.org/Shopify/bootsnap.svg?branch=master)](https://travis-ci.org/Shopify/bootsnap)
 
-Bootsnap は RubyVM におけるバイトコード生成やファイルルックアップ等の時間のかかる処理を最適化するためのライブラリです。ActiveSupport や YAML もサポートしています。[内部動作](#内部動作)もご覧ください。
+Bootsnap は RubyVM におけるバイトコード生成やファイルルックアップ等の時間のかかる処理を最適化するためのライブラリです。 YAML もサポートしています。[内部動作](#内部動作)もご覧ください。
 
 注意書き: このライブラリは英語話者によって管理されています。この README は日本語ですが、日本語でのサポートはしておらず、リクエストにお答えすることもできません。バイリンガルの方がサポートをサポートしてくださる場合はお知らせください！:)
 
@@ -37,7 +37,6 @@ Bootsnap.setup(
   cache_dir:            'tmp/cache',          # キャッシュファイルを保存する path
   development_mode:     env == 'development', # 現在の作業環境、例えば RACK_ENV, RAILS_ENV など。
   load_path_cache:      true,                 # キャッシュで LOAD_PATH を最適化する。
-  autoload_paths_cache: true,                 # キャッシュで ActiveSupport による autoload を行う。
   disable_trace:        true,                 # (アルファ) `RubyVM::InstructionSequence.compile_option = { trace_instruction: false }`をセットする。
   compile_cache_iseq:   true,                 # ISeq キャッシュをコンパイルする
   compile_cache_yaml:   true                  # YAML キャッシュをコンパイルする
@@ -59,7 +58,6 @@ Bootsnap は、処理に時間のかかるメソッドの結果をキャッシ�
 
 * [Path Pre-Scanning](#path-pre-scanning)
   * `Kernel#require` と `Kernel#load` を `$LOAD_PATH` フルスキャンを行わないように変更します。
-  * `ActiveSupport::Dependencies.{autoloadable_module?,load_missing_constant,depend_on}` を `ActiveSupport::Dependencies.autoload_paths` のフルスキャンを行わないようにオーバーライドします。
 * [Compilation caching](#compilation-caching)
   * Ruby バイトコードのコンパイル結果をキャッシュするためのメソッド `RubyVM::InstructionSequence.load_iseq` が実装されています。
   * `YAML.load_file` を YAML オブジェクトのロード結果を MessagePack でキャッシュするように変更します。 MessagePack でサポートされていないタイプが使われている場合は Marshal が使われます。
@@ -88,8 +86,6 @@ open  y/foo.rb
 open y/foo.rb
 ...
 ```
-
-`autoload_paths_cache` オプションが `Bootsnap.setup` に与えられている場合、`ActiveSupport::Dependencies.autoload_paths` をトラバースする方法にはまったく同じ最適化が使用されます。
 
 `*_path_cache` を機能させるオーバーライドを図にすると、次のようになります。
 
