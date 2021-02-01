@@ -12,21 +12,21 @@ module Bootsnap
     cache_dir:,
     development_mode: true,
     load_path_cache: true,
-    autoload_paths_cache: true,
+    autoload_paths_cache: nil,
     disable_trace: false,
     compile_cache_iseq: true,
     compile_cache_yaml: true
   )
-    if autoload_paths_cache && !load_path_cache
-      raise(InvalidConfiguration, "feature 'autoload_paths_cache' depends on feature 'load_path_cache'")
+    unless autoload_paths_cache.nil?
+      warn "[DEPRECATED] Bootsnap's `autoload_paths_cache:` option is deprecated and will be removed. " \
+        "If you use Zeitwerk this option is useless, and if you are still using the classic autoloader " \
+        "upgrading is recommended."
     end
-
     setup_disable_trace if disable_trace
 
     Bootsnap::LoadPathCache.setup(
       cache_path:       cache_dir + '/bootsnap/load-path-cache',
       development_mode: development_mode,
-      active_support:   autoload_paths_cache
     ) if load_path_cache
 
     Bootsnap::CompileCache.setup(

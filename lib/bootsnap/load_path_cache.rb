@@ -28,10 +28,9 @@ module Bootsnap
     CACHED_EXTENSIONS = DLEXT2 ? [DOT_RB, DLEXT, DLEXT2] : [DOT_RB, DLEXT]
 
     class << self
-      attr_reader(:load_path_cache, :autoload_paths_cache,
-        :loaded_features_index, :realpath_cache)
+      attr_reader(:load_path_cache, :loaded_features_index, :realpath_cache)
 
-      def setup(cache_path:, development_mode:, active_support: true)
+      def setup(cache_path:, development_mode:)
         unless supported?
           warn("[bootsnap/setup] Load path caching is not supported on this implementation of Ruby") if $VERBOSE
           return
@@ -45,18 +44,6 @@ module Bootsnap
         @load_path_cache = Cache.new(store, $LOAD_PATH, development_mode: development_mode)
         require_relative('load_path_cache/core_ext/kernel_require')
         require_relative('load_path_cache/core_ext/loaded_features')
-
-        if active_support
-          # this should happen after setting up the initial cache because it
-          # loads a lot of code. It's better to do after +require+ is optimized.
-          require('active_support/dependencies')
-          @autoload_paths_cache = Cache.new(
-            store,
-            ::ActiveSupport::Dependencies.autoload_paths,
-            development_mode: development_mode
-          )
-          require_relative('load_path_cache/core_ext/active_support')
-        end
       end
 
       def supported?

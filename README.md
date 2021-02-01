@@ -1,6 +1,6 @@
 # Bootsnap [![Actions Status](https://github.com/Shopify/bootsnap/workflows/ci/badge.svg)](https://github.com/Shopify/bootsnap/actions)
 
-Bootsnap is a library that plugs into Ruby, with optional support for `ActiveSupport` and `YAML`,
+Bootsnap is a library that plugs into Ruby, with optional support for `YAML`,
 to optimize and cache expensive computations. See [How Does This Work](#how-does-this-work).
 
 #### Performance
@@ -54,7 +54,6 @@ Bootsnap.setup(
   cache_dir:            'tmp/cache',          # Path to your cache
   development_mode:     env == 'development', # Current working environment, e.g. RACK_ENV, RAILS_ENV, etc
   load_path_cache:      true,                 # Optimize the LOAD_PATH with a cache
-  autoload_paths_cache: true,                 # Optimize ActiveSupport autoloads with cache
   disable_trace:        true,                 # Set `RubyVM::InstructionSequence.compile_option = { trace_instruction: false }`
   compile_cache_iseq:   true,                 # Compile Ruby code into ISeq cache, breaks coverage reporting.
   compile_cache_yaml:   true                  # Compile YAML into a cache
@@ -85,8 +84,6 @@ into two broad categories:
 
 * [Path Pre-Scanning](#path-pre-scanning)
     * `Kernel#require` and `Kernel#load` are modified to eliminate `$LOAD_PATH` scans.
-    * `ActiveSupport::Dependencies.{autoloadable_module?,load_missing_constant,depend_on}` are
-      overridden to eliminate scans of `ActiveSupport::Dependencies.autoload_paths`.
 * [Compilation caching](#compilation-caching)
     * `RubyVM::InstructionSequence.load_iseq` is implemented to cache the result of ruby bytecode
       compilation.
@@ -124,10 +121,6 @@ becomes this:
 open y/foo.rb
 ...
 ```
-
-Exactly the same strategy is employed for methods that traverse
-`ActiveSupport::Dependencies.autoload_paths` if the `autoload_paths_cache` option is given to
-`Bootsnap.setup`.
 
 The following diagram flowcharts the overrides that make the `*_path_cache` features work.
 

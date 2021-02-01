@@ -1,5 +1,7 @@
 # Unreleased
 
+* Deprecate the `ActiveSupport::Dependencies` (AKA Classic autoloader) integration. (#344) 
+
 # 1.6.0
 
 * Fix a Ruby 2.7/3.0 issue with `YAML.load_file` keyword arguments. (#342)

@@ -5,7 +5,7 @@ AllCops:
   Exclude:
     - 'vendor/**/*'
     - 'tmp/**/*'
-  TargetRubyVersion: '2.3'
+  TargetRubyVersion: '2.4'
 
 # This doesn't take into account retrying from an exception
 Lint/SuppressedException:
