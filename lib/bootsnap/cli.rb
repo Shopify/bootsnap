@@ -60,7 +60,7 @@ module Bootsnap
 
           # Gems that include YAML files usually don't put them in `lib/`.
           # So we look at the gem root.
-          gem_pattern = %r{^#{Regexp.escape(Bundler.bundle_path.to_s)}/?(?:bundler/)?gem\/[^/]+}
+          gem_pattern = %r{^#{Regexp.escape(Bundler.bundle_path.to_s)}/?(?:bundler/)?gems\/[^/]+}
           gem_paths = $LOAD_PATH.map { |p| p[gem_pattern] }.compact.uniq
           precompile_yaml_files(gem_paths, exclude: gem_exclude)
         end
@@ -121,7 +121,7 @@ module Bootsnap
         if !exclude || !exclude.match?(path)
           list_files(path, '**/*.{yml,yaml}').each do |yaml_file|
             # We ignore hidden files to not match the various .ci.yml files
-            if !yaml_file.include?('/.') && (!exclude || !exclude.match?(yaml_file))
+            if !File.basename(yaml_file).start_with?('.') && (!exclude || !exclude.match?(yaml_file))
               @work_pool.push(:yaml, yaml_file)
             end
           end
