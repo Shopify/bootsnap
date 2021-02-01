@@ -1,5 +1,7 @@
 # Unreleased
 
+# 1.7.0
+
 * Fix detection of YAML files in gems.
 * Adds an instrumentation API to monitor cache misses.
 * Allow to control the behavior of `require 'bootsnap/setup'` using environment variables.
