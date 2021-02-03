@@ -5,6 +5,7 @@ require('tmpdir')
 require('fileutils')
 
 class CompileCacheKeyFormatTest < Minitest::Test
+  FILE = File.expand_path(__FILE__)
   include(TmpdirHelper)
 
   R = {
@@ -18,16 +19,16 @@ class CompileCacheKeyFormatTest < Minitest::Test
   }
 
   def test_key_version
-    key = cache_key_for_file(__FILE__)
+    key = cache_key_for_file(FILE)
     exp = [3].pack("L")
     assert_equal(exp, key[R[:version]])
   end
 
   def test_key_compile_option_stable
-    k1 = cache_key_for_file(__FILE__)
-    k2 = cache_key_for_file(__FILE__)
+    k1 = cache_key_for_file(FILE)
+    k2 = cache_key_for_file(FILE)
     RubyVM::InstructionSequence.compile_option = { tailcall_optimization: true }
-    k3 = cache_key_for_file(__FILE__)
+    k3 = cache_key_for_file(FILE)
     assert_equal(k1[R[:compile_option]], k2[R[:compile_option]])
     refute_equal(k1[R[:compile_option]], k3[R[:compile_option]])
   ensure
@@ -35,7 +36,7 @@ class CompileCacheKeyFormatTest < Minitest::Test
   end
 
   def test_key_ruby_revision
-    key = cache_key_for_file(__FILE__)
+    key = cache_key_for_file(FILE)
     exp = if RUBY_REVISION.is_a?(String)
       [Help.fnv1a_64(RUBY_REVISION) >> 32].pack("L")
     else
@@ -45,15 +46,15 @@ class CompileCacheKeyFormatTest < Minitest::Test
   end
 
   def test_key_size
-    key = cache_key_for_file(__FILE__)
-    exp = File.size(__FILE__)
+    key = cache_key_for_file(FILE)
+    exp = File.size(FILE)
     act = key[R[:size]].unpack("Q")[0]
     assert_equal(exp, act)
   end
 
   def test_key_mtime
-    key = cache_key_for_file(__FILE__)
-    exp = File.mtime(__FILE__).to_i
+    key = cache_key_for_file(FILE)
+    exp = File.mtime(FILE).to_i
     act = key[R[:mtime]].unpack("Q")[0]
     assert_equal(exp, act)
   end
@@ -87,7 +88,7 @@ class CompileCacheKeyFormatTest < Minitest::Test
 
   def cache_key_for_file(file)
     Bootsnap::CompileCache::Native.fetch(@tmp_dir, file, TestHandler, nil)
-    data = File.read(Help.cache_path(@tmp_dir, file))
-    Help.binary(data[0..31])
+    data = File.binread(Help.cache_path(@tmp_dir, file))
+    data.byteslice(0..31)
   end
 end

@@ -311,7 +311,7 @@ bs_cache_path(const char * cachedir, const VALUE path, char (* cache_path)[MAX_C
   uint8_t first_byte = (hash >> (64 - 8));
   uint64_t remainder = hash & 0x00ffffffffffffff;
 
-  sprintf(*cache_path, "%s/%02x/%014llx", cachedir, first_byte, remainder);
+  sprintf(*cache_path, "%s/%02"PRIx8"/%014"PRIx64, cachedir, first_byte, remainder);
 }
 
 /*
