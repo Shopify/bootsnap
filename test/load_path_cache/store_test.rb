@@ -68,8 +68,8 @@ module Bootsnap
       def test_retry_on_collision
         retries = sequence('retries')
 
-        File.expects(:binwrite).in_sequence(retries).raises(Errno::EEXIST.new("File exists @ rb_sysopen"))
-        File.expects(:binwrite).in_sequence(retries).returns(1)
+        MessagePack.expects(:dump).in_sequence(retries).raises(Errno::EEXIST.new("File exists @ rb_sysopen"))
+        MessagePack.expects(:dump).in_sequence(retries).returns(1)
         FileUtils.expects(:mv).in_sequence(retries)
 
         store.transaction { store.set('a', 1) }

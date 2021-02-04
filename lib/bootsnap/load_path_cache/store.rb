@@ -62,12 +62,18 @@ module Bootsnap
 
       def load_data
         @data = begin
-          MessagePack.load(File.binread(@store_path))
-                # handle malformed data due to upgrade incompatibility
-                rescue Errno::ENOENT, MessagePack::MalformedFormatError, MessagePack::UnknownExtTypeError, EOFError
-                  {}
-                rescue ArgumentError => e
-                  e.message =~ /negative array size/ ? {} : raise
+          File.open(@store_path, encoding: Encoding::BINARY) do |io|
+            MessagePack.load(io)
+          end
+        # handle malformed data due to upgrade incompatibility
+        rescue Errno::ENOENT, MessagePack::MalformedFormatError, MessagePack::UnknownExtTypeError, EOFError
+          {}
+        rescue ArgumentError => error
+          if error.message =~ /negative array size/
+            {}
+          else
+            raise
+          end
         end
       end
 
@@ -79,7 +85,9 @@ module Bootsnap
         exclusive_write = File::Constants::CREAT | File::Constants::EXCL | File::Constants::WRONLY
         # `encoding:` looks redundant wrt `binwrite`, but necessary on windows
         # because binary is part of mode.
-        File.binwrite(tmp, MessagePack.dump(@data), mode: exclusive_write, encoding: Encoding::BINARY)
+        File.open(tmp, mode: exclusive_write, encoding: Encoding::BINARY) do |io|
+          MessagePack.dump(@data, io)
+        end
         FileUtils.mv(tmp, @store_path)
       rescue Errno::EEXIST
         retry
