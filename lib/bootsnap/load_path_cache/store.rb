@@ -86,7 +86,7 @@ module Bootsnap
         # `encoding:` looks redundant wrt `binwrite`, but necessary on windows
         # because binary is part of mode.
         File.open(tmp, mode: exclusive_write, encoding: Encoding::BINARY) do |io|
-          MessagePack.dump(@data, io)
+          MessagePack.dump(@data, io, freeze: true)
         end
         FileUtils.mv(tmp, @store_path)
       rescue Errno::EEXIST

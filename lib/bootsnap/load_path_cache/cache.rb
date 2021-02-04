@@ -11,7 +11,7 @@ module Bootsnap
         @development_mode = development_mode
         @store = store
         @mutex = defined?(::Mutex) ? ::Mutex.new : ::Thread::Mutex.new # TODO: Remove once Ruby 2.2 support is dropped.
-        @path_obj = path_obj.map! { |f| File.exist?(f) ? File.realpath(f) : f }
+        @path_obj = path_obj.map! { |f| PathScanner.os_path(File.exist?(f) ? File.realpath(f) : f.dup) }
         @has_relative_paths = nil
         reinitialize
       end
@@ -178,25 +178,42 @@ module Bootsnap
 
       if DLEXT2
         def search_index(f)
-          try_index("#{f}#{DOT_RB}") || try_index("#{f}#{DLEXT}") || try_index("#{f}#{DLEXT2}") || try_index(f)
+          try_index(f + DOT_RB) || try_index(f + DLEXT) || try_index(f + DLEXT2) || try_index(f)
         end
 
         def maybe_append_extension(f)
-          try_ext("#{f}#{DOT_RB}") || try_ext("#{f}#{DLEXT}") || try_ext("#{f}#{DLEXT2}") || f
+          try_ext(f + DOT_RB) || try_ext(f + DLEXT) || try_ext(f + DLEXT2) || f
         end
       else
         def search_index(f)
-          try_index("#{f}#{DOT_RB}") || try_index("#{f}#{DLEXT}") || try_index(f)
+          try_index(f + DOT_RB) || try_index(f + DLEXT) || try_index(f)
         end
 
         def maybe_append_extension(f)
-          try_ext("#{f}#{DOT_RB}") || try_ext("#{f}#{DLEXT}") || f
+          try_ext(f + DOT_RB) || try_ext(f + DLEXT) || f
         end
       end
 
-      def try_index(f)
-        if (p = @index[f])
-          "#{p}/#{f}"
+      s = rand.to_s.force_encoding(Encoding::US_ASCII).freeze
+      if s.respond_to?(:-@)
+        if (-s).equal?(s) && (-s.dup).equal?(s)
+          def try_index(f)
+            if (p = @index[f])
+              -(File.join(p, f).freeze)
+            end
+          end
+        else
+          def try_index(f)
+            if (p = @index[f])
+              -File.join(p, f).untaint
+            end
+          end
+        end
+      else
+        def try_index(f)
+          if (p = @index[f])
+            File.join(p, f)
+          end
         end
       end
 
