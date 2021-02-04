@@ -10,7 +10,7 @@ module Bootsnap
       def initialize(store, path_obj, development_mode: false)
         @development_mode = development_mode
         @store = store
-        @mutex = defined?(::Mutex) ? ::Mutex.new : ::Thread::Mutex.new # TODO: Remove once Ruby 2.2 support is dropped.
+        @mutex = Mutex.new
         @path_obj = path_obj.map! { |f| PathScanner.os_path(File.exist?(f) ? File.realpath(f) : f.dup) }
         @has_relative_paths = nil
         reinitialize

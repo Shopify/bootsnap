@@ -26,7 +26,7 @@ module Bootsnap
     class LoadedFeaturesIndex
       def initialize
         @lfi = {}
-        @mutex = defined?(::Mutex) ? ::Mutex.new : ::Thread::Mutex.new # TODO: Remove once Ruby 2.2 support is dropped.
+        @mutex = Mutex.new
 
         # In theory the user could mutate $LOADED_FEATURES and invalidate our
         # cache. If this ever comes up in practice — or if you, the
