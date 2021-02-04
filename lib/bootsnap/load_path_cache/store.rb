@@ -12,8 +12,7 @@ module Bootsnap
 
       def initialize(store_path)
         @store_path = store_path
-        # TODO: Remove conditional once Ruby 2.2 support is dropped.
-        @txn_mutex =  defined?(::Mutex) ? ::Mutex.new : ::Thread::Mutex.new
+        @txn_mutex = Mutex.new
         @dirty = false
         load_data
       end
