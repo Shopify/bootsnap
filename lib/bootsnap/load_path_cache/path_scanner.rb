@@ -33,10 +33,10 @@ module Bootsnap
           requirables = []
           walk(path, nil) do |relative_path, absolute_path, is_directory|
             if is_directory
-              dirs << relative_path
+              dirs << os_path(relative_path)
               !contains_bundle_path || !absolute_path.start_with?(BUNDLE_PATH)
             elsif relative_path.end_with?(*REQUIRABLE_EXTENSIONS)
-              requirables << relative_path
+              requirables << os_path(relative_path)
             end
           end
           [requirables, dirs]
@@ -45,7 +45,7 @@ module Bootsnap
         def walk(absolute_dir_path, relative_dir_path, &block)
           Dir.foreach(absolute_dir_path) do |name|
             next if name.start_with?('.')
-            relative_path = relative_dir_path ? "#{relative_dir_path}/#{name}" : name.freeze
+            relative_path = relative_dir_path ? File.join(relative_dir_path, name) : name
 
             absolute_path = "#{absolute_dir_path}/#{name}"
             if File.directory?(absolute_path)
@@ -55,6 +55,17 @@ module Bootsnap
             else
               yield relative_path, absolute_path, false
             end
+          end
+        end
+
+        if RUBY_VERSION >= '3.1'
+          def os_path(path)
+            path.freeze
+          end
+        else
+          def os_path(path)
+            path.force_encoding(Encoding::US_ASCII) if path.ascii_only?
+            path.freeze
           end
         end
       end

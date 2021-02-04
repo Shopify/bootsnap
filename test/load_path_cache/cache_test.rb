@@ -16,6 +16,7 @@ module Bootsnap
         FileUtils.touch("#{@dir1}/dl#{DLEXT}")
         FileUtils.touch("#{@dir1}/both.rb")
         FileUtils.touch("#{@dir1}/both#{DLEXT}")
+        FileUtils.touch("#{@dir1}/béé.rb")
       end
 
       def teardown
@@ -136,6 +137,36 @@ module Bootsnap
         path_obj.unshift(@dir1)
 
         assert_equal("#{@dir1}/a.rb", cache.find('a'))
+      end
+
+      if RUBY_VERSION >= '2.5' && !(RbConfig::CONFIG['host_os'] =~ /mswin|mingw|cygwin/)
+        # https://github.com/ruby/ruby/pull/4061
+        # https://bugs.ruby-lang.org/issues/17517
+        OS_ASCII_PATH_ENCODING = RUBY_VERSION >= '3.1' ? Encoding::UTF_8 : Encoding::US_ASCII
+
+        def test_path_encoding
+          po = [@dir1]
+          cache = Cache.new(NullCache, po)
+
+          path = cache.find('a')
+
+          assert_equal("#{@dir1}/a.rb", path)
+          require path
+          internal_path = $LOADED_FEATURES.last
+          assert_equal(OS_ASCII_PATH_ENCODING, internal_path.encoding)
+          assert_equal(OS_ASCII_PATH_ENCODING, path.encoding)
+          File.write(path, '')
+          assert_same path, internal_path
+
+          utf8_path = cache.find('béé')
+          require utf8_path
+          internal_utf8_path = $LOADED_FEATURES.last
+          assert_equal("#{@dir1}/béé.rb", utf8_path)
+          assert_equal(Encoding::UTF_8, internal_utf8_path.encoding)
+          assert_equal(Encoding::UTF_8, utf8_path.encoding)
+          File.write(utf8_path, '')
+          assert_same utf8_path, internal_utf8_path
+        end
       end
     end
   end
