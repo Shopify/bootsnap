@@ -1,5 +1,11 @@
 # Unreleased
 
+# 1.7.2
+
+* Fix compatibility with msgpack < 1. (#349)
+
+# 1.7.1
+
 * Warn Ruby 2.5 users if they turn ISeq caching on. (#327, #244)
 * Disable ISeq caching for the whole 2.5.x series again.
 * Better handle hashing of Ruby strings. (#318)
