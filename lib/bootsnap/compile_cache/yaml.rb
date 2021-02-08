@@ -51,22 +51,25 @@ module Bootsnap
           # see: https://github.com/msgpack/msgpack-ruby/pull/122
           factory = MessagePack::Factory.new
           factory.register_type(0x00, Symbol)
-          factory.register_type(
-            MessagePack::Timestamp::TYPE, # or just -1
-            Time,
-            packer: MessagePack::Time::Packer,
-            unpacker: MessagePack::Time::Unpacker
-          )
 
-          marshal_fallback = {
-            packer: ->(value) { Marshal.dump(value) },
-            unpacker: ->(payload) { Marshal.load(payload) },
-          }
-          {
-            Date => 0x01,
-            Regexp => 0x02,
-          }.each do |type, code|
-            factory.register_type(code, type, marshal_fallback)
+          if defined? MessagePack::Timestamp
+            factory.register_type(
+              MessagePack::Timestamp::TYPE, # or just -1
+              Time,
+              packer: MessagePack::Time::Packer,
+              unpacker: MessagePack::Time::Unpacker
+            )
+
+            marshal_fallback = {
+              packer: ->(value) { Marshal.dump(value) },
+              unpacker: ->(payload) { Marshal.load(payload) },
+            }
+            {
+              Date => 0x01,
+              Regexp => 0x02,
+            }.each do |type, code|
+              factory.register_type(code, type, marshal_fallback)
+            end
           end
 
           self.msgpack_factory = factory
