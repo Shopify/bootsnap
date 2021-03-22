@@ -1,5 +1,9 @@
 # Unreleased
 
+# 1.7.3
+
+* Disable YAML precompilation when encountering YAML tags. (#351)
+
 # 1.7.2
 
 * Fix compatibility with msgpack < 1. (#349)
