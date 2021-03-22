@@ -8,8 +8,7 @@ module Bootsnap
         attr_accessor(:msgpack_factory, :cache_dir, :supported_options)
 
         def input_to_storage(contents, _)
-          raise(Uncompilable) if contents.index("!ruby/object")
-          obj = ::YAML.load(contents)
+          obj = strict_load(contents)
           msgpack_factory.dump(obj)
         rescue NoMethodError, RangeError
           # The object included things that we can't serialize
@@ -26,6 +25,13 @@ module Bootsnap
         def input_to_output(data, kwargs)
           ::YAML.load(data, **(kwargs || {}))
         end
+
+        def strict_load(payload, *args)
+          ast = ::YAML.parse(payload)
+          return ast unless ast
+          strict_visitor.create(*args).visit(ast)
+        end
+        ruby2_keywords :strict_load if respond_to?(:ruby2_keywords, true)
 
         def precompile(path, cache_dir: YAML.cache_dir)
           Bootsnap::CompileCache::Native.precompile(
@@ -85,6 +91,17 @@ module Bootsnap
             end
           end
           self.supported_options.freeze
+        end
+
+        def strict_visitor
+          self::NoTagsVisitor ||= Class.new(Psych::Visitors::ToRuby) do
+            def visit(target)
+              if target.tag
+                raise Uncompilable, "YAML tags are not supported: #{target.tag}"
+              end
+              super
+            end
+          end
         end
       end
 

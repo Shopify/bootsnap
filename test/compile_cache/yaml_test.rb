@@ -19,6 +19,31 @@ class CompileCacheYAMLTest < Minitest::Test
     Bootsnap::CompileCache::YAML.init!
   end
 
+  def test_yaml_strict_load
+    document = ::Bootsnap::CompileCache::YAML.strict_load(<<~YAML)
+      ---
+      :foo: 42
+      bar: [1]
+    YAML
+    expected = {
+      foo: 42,
+      'bar' => [1],
+    }
+    assert_equal expected, document
+  end
+
+  def test_yaml_tags
+    error = assert_raises Bootsnap::CompileCache::Uncompilable do
+      ::Bootsnap::CompileCache::YAML.strict_load('!many Boolean')
+    end
+    assert_equal "YAML tags are not supported: !many", error.message
+
+    error = assert_raises Bootsnap::CompileCache::Uncompilable do
+      ::Bootsnap::CompileCache::YAML.strict_load('!ruby/object {}')
+    end
+    assert_equal "YAML tags are not supported: !ruby/object", error.message
+  end
+
   def test_load_file
     Help.set_file('a.yml', "---\nfoo: bar", 100)
     assert_equal({'foo' => 'bar'}, FakeYaml.load_file('a.yml'))
