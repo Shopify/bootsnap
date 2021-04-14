@@ -763,9 +763,11 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args
   /* If storage_data isn't a string, we can't cache it */
   if (!RB_TYPE_P(storage_data, T_STRING)) goto invalid_type_storage_data;
 
-  /* Write the cache key and storage_data to the cache directory */
-  res = atomic_write_cache_file(cache_path, &current_key, storage_data, &errno_provenance);
-  if (res < 0) goto fail_errno;
+  /* Attempt to write the cache key and storage_data to the cache directory.
+   * We do however ignore any failures to persist the cache, as it's better
+   * to move along, than to interrupt the process.
+   */
+  atomic_write_cache_file(cache_path, &current_key, storage_data, &errno_provenance);
 
   /* Having written the cache, now convert storage_data to output_data */
   exception_tag = bs_storage_to_output(handler, args, storage_data, &output_data);
