@@ -40,7 +40,7 @@ class CompileCacheTest < Minitest::Test
       folder = File.dirname(Help.cache_path(@tmp_dir, path))
       FileUtils.mkdir_p(folder)
       FileUtils.chmod(0400, folder)
-      assert_raises(Bootsnap::CompileCache::PermissionError) { load(path) }
+      load(path)
     end
   end
 

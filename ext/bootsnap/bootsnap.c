@@ -464,8 +464,7 @@ open_cache_file(const char * path, struct bs_cache_key * key, const char ** errn
   fd = open(path, O_RDONLY);
   if (fd < 0) {
     *errno_provenance = "bs_fetch:open_cache_file:open";
-    if (errno == ENOENT) return CACHE_MISS;
-    return ERROR_WITH_ERRNO;
+    return CACHE_MISS;
   }
   #ifdef _WIN32
   setmode(fd, O_BINARY);
