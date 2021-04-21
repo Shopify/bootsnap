@@ -1,5 +1,11 @@
 # Unreleased
 
+# 1.7.4
+
+* Stop raising errors when encoutering various file system errors. The cache is now best effort,
+  if somehow it can't be saved, bootsnapp will gracefully fallback to the original operation (e.g. `Kernel.require`).
+  (#353, #177, #262)
+
 # 1.7.3
 
 * Disable YAML precompilation when encountering YAML tags. (#351)
