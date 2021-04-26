@@ -91,6 +91,7 @@ module Bootsnap
         FileUtils.mv(tmp, @store_path)
       rescue Errno::EEXIST
         retry
+      rescue Errno::EROFS
       end
     end
   end
