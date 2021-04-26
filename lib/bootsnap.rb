@@ -27,7 +27,9 @@ module Bootsnap
 
   def self.instrumentation=(callback)
     @instrumentation = callback
-    self.instrumentation_enabled = !!callback
+    if respond_to?(:instrumentation_enabled=, true)
+      self.instrumentation_enabled = !!callback
+    end
   end
 
   def self._instrument(event, path)
