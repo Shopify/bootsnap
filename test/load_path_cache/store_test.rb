@@ -74,6 +74,12 @@ module Bootsnap
 
         store.transaction { store.set('a', 1) }
       end
+
+      def test_ignore_read_only_filesystem
+        MessagePack.expects(:dump).raises(Errno::EROFS.new("Read-only file system @ rb_sysopen"))
+        store.transaction { store.set('a', 1) }
+        refute(File.exist?(@path))
+      end
     end
   end
 end
