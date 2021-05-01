@@ -123,6 +123,7 @@ module Bootsnap
           rescue Errno::EACCES
             ::Bootsnap::CompileCache.permission_error(path)
           end
+          rescue SystemCallError
         end
 
         ruby2_keywords :load_file if respond_to?(:ruby2_keywords, true)
