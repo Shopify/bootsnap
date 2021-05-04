@@ -196,7 +196,7 @@ module Bootsnap
 
       s = rand.to_s.force_encoding(Encoding::US_ASCII).freeze
       if s.respond_to?(:-@)
-        if (-s).equal?(s) && (-s.dup).equal?(s)
+        if (-s).equal?(s) && (-s.dup).equal?(s) || RUBY_VERSION >= '2.7'
           def try_index(f)
             if (p = @index[f])
               -(File.join(p, f).freeze)
