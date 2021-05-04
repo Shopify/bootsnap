@@ -1,5 +1,10 @@
 # Unreleased
 
+# 1.7.5
+
+* Handle a regression of Ruby 2.7.3 causing Bootsnap to call the deprecated `untaint` method. (#360)
+* Gracefully handle read-only file system as well as other errors preventing to persist the load path cache. (#358)
+
 # 1.7.4
 
 * Stop raising errors when encoutering various file system errors. The cache is now best effort,
