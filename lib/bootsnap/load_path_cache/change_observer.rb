@@ -15,11 +15,13 @@ module Bootsnap
           @lpc_observer.push_paths(self, *entries.map(&:to_s))
           super
         end
+        alias_method :append, :push
 
         def unshift(*entries)
           @lpc_observer.unshift_paths(self, *entries.map(&:to_s))
           super
         end
+        alias_method :prepend, :unshift
 
         def concat(entries)
           @lpc_observer.push_paths(self, *entries.map(&:to_s))
