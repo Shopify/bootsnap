@@ -89,4 +89,11 @@ class CompileCacheYAMLTest < Minitest::Test
       FakeYaml.load_file('a.yml', fallback: true)
     end
   end
+
+  def test_ignore_read_only_filesystem
+    Help.set_file('a.yml', "---\nfoo", 100)
+    Bootsnap::CompileCache::Native.expects(:fetch).raises(Errno::EROFS.new("Read-only file system @ rb_sysopen"))
+    Bootsnap::CompileCache::YAML.install!(Bootsnap::CompileCache::YAML.cache_dir)
+    document = ::YAML.load_file('a.yml')
+  end
 end
