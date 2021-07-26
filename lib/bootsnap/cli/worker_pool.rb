@@ -37,7 +37,11 @@ module Bootsnap
 
         def initialize(jobs)
           @jobs = jobs
-          @pipe_out, @to_io = IO.pipe
+          @pipe_out, @to_io = IO.pipe(binmode: true)
+          # Set the writer encoding to binary since IO.pipe only sets it for the reader.
+          # https://github.com/rails/rails/issues/16514#issuecomment-52313290
+          @to_io.set_encoding(Encoding::BINARY)
+
           @pid = nil
         end
 

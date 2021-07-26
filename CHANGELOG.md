@@ -1,5 +1,7 @@
 # Unreleased
 
+* Fix `Encoding::UndefinedConversionError` error for Rails applications when precompiling cache. (#364)
+
 # 1.7.5
 
 * Handle a regression of Ruby 2.7.3 causing Bootsnap to call the deprecated `untaint` method. (#360)
