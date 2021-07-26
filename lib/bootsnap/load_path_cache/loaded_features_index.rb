@@ -58,9 +58,9 @@ module Bootsnap
       end
 
       def purge_multi(features)
-        rejected_hashes = features.map(&:hash).to_set
+        rejected_hashes = features.each_with_object({}) { |f, h| h[f.hash] = true }
         @mutex.synchronize do
-          @lfi.reject! { |_, hash| rejected_hashes.include?(hash) }
+          @lfi.reject! { |_, hash| rejected_hashes.key?(hash) }
         end
       end
 
