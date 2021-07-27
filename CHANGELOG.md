@@ -1,5 +1,8 @@
 # Unreleased
 
+
+# 1.7.6
+
 * Fix reliance on `set` to be required.
 * Fix `Encoding::UndefinedConversionError` error for Rails applications when precompiling cache. (#364)
 
