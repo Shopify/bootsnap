@@ -1,5 +1,8 @@
 # Unreleased
 
+# 1.7.7
+
+* Fix changelog entry for 1.7.6.
 
 # 1.7.6
 
