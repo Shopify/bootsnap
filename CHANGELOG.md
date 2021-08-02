@@ -1,5 +1,8 @@
 # Unreleased
 
+# 1.7.7
+
+* Fix `require_relative` in evaled code on latest ruby 3.1.0-dev. (#366)
 
 # 1.7.6
 
