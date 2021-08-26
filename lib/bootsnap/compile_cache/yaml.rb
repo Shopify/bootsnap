@@ -23,7 +23,7 @@ module Bootsnap
         end
 
         def input_to_output(data, kwargs)
-          ::YAML.load(data, **(kwargs || {}))
+          ::YAML.unsafe_load(data, **(kwargs || {}))
         end
 
         def strict_load(payload, *args)
@@ -51,6 +51,13 @@ module Bootsnap
           require('yaml')
           require('msgpack')
           require('date')
+
+          if Patch.method_defined?(:unsafe_load_file) && !::YAML.respond_to?(:unsafe_load_file)
+            Patch.send(:remove_method, :unsafe_load_file)
+          end
+          if Patch.method_defined?(:load_file) && ::YAML::VERSION >= '4'
+            Patch.send(:remove_method, :load_file)
+          end
 
           # MessagePack serializes symbols as strings by default.
           # We want them to roundtrip cleanly, so we use a custom factory.
@@ -126,6 +133,27 @@ module Bootsnap
         end
 
         ruby2_keywords :load_file if respond_to?(:ruby2_keywords, true)
+
+        def unsafe_load_file(path, *args)
+          return super if args.size > 1
+          if kwargs = args.first
+            return super unless kwargs.is_a?(Hash)
+            return super unless (kwargs.keys - ::Bootsnap::CompileCache::YAML.supported_options).empty?
+          end
+
+          begin
+            ::Bootsnap::CompileCache::Native.fetch(
+              Bootsnap::CompileCache::YAML.cache_dir,
+              File.realpath(path),
+              ::Bootsnap::CompileCache::YAML,
+              kwargs,
+            )
+          rescue Errno::EACCES
+            ::Bootsnap::CompileCache.permission_error(path)
+          end
+        end
+
+        ruby2_keywords :unsafe_load_file if respond_to?(:ruby2_keywords, true)
       end
     end
   end
