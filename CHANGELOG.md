@@ -1,6 +1,8 @@
 # Unreleased
 
-* Improve support for Pysch 4.
+# 1.8.0
+
+* Improve support for Pysch 4. (#368)
 
 # 1.7.7
 
