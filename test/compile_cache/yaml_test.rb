@@ -36,6 +36,19 @@ class CompileCacheYAMLTest < Minitest::Test
     assert_equal expected, document
   end
 
+  def test_yaml_input_to_output
+    document = ::Bootsnap::CompileCache::YAML.input_to_output(<<~YAML, {})
+      ---
+      :foo: 42
+      bar: [1]
+    YAML
+    expected = {
+      foo: 42,
+      'bar' => [1],
+    }
+    assert_equal expected, document
+  end
+
   def test_yaml_tags
     error = assert_raises Bootsnap::CompileCache::Uncompilable do
       ::Bootsnap::CompileCache::YAML.strict_load('!many Boolean')

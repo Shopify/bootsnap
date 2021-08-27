@@ -23,7 +23,11 @@ module Bootsnap
         end
 
         def input_to_output(data, kwargs)
-          ::YAML.unsafe_load(data, **(kwargs || {}))
+          if ::YAML.respond_to?(:unsafe_load)
+            ::YAML.unsafe_load(data, **(kwargs || {}))
+          else
+            ::YAML.load(data, **(kwargs || {}))
+          end
         end
 
         def strict_load(payload, *args)
