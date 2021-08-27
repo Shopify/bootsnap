@@ -1,5 +1,9 @@
 # Unreleased
 
+# 1.8.1
+
+* Fixed support for older Psych. (#369)
+
 # 1.8.0
 
 * Improve support for Pysch 4. (#368)
