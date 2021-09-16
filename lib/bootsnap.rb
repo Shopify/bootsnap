@@ -43,7 +43,8 @@ module Bootsnap
     autoload_paths_cache: nil,
     disable_trace: nil,
     compile_cache_iseq: true,
-    compile_cache_yaml: true
+    compile_cache_yaml: true,
+    compile_cache_json: true
   )
     unless autoload_paths_cache.nil?
       warn "[DEPRECATED] Bootsnap's `autoload_paths_cache:` option is deprecated and will be removed. " \
@@ -69,7 +70,8 @@ module Bootsnap
     Bootsnap::CompileCache.setup(
       cache_dir: cache_dir + '/bootsnap/compile-cache',
       iseq: compile_cache_iseq,
-      yaml: compile_cache_yaml
+      yaml: compile_cache_yaml,
+      json: compile_cache_json,
     )
   end
 
@@ -113,6 +115,7 @@ module Bootsnap
         load_path_cache:      !ENV['DISABLE_BOOTSNAP_LOAD_PATH_CACHE'],
         compile_cache_iseq:   !ENV['DISABLE_BOOTSNAP_COMPILE_CACHE'] && iseq_cache_supported?,
         compile_cache_yaml:   !ENV['DISABLE_BOOTSNAP_COMPILE_CACHE'],
+        compile_cache_json:   !ENV['DISABLE_BOOTSNAP_COMPILE_CACHE'],
       )
 
       if ENV['BOOTSNAP_LOG']
