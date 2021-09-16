@@ -1,5 +1,9 @@
 # Unreleased
 
+# 1.9.0
+
+* Added a compilation cache for `JSON.load_file`. (#370)
+
 # 1.8.1
 
 * Fixed support for older Psych. (#369)
