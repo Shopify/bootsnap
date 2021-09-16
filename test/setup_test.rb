@@ -20,6 +20,7 @@ module Bootsnap
         load_path_cache: true,
         compile_cache_iseq: Bootsnap.iseq_cache_supported?,
         compile_cache_yaml: true,
+        compile_cache_json: true,
       )
 
       Bootsnap.default_setup
@@ -34,6 +35,7 @@ module Bootsnap
         load_path_cache: true,
         compile_cache_iseq: Bootsnap.iseq_cache_supported?,
         compile_cache_yaml: true,
+        compile_cache_json: true,
       )
 
       Bootsnap.default_setup
@@ -48,6 +50,7 @@ module Bootsnap
         load_path_cache: false,
         compile_cache_iseq: Bootsnap.iseq_cache_supported?,
         compile_cache_yaml: true,
+        compile_cache_json: true,
       )
 
       Bootsnap.default_setup
@@ -62,6 +65,7 @@ module Bootsnap
         load_path_cache: true,
         compile_cache_iseq: false,
         compile_cache_yaml: false,
+        compile_cache_json: false,
       )
 
       Bootsnap.default_setup
@@ -83,6 +87,7 @@ module Bootsnap
         load_path_cache: true,
         compile_cache_iseq: Bootsnap.iseq_cache_supported?,
         compile_cache_yaml: true,
+        compile_cache_json: true,
       )
       Bootsnap.expects(:logger=).with($stderr.method(:puts))
 

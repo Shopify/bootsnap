@@ -21,7 +21,7 @@ module Bootsnap
 
     attr_reader :cache_dir, :argv
 
-    attr_accessor :compile_gemfile, :exclude, :verbose, :iseq, :yaml, :jobs
+    attr_accessor :compile_gemfile, :exclude, :verbose, :iseq, :yaml, :json, :jobs
 
     def initialize(argv)
       @argv = argv
@@ -32,37 +32,44 @@ module Bootsnap
       self.jobs = Etc.nprocessors
       self.iseq = true
       self.yaml = true
+      self.json = true
     end
 
     def precompile_command(*sources)
       require 'bootsnap/compile_cache/iseq'
       require 'bootsnap/compile_cache/yaml'
+      require 'bootsnap/compile_cache/json'
 
       fix_default_encoding do
         Bootsnap::CompileCache::ISeq.cache_dir = self.cache_dir
         Bootsnap::CompileCache::YAML.init!
         Bootsnap::CompileCache::YAML.cache_dir = self.cache_dir
+        Bootsnap::CompileCache::JSON.init!
+        Bootsnap::CompileCache::JSON.cache_dir = self.cache_dir
 
         @work_pool = WorkerPool.create(size: jobs, jobs: {
           ruby: method(:precompile_ruby),
           yaml: method(:precompile_yaml),
+          json: method(:precompile_json),
         })
         @work_pool.spawn
 
         main_sources = sources.map { |d| File.expand_path(d) }
         precompile_ruby_files(main_sources)
         precompile_yaml_files(main_sources)
+        precompile_json_files(main_sources)
 
         if compile_gemfile
           # Some gems embed their tests, they're very unlikely to be loaded, so not worth precompiling.
           gem_exclude = Regexp.union([exclude, '/spec/', '/test/'].compact)
           precompile_ruby_files($LOAD_PATH.map { |d| File.expand_path(d) }, exclude: gem_exclude)
 
-          # Gems that include YAML files usually don't put them in `lib/`.
+          # Gems that include JSON or YAML files usually don't put them in `lib/`.
           # So we look at the gem root.
           gem_pattern = %r{^#{Regexp.escape(Bundler.bundle_path.to_s)}/?(?:bundler/)?gems\/[^/]+}
           gem_paths = $LOAD_PATH.map { |p| p[gem_pattern] }.compact.uniq
           precompile_yaml_files(gem_paths, exclude: gem_exclude)
+          precompile_json_files(gem_paths, exclude: gem_exclude)
         end
 
         if exitstatus = @work_pool.shutdown
@@ -133,6 +140,29 @@ module Bootsnap
       Array(yaml_files).each do |yaml_file|
         if CompileCache::YAML.precompile(yaml_file, cache_dir: cache_dir)
           STDERR.puts(yaml_file) if verbose
+        end
+      end
+    end
+
+    def precompile_json_files(load_paths, exclude: self.exclude)
+      return unless json
+
+      load_paths.each do |path|
+        if !exclude || !exclude.match?(path)
+          list_files(path, '**/*.json').each do |json_file|
+            # We ignore hidden files to not match the various .config.json files
+            if !File.basename(json_file).start_with?('.') && (!exclude || !exclude.match?(json_file))
+              @work_pool.push(:json, json_file)
+            end
+          end
+        end
+      end
+    end
+
+    def precompile_json(*json_files)
+      Array(json_files).each do |json_file|
+        if p(CompileCache::JSON.precompile(json_file, cache_dir: cache_dir))
+          STDERR.puts(json_file) if verbose
         end
       end
     end
@@ -240,6 +270,11 @@ module Bootsnap
           Disable YAML precompilation.
         EOS
         opts.on('--no-yaml', help) { self.yaml = false }
+
+        help = <<~EOS
+          Disable JSON precompilation.
+        EOS
+        opts.on('--no-json', help) { self.json = false }
       end
     end
   end
