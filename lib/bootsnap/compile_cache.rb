@@ -28,7 +28,7 @@ module Bootsnap
           require_relative('compile_cache/json')
           Bootsnap::CompileCache::JSON.install!(cache_dir)
         elsif $VERBOSE
-          warn("[bootsnap/setup] YAML parsing caching is not supported on this implementation of Ruby")
+          warn("[bootsnap/setup] JSON parsing caching is not supported on this implementation of Ruby")
         end
       end
     end
