@@ -1,5 +1,7 @@
 # Unreleased
 
+# 1.9.1
+
 * Removed a forgotten debug statement in JSON precompilation.
 
 # 1.9.0
