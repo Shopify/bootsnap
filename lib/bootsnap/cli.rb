@@ -161,7 +161,7 @@ module Bootsnap
 
     def precompile_json(*json_files)
       Array(json_files).each do |json_file|
-        if p(CompileCache::JSON.precompile(json_file, cache_dir: cache_dir))
+        if CompileCache::JSON.precompile(json_file, cache_dir: cache_dir)
           STDERR.puts(json_file) if verbose
         end
       end

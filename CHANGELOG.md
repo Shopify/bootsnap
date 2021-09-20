@@ -1,5 +1,7 @@
 # Unreleased
 
+* Removed a forgotten debug statement in JSON precompilation.
+
 # 1.9.0
 
 * Added a compilation cache for `JSON.load_file`. (#370)
