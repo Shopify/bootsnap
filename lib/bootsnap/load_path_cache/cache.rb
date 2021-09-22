@@ -44,14 +44,20 @@ module Bootsnap
 
       # Try to resolve this feature to an absolute path without traversing the
       # loadpath.
-      def find(feature)
+      def find(feature, try_extensions: true)
         reinitialize if (@has_relative_paths && dir_changed?) || stale?
         feature = feature.to_s.freeze
+
         return feature if absolute_path?(feature)
-        return expand_path(feature) if feature.start_with?('./')
+
+        if feature.start_with?('./')
+          return try_extensions ? expand_path(feature) : File.expand_path(feature).freeze
+        end
+
         @mutex.synchronize do
-          x = search_index(feature)
+          x = search_index(feature, try_extensions: try_extensions)
           return x if x
+          return unless try_extensions
 
           # Ruby has some built-in features that require lies about.
           # For example, 'enumerator' is built in. If you require it, ruby
@@ -177,7 +183,9 @@ module Bootsnap
       end
 
       if DLEXT2
-        def search_index(f)
+        def search_index(f, try_extensions: true)
+          return try_index(f) unless try_extensions
+
           try_index(f + DOT_RB) || try_index(f + DLEXT) || try_index(f + DLEXT2) || try_index(f)
         end
 
@@ -185,7 +193,9 @@ module Bootsnap
           try_ext(f + DOT_RB) || try_ext(f + DLEXT) || try_ext(f + DLEXT2) || f
         end
       else
-        def search_index(f)
+        def search_index(f, try_extensions: true)
+          return try_index(f) unless try_extensions
+
           try_index(f + DOT_RB) || try_index(f + DLEXT) || try_index(f)
         end
 

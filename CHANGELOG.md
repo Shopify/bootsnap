@@ -1,5 +1,7 @@
 # Unreleased
 
+* Fix `Kernel.load` behavior: before `load 'a'` would load `a.rb` (and other tried extensions) and wouldn't load `a` unless `development_mode: true`, now only `a` would be loaded and files with extensions wouldn't be.
+
 # 1.9.1
 
 * Removed a forgotten debug statement in JSON precompilation.

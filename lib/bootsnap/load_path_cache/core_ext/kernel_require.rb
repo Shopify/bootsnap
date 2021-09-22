@@ -56,27 +56,9 @@ module Kernel
 
   alias_method(:load_without_bootsnap, :load)
   def load(path, wrap = false)
-    if (resolved = Bootsnap::LoadPathCache.load_path_cache.find(path))
-      return load_without_bootsnap(resolved, wrap)
-    end
+    resolved = Bootsnap::LoadPathCache.load_path_cache.find(path, try_extensions: false)
 
-    # load also allows relative paths from pwd even when not in $:
-    if File.exist?(relative = File.expand_path(path).freeze)
-      return load_without_bootsnap(relative, wrap)
-    end
-
-    raise(Bootsnap::LoadPathCache::CoreExt.make_load_error(path))
-  rescue LoadError => e
-    e.instance_variable_set(Bootsnap::LoadPathCache::ERROR_TAG_IVAR, true)
-    raise(e)
-  rescue Bootsnap::LoadPathCache::ReturnFalse
-    false
-  rescue Bootsnap::LoadPathCache::FallbackScan
-    fallback = true
-  ensure
-    if fallback
-      load_without_bootsnap(path, wrap)
-    end
+    resolved ? load_without_bootsnap(resolved, wrap) : load_without_bootsnap(path, wrap)
   end
 end
 

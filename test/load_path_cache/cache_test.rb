@@ -49,8 +49,10 @@ module Bootsnap
         po = [@dir1]
         cache = Cache.new(NullCache, po)
         assert_equal("#{@dir1}/a.rb", cache.find('a'))
+        refute(cache.find('a', try_extensions: false))
         cache.push_paths(po, @dir2)
         assert_equal("#{@dir2}/b.rb", cache.find('b'))
+        refute(cache.find('b', try_extensions: false))
       end
 
       def test_extension_append_for_relative_paths
@@ -58,8 +60,11 @@ module Bootsnap
         cache = Cache.new(NullCache, po)
         Dir.chdir(@dir1) do
           assert_equal("#{@dir1}/a.rb",       cache.find('./a'))
+          assert_equal("#{@dir1}/a",          cache.find('./a', try_extensions: false))
           assert_equal("#{@dir1}/dl#{DLEXT}", cache.find('./dl'))
+          assert_equal("#{@dir1}/dl",         cache.find('./dl', try_extensions: false))
           assert_equal("#{@dir1}/enoent",     cache.find('./enoent'))
+          assert_equal("#{@dir1}/enoent",     cache.find('./enoent', try_extensions: false))
         end
       end
 
@@ -67,16 +72,20 @@ module Bootsnap
         po = [@dir1]
         cache = Cache.new(NullCache, po)
         assert_equal("#{@dir1}/conflict.rb", cache.find('conflict'))
+        assert_equal("#{@dir1}/conflict.rb", cache.find('conflict.rb', try_extensions: false))
         cache.unshift_paths(po, @dir2)
         assert_equal("#{@dir2}/conflict.rb", cache.find('conflict'))
+        assert_equal("#{@dir2}/conflict.rb", cache.find('conflict.rb', try_extensions: false))
       end
 
       def test_pushed_paths_have_lower_precedence
         po = [@dir1]
         cache = Cache.new(NullCache, po)
         assert_equal("#{@dir1}/conflict.rb", cache.find('conflict'))
+        assert_equal("#{@dir1}/conflict.rb", cache.find('conflict.rb', try_extensions: false))
         cache.push_paths(po, @dir2)
         assert_equal("#{@dir1}/conflict.rb", cache.find('conflict'))
+        assert_equal("#{@dir1}/conflict.rb", cache.find('conflict.rb', try_extensions: false))
       end
 
       def test_directory_caching
@@ -89,10 +98,14 @@ module Bootsnap
       def test_extension_permutations
         cache = Cache.new(NullCache, [@dir1])
         assert_equal("#{@dir1}/dl#{DLEXT}", cache.find('dl'))
+        refute(cache.find('dl', try_extensions: false))
         assert_equal("#{@dir1}/dl#{DLEXT}", cache.find("dl#{DLEXT}"))
         assert_equal("#{@dir1}/both.rb", cache.find("both"))
+        refute(cache.find("both", try_extensions: false))
         assert_equal("#{@dir1}/both.rb", cache.find("both.rb"))
+        assert_equal("#{@dir1}/both.rb", cache.find("both.rb", try_extensions: false))
         assert_equal("#{@dir1}/both#{DLEXT}", cache.find("both#{DLEXT}"))
+        assert_equal("#{@dir1}/both#{DLEXT}", cache.find("both#{DLEXT}", try_extensions: false))
       end
 
       def test_relative_paths_rescanned
