@@ -50,7 +50,7 @@ module Bootsnap
 
         return feature if absolute_path?(feature)
 
-        if feature.start_with?('./')
+        if feature.start_with?('./', '../')
           return try_extensions ? expand_path(feature) : File.expand_path(feature).freeze
         end
 
