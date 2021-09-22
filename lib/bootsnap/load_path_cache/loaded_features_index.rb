@@ -84,10 +84,18 @@ module Bootsnap
       #    entry.
       def register(short, long = nil)
         if long.nil?
-          pat = %r{/#{Regexp.escape(short)}(\.[^/]+)?$}
           len = $LOADED_FEATURES.size
           ret = yield
-          long = $LOADED_FEATURES[len..-1].detect { |feat| feat =~ pat }
+          long = $LOADED_FEATURES[len..-1].detect do |feat|
+            offset = 0
+            while offset = feat.index(short, offset)
+              if feat.index(".", offset + 1) && !feat.index("/", offset + 2)
+                break true
+              else
+                offset += 1
+              end
+            end
+          end
         else
           ret = yield
         end
