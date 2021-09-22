@@ -56,9 +56,11 @@ module Kernel
 
   alias_method(:load_without_bootsnap, :load)
   def load(path, wrap = false)
-    resolved = Bootsnap::LoadPathCache.load_path_cache.find(path, try_extensions: false)
-
-    resolved ? load_without_bootsnap(resolved, wrap) : load_without_bootsnap(path, wrap)
+    if (resolved = Bootsnap::LoadPathCache.load_path_cache.find(path, try_extensions: false))
+      load_without_bootsnap(resolved, wrap)
+    else
+      load_without_bootsnap(path, wrap)
+    end
   end
 end
 

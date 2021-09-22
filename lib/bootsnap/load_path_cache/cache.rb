@@ -184,9 +184,11 @@ module Bootsnap
 
       if DLEXT2
         def search_index(f, try_extensions: true)
-          return try_index(f) unless try_extensions
-
-          try_index(f + DOT_RB) || try_index(f + DLEXT) || try_index(f + DLEXT2) || try_index(f)
+          if try_extensions
+            try_index(f + DOT_RB) || try_index(f + DLEXT) || try_index(f + DLEXT2) || try_index(f)
+          else
+            try_index(f)
+          end
         end
 
         def maybe_append_extension(f)
@@ -194,9 +196,11 @@ module Bootsnap
         end
       else
         def search_index(f, try_extensions: true)
-          return try_index(f) unless try_extensions
-
-          try_index(f + DOT_RB) || try_index(f + DLEXT) || try_index(f)
+          if try_extensions
+            try_index(f + DOT_RB) || try_index(f + DLEXT) || try_index(f)
+          else
+            try_index(f)
+          end
         end
 
         def maybe_append_extension(f)
