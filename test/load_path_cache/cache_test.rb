@@ -58,9 +58,12 @@ module Bootsnap
       def test_extension_append_for_relative_paths
         po = [@dir1]
         cache = Cache.new(NullCache, po)
+        dir1_basename = File.basename(@dir1)
         Dir.chdir(@dir1) do
           assert_equal("#{@dir1}/a.rb",       cache.find('./a'))
           assert_equal("#{@dir1}/a",          cache.find('./a', try_extensions: false))
+          assert_equal("#{@dir1}/a.rb",       cache.find("../#{dir1_basename}/a"))
+          assert_equal("#{@dir1}/a",          cache.find("../#{dir1_basename}/a", try_extensions: false))
           assert_equal("#{@dir1}/dl#{DLEXT}", cache.find('./dl'))
           assert_equal("#{@dir1}/dl",         cache.find('./dl', try_extensions: false))
           assert_equal("#{@dir1}/enoent",     cache.find('./enoent'))
