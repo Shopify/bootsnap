@@ -48,18 +48,38 @@ module Bootsnap
       end
 
       module InstructionSequenceMixin
-        def load_iseq(path)
-          # Having coverage enabled prevents iseq dumping/loading.
-          return nil if defined?(Coverage) && Bootsnap::CompileCache::Native.coverage_running?
+        if RUBY_VERSION >= "3.1"
+          def load_iseq(path)
+            # Temporary hack for Ruby 3.1.
+            # See https://github.com/Shopify/bootsnap/issues/376
+            return nil if path.end_with?("ruby/3.1.0/ostruct.rb")
 
-          Bootsnap::CompileCache::ISeq.fetch(path.to_s)
-        rescue Errno::EACCES
-          Bootsnap::CompileCache.permission_error(path)
-        rescue RuntimeError => e
-          if e.message =~ /unmatched platform/
-            puts("unmatched platform for file #{path}")
+            # Having coverage enabled prevents iseq dumping/loading.
+            return nil if defined?(Coverage) && Bootsnap::CompileCache::Native.coverage_running?
+
+            Bootsnap::CompileCache::ISeq.fetch(path.to_s)
+          rescue Errno::EACCES
+            Bootsnap::CompileCache.permission_error(path)
+          rescue RuntimeError => e
+            if e.message =~ /unmatched platform/
+              puts("unmatched platform for file #{path}")
+            end
+            raise
           end
-          raise
+        else
+          def load_iseq(path)
+            # Having coverage enabled prevents iseq dumping/loading.
+            return nil if defined?(Coverage) && Bootsnap::CompileCache::Native.coverage_running?
+
+            Bootsnap::CompileCache::ISeq.fetch(path.to_s)
+          rescue Errno::EACCES
+            Bootsnap::CompileCache.permission_error(path)
+          rescue RuntimeError => e
+            if e.message =~ /unmatched platform/
+              puts("unmatched platform for file #{path}")
+            end
+            raise
+          end
         end
 
         def compile_option=(hash)
