@@ -93,6 +93,7 @@ module Bootsnap
     begin
       if defined? RubyVM::InstructionSequence
         RubyVM::InstructionSequence.compile("def foo(*); ->{ super }; end").to_binary
+        RubyVM::InstructionSequence.compile("def foo(**); ->{ super }; end").to_binary
       end
       false
     rescue TypeError
