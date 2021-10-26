@@ -57,9 +57,15 @@ module Bootsnap
         "If you use Ruby 2.5 or newer this option is useless, if not upgrading is recommended."
     end
 
-    if compile_cache_iseq && !iseq_cache_supported?
-      warn "Ruby 2.5 has a bug that break code tracing when code is loaded from cache. It is recommened " \
-        "to turn `compile_cache_iseq` off on Ruby 2.5"
+    if compile_cache_iseq
+      if iseq_cache_tracing_bug?
+        warn "Ruby 2.5 has a bug that break code tracing when code is loaded from cache. It is recommended " \
+          "to turn `compile_cache_iseq` off on Ruby 2.5"
+      end
+
+      if iseq_cache_anonymous_params_bug?
+        warn "Your version of Ruby 3.1.0-dev has a bug that break bytecode caching (https://github.com/ruby/ruby/pull/4961)."
+      end
     end
 
     Bootsnap::LoadPathCache.setup(
@@ -75,11 +81,28 @@ module Bootsnap
     )
   end
 
-  def self.iseq_cache_supported?
-    return @iseq_cache_supported if defined? @iseq_cache_supported
+  def self.iseq_cache_tracing_bug?
+    return @iseq_cache_tracing_bug if defined? @iseq_cache_tracing_bug
 
     ruby_version = Gem::Version.new(RUBY_VERSION)
-    @iseq_cache_supported = ruby_version < Gem::Version.new('2.5.0') || ruby_version >= Gem::Version.new('2.6.0')
+    @iseq_cache_tracing_bug = ruby_version < Gem::Version.new('2.5.0') || ruby_version >= Gem::Version.new('2.6.0')
+  end
+
+  def self.iseq_cache_anonymous_params_bug?
+    return @iseq_cache_anonymous_params_bug if defined? @iseq_cache_anonymous_params_bug
+    begin
+      if defined? RubyVM::InstructionSequence
+        RubyVM::InstructionSequence.compile("def foo(*); ->{ super }; end").to_binary
+        RubyVM::InstructionSequence.compile("def foo(**); ->{ super }; end").to_binary
+      end
+      false
+    rescue TypeError
+      true
+    end
+  end
+
+  def self.iseq_cache_supported?
+    !(iseq_cache_tracing_bug? || iseq_cache_anonymous_params_bug?)
   end
 
   def self.default_setup
