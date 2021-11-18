@@ -7,6 +7,8 @@ on:
   push:
     branches:
       - master
+  schedule:
+    - cron:  '45 4 * * *'
 
 jobs:
   platforms:
@@ -26,7 +28,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu]
-        ruby: ['2.3', '2.4', '2.5', '2.6', '2.7', '3.0', 'ruby-head']
+        ruby: ['2.3', '2.4', '2.5', '2.6', '2.7', '3.0', 'ruby-head', 'debug']
     runs-on: ${{ matrix.os }}-latest
     steps:
       - uses: actions/checkout@v2
