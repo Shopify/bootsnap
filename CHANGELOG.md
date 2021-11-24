@@ -1,11 +1,14 @@
 # Unreleased
 
+# 1.9.3
+
 * Only disable the compile cache for source files impacted by [Ruby 3.0.3 [Bug 18250]](https://bugs.ruby-lang.org/issues/18250).
   This should keep the performance loss to a minimum.
 
 # 1.9.2
 
-* Disable compile cache if Ruby 3.0.3's ISeq cache bug is detected.
+* Disable compile cache if [Ruby 3.0.3's ISeq cache bug](https://bugs.ruby-lang.org/issues/18250) is detected.
+  AKA `iseq.rb:13 to_binary: wrong argument type false (expected Symbol)`
 * Fix `Kernel.load` behavior: before `load 'a'` would load `a.rb` (and other tried extensions) and wouldn't load `a` unless `development_mode: true`, now only `a` would be loaded and files with extensions wouldn't be.
 
 # 1.9.1
