@@ -9,10 +9,35 @@ module Bootsnap
         attr_accessor(:cache_dir)
       end
 
-      def self.input_to_storage(_, path)
-        RubyVM::InstructionSequence.compile_file(path).to_binary
-      rescue SyntaxError
-        raise(Uncompilable, 'syntax error')
+      has_ruby_bug_18250 = begin # https://bugs.ruby-lang.org/issues/18250
+        if defined? RubyVM::InstructionSequence
+          RubyVM::InstructionSequence.compile("def foo(*); ->{ super }; end; def foo(**); ->{ super }; end").to_binary
+        end
+        false
+      rescue TypeError
+        true
+      end
+
+      if has_ruby_bug_18250
+        def self.input_to_storage(_, path)
+          iseq = begin
+            RubyVM::InstructionSequence.compile_file(path)
+          rescue SyntaxError
+            raise(Uncompilable, 'syntax error')
+          end
+
+          begin
+            iseq.to_binary
+          rescue TypeError
+            raise(Uncompilable, 'ruby bug #18250')
+          end
+        end
+      else
+        def self.input_to_storage(_, path)
+          RubyVM::InstructionSequence.compile_file(path).to_binary
+        rescue SyntaxError
+          raise(Uncompilable, 'syntax error')
+        end
       end
 
       def self.storage_to_output(binary, _args)
