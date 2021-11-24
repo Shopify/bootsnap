@@ -1,5 +1,8 @@
 # Unreleased
 
+* Only disable the compile cache for source files impacted by [Ruby 3.0.3 [Bug 18250]](https://bugs.ruby-lang.org/issues/18250).
+  This should keep the performance loss to a minimum.
+
 # 1.9.2
 
 * Disable compile cache if Ruby 3.0.3's ISeq cache bug is detected.
