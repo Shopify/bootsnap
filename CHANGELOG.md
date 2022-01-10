@@ -1,5 +1,7 @@
 # Unreleased
 
+# 1.9.4
+
 * Ignore absolute paths in the loaded feature index. (#385)
   This fixes a compatibility issue with Zeitwerk when Zeitwerk is loaded before bootsnap. It also should
   reduce the memory usage and improve load performance of Zeitwerk managed files.
