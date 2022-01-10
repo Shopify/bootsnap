@@ -136,10 +136,22 @@ module Bootsnap
       end
 
       def test_works_with_pathname
-        path = '/tmp/bundler.rb'
+        path = 'bundler.rb'
         pathname = Pathname.new(path)
         @index.register(pathname, path) { true }
         assert(@index.key?(pathname))
+      end
+
+      def test_ignores_absolute_paths
+        path = "#{Dir.mktmpdir}/bundler.rb"
+        @index.register(path) { true }
+        refute(@index.key?(path))
+
+        path = "#{Dir.mktmpdir}/bundler.rb"
+        pathname = Pathname.new(path)
+        @index.register(pathname, path) { true }
+        refute(@index.key?(path))
+        refute(@index.key?(pathname))
       end
     end
   end

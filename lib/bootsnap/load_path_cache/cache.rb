@@ -48,7 +48,7 @@ module Bootsnap
         reinitialize if (@has_relative_paths && dir_changed?) || stale?
         feature = feature.to_s.freeze
 
-        return feature if absolute_path?(feature)
+        return feature if Bootsnap.absolute_path?(feature)
 
         if feature.start_with?('./', '../')
           return try_extensions ? expand_path(feature) : File.expand_path(feature).freeze
@@ -96,16 +96,6 @@ module Bootsnap
         # be able to detect newly-created files without rebooting the
         # application.
         raise(LoadPathCache::FallbackScan, '', []) if @development_mode
-      end
-
-      if RbConfig::CONFIG['host_os'] =~ /mswin|mingw|cygwin/
-        def absolute_path?(path)
-          path[1] == ':'
-        end
-      else
-        def absolute_path?(path)
-          path.start_with?(SLASH)
-        end
       end
 
       def unshift_paths(sender, *paths)

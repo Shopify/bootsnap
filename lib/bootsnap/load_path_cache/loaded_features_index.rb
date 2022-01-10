@@ -83,6 +83,11 @@ module Bootsnap
       # 2. Inspect $LOADED_FEATURES upon return from yield to find the matching
       #    entry.
       def register(short, long = nil)
+        # Absolute paths are not a concern.
+        if Bootsnap.absolute_path?(short.to_s)
+          return yield
+        end
+
         if long.nil?
           len = $LOADED_FEATURES.size
           ret = yield
