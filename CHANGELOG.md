@@ -1,5 +1,8 @@
 # Unreleased
 
+* Automatically invalidate the load path cache whenever the Ruby version change. (#387)
+  This is to avoid issues in case the same installation path is re-used for subsequent ruby patch releases.
+
 # 1.9.3
 
 * Only disable the compile cache for source files impacted by [Ruby 3.0.3 [Bug 18250]](https://bugs.ruby-lang.org/issues/18250).
