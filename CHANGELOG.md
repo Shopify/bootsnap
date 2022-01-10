@@ -1,5 +1,9 @@
 # Unreleased
 
+* Ignore absolute paths in the loaded feature index. (#385)
+  This fixes a compatibility issue with Zeitwerk when Zeitwerk is loaded before bootsnap. It also should
+  reduce the memory usage and improve load performance of Zeitwerk managed files.
+
 * Automatically invalidate the load path cache whenever the Ruby version change. (#387)
   This is to avoid issues in case the same installation path is re-used for subsequent ruby patch releases.
 

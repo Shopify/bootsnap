@@ -123,4 +123,14 @@ module Bootsnap
       end
     end
   end
+
+  if RbConfig::CONFIG['host_os'] =~ /mswin|mingw|cygwin/
+    def self.absolute_path?(path)
+      path[1] == ':'
+    end
+  else
+    def self.absolute_path?(path)
+      path.start_with?('/')
+    end
+  end
 end
