@@ -7,6 +7,9 @@ Bootsnap::ExplicitRequire.from_rubylibdir('fileutils')
 module Bootsnap
   module LoadPathCache
     class Store
+      VERSION_KEY = '__bootsnap_ruby_version__'
+      CURRENT_VERSION = "#{RUBY_REVISION}-#{RUBY_PLATFORM}".freeze
+
       NestedTransactionError = Class.new(StandardError)
       SetOutsideTransactionNotAllowed = Class.new(StandardError)
 
@@ -62,15 +65,20 @@ module Bootsnap
 
       def load_data
         @data = begin
-          File.open(@store_path, encoding: Encoding::BINARY) do |io|
+          data = File.open(@store_path, encoding: Encoding::BINARY) do |io|
             MessagePack.load(io)
+          end
+          if data.is_a?(Hash) && data[VERSION_KEY] == CURRENT_VERSION
+            data
+          else
+            default_data
           end
         # handle malformed data due to upgrade incompatibility
         rescue Errno::ENOENT, MessagePack::MalformedFormatError, MessagePack::UnknownExtTypeError, EOFError
-          {}
+          default_data
         rescue ArgumentError => error
           if error.message =~ /negative array size/
-            {}
+            default_data
           else
             raise
           end
@@ -92,6 +100,10 @@ module Bootsnap
       rescue Errno::EEXIST
         retry
       rescue SystemCallError
+      end
+
+      def default_data
+        { VERSION_KEY => CURRENT_VERSION }
       end
     end
   end
