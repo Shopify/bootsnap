@@ -1,11 +1,11 @@
-inherit_from:
-  - http://shopify.github.io/ruby-style-guide/rubocop.yml
+inherit_gem:
+  rubocop-shopify: rubocop.yml
 
 AllCops:
   Exclude:
     - 'vendor/**/*'
     - 'tmp/**/*'
-  TargetRubyVersion: '2.4'
+  TargetRubyVersion: 2.5
 
 # This doesn't take into account retrying from an exception
 Lint/SuppressedException:
