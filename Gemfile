@@ -10,5 +10,6 @@ end
 
 group :development do
   gem 'rubocop'
+  gem 'rubocop-shopify', require: false
   gem 'byebug', platform: :ruby
 end

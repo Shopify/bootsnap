@@ -18,7 +18,7 @@ Gem::Specification.new do |spec|
 
   spec.metadata = {
     'bug_tracker_uri' => 'https://github.com/Shopify/bootsnap/issues',
-    'changelog_uri' => 'https://github.com/Shopify/bootsnap/blob/master/CHANGELOG.md',
+    'changelog_uri' => 'https://github.com/Shopify/bootsnap/blob/main/CHANGELOG.md',
     'source_code_uri' => 'https://github.com/Shopify/bootsnap',
     'allowed_push_host' => 'https://rubygems.org'
   }
