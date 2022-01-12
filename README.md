@@ -41,7 +41,7 @@ getting progressively slower, this is almost certainly the cause.**
 It's technically possible to simply specify `gem 'bootsnap', require: 'bootsnap/setup'`, but it's
 important to load Bootsnap as early as possible to get maximum performance improvement.
 
-You can see how this require works [here](https://github.com/Shopify/bootsnap/blob/master/lib/bootsnap/setup.rb).
+You can see how this require works [here](https://github.com/Shopify/bootsnap/blob/main/lib/bootsnap/setup.rb).
 
 If you are not using Rails, or if you are but want more control over things, add this to your
 application setup immediately after `require 'bundler/setup'` (i.e. as early as possible: the sooner
@@ -161,7 +161,7 @@ The only directories considered "stable" are things under the Ruby install prefi
 "volatile".
 
 In addition to the [`Bootsnap::LoadPathCache::Cache`
-source](https://github.com/Shopify/bootsnap/blob/master/lib/bootsnap/load_path_cache/cache.rb),
+source](https://github.com/Shopify/bootsnap/blob/main/lib/bootsnap/load_path_cache/cache.rb),
 this diagram may help clarify how entry resolution works:
 
 ![How path searching works](https://cloud.githubusercontent.com/assets/3074765/25388270/670b5652-299b-11e7-87fb-975647f68981.png)
