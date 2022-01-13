@@ -6,7 +6,12 @@ module Bootsnap
   module CompileCache
     module JSON
       class << self
-        attr_accessor(:msgpack_factory, :cache_dir, :supported_options)
+        attr_accessor(:msgpack_factory, :supported_options)
+        attr_reader(:cache_dir)
+
+        def cache_dir=(cache_dir)
+          @cache_dir = cache_dir.end_with?("/") ? "#{cache_dir}json" : "#{cache_dir}-json"
+        end
 
         def input_to_storage(payload, _)
           obj = ::JSON.parse(payload)
@@ -24,7 +29,7 @@ module Bootsnap
           ::JSON.parse(data, **(kwargs || {}))
         end
 
-        def precompile(path, cache_dir: self.cache_dir)
+        def precompile(path)
           Bootsnap::CompileCache::Native.precompile(
             cache_dir,
             path.to_s,

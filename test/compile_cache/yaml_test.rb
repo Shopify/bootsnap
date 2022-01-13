@@ -21,24 +21,11 @@ class CompileCacheYAMLTest < Minitest::Test
   def setup
     super
     Bootsnap::CompileCache::YAML.init!
-    FakeYaml.singleton_class.prepend(Bootsnap::CompileCache::YAML::Patch)
+    FakeYaml.singleton_class.prepend(Bootsnap::CompileCache::YAML.patch)
   end
 
   def test_yaml_strict_load
     document = ::Bootsnap::CompileCache::YAML.strict_load(<<~YAML)
-      ---
-      :foo: 42
-      bar: [1]
-    YAML
-    expected = {
-      foo: 42,
-      "bar" => [1],
-    }
-    assert_equal expected, document
-  end
-
-  def test_yaml_input_to_output
-    document = ::Bootsnap::CompileCache::YAML.input_to_output(<<~YAML, {})
       ---
       :foo: 42
       bar: [1]
@@ -63,15 +50,68 @@ class CompileCacheYAMLTest < Minitest::Test
   end
 
   if YAML::VERSION >= "4"
-    def test_load_psych_4
-      # Until we figure out a proper strategy, only `YAML.unsafe_load_file`
-      # is cached with Psych >= 4
+    def test_load_psych_4_with_alias
       Help.set_file("a.yml", "foo: &foo\n  bar: 42\nplop:\n  <<: *foo", 100)
-      assert_raises FakeYaml::Fallback do
+
+      foo = {"bar" => 42}
+      expected = {"foo" => foo, "plop" => foo}
+      assert_equal(expected, FakeYaml.unsafe_load_file("a.yml"))
+
+      assert_raises Psych::BadAlias do
         FakeYaml.load_file("a.yml")
       end
     end
+
+    def test_load_psych_4_with_unsafe_class
+      Help.set_file("a.yml",  "---\nfoo: !ruby/regexp /bar/\n", 100)
+
+      expected = {"foo" => /bar/}
+      assert_equal(expected, FakeYaml.unsafe_load_file("a.yml"))
+
+      assert_raises Psych::DisallowedClass do
+        FakeYaml.load_file("a.yml")
+      end
+    end
+
+    def test_yaml_input_to_output_safe
+      document = ::Bootsnap::CompileCache::YAML::Psych4::SafeLoad.input_to_output(<<~YAML, {})
+        ---
+        :foo: 42
+        bar: [1]
+      YAML
+      expected = {
+        foo: 42,
+        "bar" => [1],
+      }
+      assert_equal expected, document
+    end
+
+    def test_yaml_input_to_output_unsafe
+      document = ::Bootsnap::CompileCache::YAML::Psych4::UnsafeLoad.input_to_output(<<~YAML, {})
+        ---
+        :foo: 42
+        bar: [1]
+      YAML
+      expected = {
+        foo: 42,
+        "bar" => [1],
+      }
+      assert_equal expected, document
+    end
   else
+    def test_yaml_input_to_output
+      document = ::Bootsnap::CompileCache::YAML::Psych3.input_to_output(<<~YAML, {})
+        ---
+        :foo: 42
+        bar: [1]
+      YAML
+      expected = {
+        foo: 42,
+        "bar" => [1],
+      }
+      assert_equal expected, document
+    end
+
     def test_load_file
       Help.set_file("a.yml", "---\nfoo: bar", 100)
       assert_equal({"foo" => "bar"}, FakeYaml.load_file("a.yml"))

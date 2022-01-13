@@ -114,7 +114,7 @@ class CompileCacheTest < Minitest::Test
 
   def test_invalid_cache_file
     path = Help.set_file("a.rb", "a = a = 3", 100)
-    cp = Help.cache_path(@tmp_dir, path)
+    cp = Help.cache_path("#{@tmp_dir}-iseq", path)
     FileUtils.mkdir_p(File.dirname(cp))
     File.write(cp, "nope")
     load(path)

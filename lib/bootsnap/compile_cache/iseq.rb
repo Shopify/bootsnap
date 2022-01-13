@@ -7,7 +7,11 @@ module Bootsnap
   module CompileCache
     module ISeq
       class << self
-        attr_accessor(:cache_dir)
+        attr_reader(:cache_dir)
+
+        def cache_dir=(cache_dir)
+          @cache_dir = cache_dir.end_with?("/") ? "#{cache_dir}iseq" : "#{cache_dir}-iseq"
+        end
       end
 
       has_ruby_bug_18250 = begin # https://bugs.ruby-lang.org/issues/18250
@@ -61,7 +65,7 @@ module Bootsnap
         )
       end
 
-      def self.precompile(path, cache_dir: ISeq.cache_dir)
+      def self.precompile(path)
         Bootsnap::CompileCache::Native.precompile(
           cache_dir,
           path.to_s,
