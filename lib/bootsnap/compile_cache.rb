@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Bootsnap
   module CompileCache
     Error           = Class.new(StandardError)
@@ -7,7 +8,7 @@ module Bootsnap
     def self.setup(cache_dir:, iseq:, yaml:, json:)
       if iseq
         if supported?
-          require_relative('compile_cache/iseq')
+          require_relative("compile_cache/iseq")
           Bootsnap::CompileCache::ISeq.install!(cache_dir)
         elsif $VERBOSE
           warn("[bootsnap/setup] bytecode caching is not supported on this implementation of Ruby")
@@ -16,7 +17,7 @@ module Bootsnap
 
       if yaml
         if supported?
-          require_relative('compile_cache/yaml')
+          require_relative("compile_cache/yaml")
           Bootsnap::CompileCache::YAML.install!(cache_dir)
         elsif $VERBOSE
           warn("[bootsnap/setup] YAML parsing caching is not supported on this implementation of Ruby")
@@ -25,7 +26,7 @@ module Bootsnap
 
       if json
         if supported?
-          require_relative('compile_cache/json')
+          require_relative("compile_cache/json")
           Bootsnap::CompileCache::JSON.install!(cache_dir)
         elsif $VERBOSE
           warn("[bootsnap/setup] JSON parsing caching is not supported on this implementation of Ruby")
@@ -44,9 +45,9 @@ module Bootsnap
 
     def self.supported?
       # only enable on 'ruby' (MRI), POSIX (darwin, linux, *bsd), Windows (RubyInstaller2) and >= 2.3.0
-      RUBY_ENGINE == 'ruby' &&
-      RUBY_PLATFORM =~ /darwin|linux|bsd|mswin|mingw|cygwin/ &&
-      Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("2.3.0")
+      RUBY_ENGINE == "ruby" &&
+        RUBY_PLATFORM =~ /darwin|linux|bsd|mswin|mingw|cygwin/ &&
+        Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("2.3.0")
     end
   end
 end

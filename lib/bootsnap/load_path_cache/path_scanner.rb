@@ -1,18 +1,18 @@
 # frozen_string_literal: true
 
-require_relative('../explicit_require')
+require_relative("../explicit_require")
 
 module Bootsnap
   module LoadPathCache
     module PathScanner
       REQUIRABLE_EXTENSIONS = [DOT_RB] + DL_EXTENSIONS
       NORMALIZE_NATIVE_EXTENSIONS = !DL_EXTENSIONS.include?(LoadPathCache::DOT_SO)
-      ALTERNATIVE_NATIVE_EXTENSIONS_PATTERN = /\.(o|bundle|dylib)\z/
+      ALTERNATIVE_NATIVE_EXTENSIONS_PATTERN = /\.(o|bundle|dylib)\z/.freeze
 
       BUNDLE_PATH = if Bootsnap.bundler?
         (Bundler.bundle_path.cleanpath.to_s << LoadPathCache::SLASH).freeze
       else
-        ''
+        ""
       end
 
       class << self
@@ -44,7 +44,8 @@ module Bootsnap
 
         def walk(absolute_dir_path, relative_dir_path, &block)
           Dir.foreach(absolute_dir_path) do |name|
-            next if name.start_with?('.')
+            next if name.start_with?(".")
+
             relative_path = relative_dir_path ? File.join(relative_dir_path, name) : name
 
             absolute_path = "#{absolute_dir_path}/#{name}"
@@ -58,7 +59,7 @@ module Bootsnap
           end
         end
 
-        if RUBY_VERSION >= '3.1'
+        if RUBY_VERSION >= "3.1"
           def os_path(path)
             path.freeze
           end

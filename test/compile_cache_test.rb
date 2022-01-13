@@ -1,5 +1,6 @@
 # frozen_string_literal: true
-require('test_helper')
+
+require("test_helper")
 
 class CompileCacheTest < Minitest::Test
   include(TmpdirHelper)
@@ -14,7 +15,7 @@ class CompileCacheTest < Minitest::Test
 
   def test_coverage_running?
     refute(Bootsnap::CompileCache::Native.coverage_running?)
-    require('coverage')
+    require("coverage")
     begin
       Coverage.start
       assert(Bootsnap::CompileCache::Native.coverage_running?)
@@ -24,7 +25,7 @@ class CompileCacheTest < Minitest::Test
   end
 
   def test_no_write_permission_to_cache
-    if RbConfig::CONFIG['host_os'] =~ /mswin|mingw|cygwin/
+    if RbConfig::CONFIG["host_os"] =~ /mswin|mingw|cygwin/
       # Always pass this test on Windows because directories aren't read, only
       # listed. You can restrict the ability to list directory contents on
       # Windows or you can set ACLS on a folder such that it is not allowed to
@@ -36,25 +37,25 @@ class CompileCacheTest < Minitest::Test
       # read-only files.
       pass
     else
-      path = Help.set_file('a.rb', 'a = 3', 100)
+      path = Help.set_file("a.rb", "a = 3", 100)
       folder = File.dirname(Help.cache_path(@tmp_dir, path))
       FileUtils.mkdir_p(folder)
-      FileUtils.chmod(0400, folder)
+      FileUtils.chmod(0o400, folder)
       load(path)
     end
   end
 
   def test_can_open_read_only_cache
-    path = Help.set_file('a.rb', 'a = a = 3', 100)
+    path = Help.set_file("a.rb", "a = a = 3", 100)
     # Load once to create the cache file
     load(path)
-    FileUtils.chmod(0400, path)
+    FileUtils.chmod(0o400, path)
     # Loading again after the file is marked read-only should still succeed
     load(path)
   end
 
   def test_file_is_only_read_once
-    path = Help.set_file('a.rb', 'a = a = 3', 100)
+    path = Help.set_file("a.rb", "a = a = 3", 100)
     storage = RubyVM::InstructionSequence.compile_file(path).to_binary
     output = RubyVM::InstructionSequence.load_from_binary(storage)
     # This doesn't really *prove* the file is only read once, but
@@ -66,7 +67,7 @@ class CompileCacheTest < Minitest::Test
   end
 
   def test_raises_syntax_error
-    path = Help.set_file('a.rb', 'a = (3', 100)
+    path = Help.set_file("a.rb", "a = (3", 100)
     assert_raises(SyntaxError) do
       # SyntaxError emits directly to stderr in addition to raising, it seems.
       capture_io { load(path) }
@@ -74,19 +75,19 @@ class CompileCacheTest < Minitest::Test
   end
 
   def test_no_recache_when_mtime_and_size_same
-    path = Help.set_file('a.rb', 'a = a = 3', 100)
+    path = Help.set_file("a.rb", "a = a = 3", 100)
     storage = RubyVM::InstructionSequence.compile_file(path).to_binary
     output = RubyVM::InstructionSequence.load_from_binary(storage)
     Bootsnap::CompileCache::ISeq.expects(:input_to_storage).times(1).returns(storage)
     Bootsnap::CompileCache::ISeq.expects(:storage_to_output).times(2).returns(output)
 
     load(path)
-    Help.set_file(path, 'a = a = 4', 100)
+    Help.set_file(path, "a = a = 4", 100)
     load(path)
   end
 
   def test_recache_when_mtime_different
-    path = Help.set_file('a.rb', 'a = a = 3', 100)
+    path = Help.set_file("a.rb", "a = a = 3", 100)
     storage = RubyVM::InstructionSequence.compile_file(path).to_binary
     output = RubyVM::InstructionSequence.load_from_binary(storage)
     # Totally lies the second time but that's not the point.
@@ -94,12 +95,12 @@ class CompileCacheTest < Minitest::Test
     Bootsnap::CompileCache::ISeq.expects(:storage_to_output).times(2).returns(output)
 
     load(path)
-    Help.set_file(path, 'a = a = 2', 101)
+    Help.set_file(path, "a = a = 2", 101)
     load(path)
   end
 
   def test_recache_when_size_different
-    path = Help.set_file('a.rb', 'a = a = 3', 100)
+    path = Help.set_file("a.rb", "a = a = 3", 100)
     storage = RubyVM::InstructionSequence.compile_file(path).to_binary
     output = RubyVM::InstructionSequence.load_from_binary(storage)
     # Totally lies the second time but that's not the point.
@@ -107,27 +108,27 @@ class CompileCacheTest < Minitest::Test
     Bootsnap::CompileCache::ISeq.expects(:storage_to_output).times(2).returns(output)
 
     load(path)
-    Help.set_file(path, 'a = 33', 100)
+    Help.set_file(path, "a = 33", 100)
     load(path)
   end
 
   def test_invalid_cache_file
-    path = Help.set_file('a.rb', 'a = a = 3', 100)
+    path = Help.set_file("a.rb", "a = a = 3", 100)
     cp = Help.cache_path(@tmp_dir, path)
     FileUtils.mkdir_p(File.dirname(cp))
-    File.write(cp, 'nope')
+    File.write(cp, "nope")
     load(path)
     assert(File.size(cp) > 32) # cache was overwritten
   end
 
   def test_instrumentation_hit
-    path = Help.set_file('a.rb', 'a = a = 3', 100)
-    load(path)
+    file_path = Help.set_file("a.rb", "a = a = 3", 100)
+    load(file_path)
 
     calls = []
     Bootsnap.instrumentation = ->(event, path) { calls << [event, path] }
 
-    load(path)
+    load(file_path)
 
     assert_equal [], calls
   ensure
@@ -135,29 +136,29 @@ class CompileCacheTest < Minitest::Test
   end
 
   def test_instrumentation_miss
-    path = Help.set_file('a.rb', 'a = a = 3', 100)
+    file_path = Help.set_file("a.rb", "a = a = 3", 100)
 
     calls = []
     Bootsnap.instrumentation = ->(event, path) { calls << [event, path] }
 
-    load(path)
+    load(file_path)
 
-    assert_equal [[:miss, 'a.rb']], calls
+    assert_equal [[:miss, "a.rb"]], calls
   ensure
     Bootsnap.instrumentation = nil
   end
 
   def test_instrumentation_stale
-    path = Help.set_file('a.rb', 'a = a = 3', 100)
-    load(path)
-    path = Help.set_file('a.rb', 'a = a = 4', 101)
+    file_path = Help.set_file("a.rb", "a = a = 3", 100)
+    load(file_path)
+    file_path = Help.set_file("a.rb", "a = a = 4", 101)
 
     calls = []
     Bootsnap.instrumentation = ->(event, path) { calls << [event, path] }
 
-    load(path)
+    load(file_path)
 
-    assert_equal [[:stale, 'a.rb']], calls
+    assert_equal [[:stale, "a.rb"]], calls
   ensure
     Bootsnap.instrumentation = nil
   end

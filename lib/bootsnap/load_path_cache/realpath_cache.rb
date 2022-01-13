@@ -21,6 +21,7 @@ module Bootsnap
 
       def find_file(name)
         return File.realpath(name).freeze if File.exist?(name)
+
         CACHED_EXTENSIONS.each do |ext|
           filename = "#{name}#{ext}"
           return File.realpath(filename).freeze if File.exist?(filename)

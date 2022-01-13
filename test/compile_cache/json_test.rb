@@ -1,5 +1,6 @@
 # frozen_string_literal: true
-require('test_helper')
+
+require("test_helper")
 
 class CompileCacheJSONTest < Minitest::Test
   include(TmpdirHelper)
@@ -7,7 +8,7 @@ class CompileCacheJSONTest < Minitest::Test
   module FakeJson
     Fallback = Class.new(StandardError)
     class << self
-      def load_file(path, symbolize_names: false, freeze: false, fallback: nil)
+      def load_file(_path, symbolize_names: false, freeze: false, fallback: nil)
         raise Fallback
       end
     end
@@ -27,55 +28,55 @@ class CompileCacheJSONTest < Minitest::Test
       }
     JSON
     expected = {
-      'foo' => 42,
-      'bar' => [1],
+      "foo" => 42,
+      "bar" => [1],
     }
     assert_equal expected, document
   end
 
   def test_load_file
-    Help.set_file('a.json', '{"foo": "bar"}', 100)
-    assert_equal({'foo' => 'bar'}, FakeJson.load_file('a.json'))
+    Help.set_file("a.json", '{"foo": "bar"}', 100)
+    assert_equal({"foo" => "bar"}, FakeJson.load_file("a.json"))
   end
 
   def test_load_file_symbolize_names
-    Help.set_file('a.json', '{"foo": "bar"}', 100)
-    FakeJson.load_file('a.json')
+    Help.set_file("a.json", '{"foo": "bar"}', 100)
+    FakeJson.load_file("a.json")
 
     if ::Bootsnap::CompileCache::JSON.supported_options.include?(:symbolize_names)
       2.times do
-        assert_equal({foo: 'bar'}, FakeJson.load_file('a.json', symbolize_names: true))
+        assert_equal({foo: "bar"}, FakeJson.load_file("a.json", symbolize_names: true))
       end
     else
       assert_raises(FakeJson::Fallback) do # would call super
-        FakeJson.load_file('a.json', symbolize_names: true)
+        FakeJson.load_file("a.json", symbolize_names: true)
       end
     end
   end
 
   def test_load_file_freeze
-    Help.set_file('a.json', '["foo"]', 100)
-    FakeJson.load_file('a.json')
+    Help.set_file("a.json", '["foo"]', 100)
+    FakeJson.load_file("a.json")
 
     if ::Bootsnap::CompileCache::JSON.supported_options.include?(:freeze)
       2.times do
-        string = FakeJson.load_file('a.json', freeze: true).first
+        string = FakeJson.load_file("a.json", freeze: true).first
         assert_equal("foo", string)
         assert_predicate(string, :frozen?)
       end
     else
       assert_raises(FakeJson::Fallback) do # would call super
-        FakeJson.load_file('a.json', freeze: true)
+        FakeJson.load_file("a.json", freeze: true)
       end
     end
   end
 
   def test_load_file_unknown_option
-    Help.set_file('a.json', '["foo"]', 100)
-    FakeJson.load_file('a.json')
+    Help.set_file("a.json", '["foo"]', 100)
+    FakeJson.load_file("a.json")
 
     assert_raises(FakeJson::Fallback) do # would call super
-      FakeJson.load_file('a.json', fallback: true)
+      FakeJson.load_file("a.json", fallback: true)
     end
   end
 end

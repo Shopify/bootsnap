@@ -1,8 +1,9 @@
 # frozen_string_literal: true
-require('test_helper')
-require('tempfile')
-require('tmpdir')
-require('fileutils')
+
+require("test_helper")
+require("tempfile")
+require("tmpdir")
+require("fileutils")
 
 class CompileCacheKeyFormatTest < Minitest::Test
   FILE = File.expand_path(__FILE__)
@@ -16,7 +17,7 @@ class CompileCacheKeyFormatTest < Minitest::Test
     size: 16...24,
     mtime: 24...32,
     data_size: 32...40,
-  }
+  }.freeze
 
   def test_key_version
     key = cache_key_for_file(FILE)
@@ -27,12 +28,12 @@ class CompileCacheKeyFormatTest < Minitest::Test
   def test_key_compile_option_stable
     k1 = cache_key_for_file(FILE)
     k2 = cache_key_for_file(FILE)
-    RubyVM::InstructionSequence.compile_option = { tailcall_optimization: true }
+    RubyVM::InstructionSequence.compile_option = {tailcall_optimization: true}
     k3 = cache_key_for_file(FILE)
     assert_equal(k1[R[:compile_option]], k2[R[:compile_option]])
     refute_equal(k1[R[:compile_option]], k3[R[:compile_option]])
   ensure
-    RubyVM::InstructionSequence.compile_option = { tailcall_optimization: false }
+    RubyVM::InstructionSequence.compile_option = {tailcall_optimization: false}
   end
 
   def test_key_ruby_revision
@@ -60,11 +61,11 @@ class CompileCacheKeyFormatTest < Minitest::Test
   end
 
   def test_fetch
-    if RbConfig::CONFIG['host_os'] =~ /mswin|mingw|cygwin/
-      target = 'NUL'
+    if RbConfig::CONFIG["host_os"] =~ /mswin|mingw|cygwin/
+      target = "NUL"
       expected_file = "#{@tmp_dir}/36/9eba19c29ffe00"
     else
-      target = '/dev/null'
+      target = "/dev/null"
       expected_file = "#{@tmp_dir}/8c/d2d180bbd995df"
     end
 
@@ -80,7 +81,7 @@ class CompileCacheKeyFormatTest < Minitest::Test
 
   def test_unexistent_fetch
     assert_raises(Errno::ENOENT) do
-      Bootsnap::CompileCache::Native.fetch(@tmp_dir, '123', Bootsnap::CompileCache::ISeq, nil)
+      Bootsnap::CompileCache::Native.fetch(@tmp_dir, "123", Bootsnap::CompileCache::ISeq, nil)
     end
   end
 

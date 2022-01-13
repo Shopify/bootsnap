@@ -1,6 +1,7 @@
 # frozen_string_literal: true
-require('bootsnap/bootsnap')
-require('zlib')
+
+require("bootsnap/bootsnap")
+require("zlib")
 
 module Bootsnap
   module CompileCache
@@ -23,27 +24,27 @@ module Bootsnap
           iseq = begin
             RubyVM::InstructionSequence.compile_file(path)
           rescue SyntaxError
-            raise(Uncompilable, 'syntax error')
+            raise(Uncompilable, "syntax error")
           end
 
           begin
             iseq.to_binary
           rescue TypeError
-            raise(Uncompilable, 'ruby bug #18250')
+            raise(Uncompilable, "ruby bug #18250")
           end
         end
       else
         def self.input_to_storage(_, path)
           RubyVM::InstructionSequence.compile_file(path).to_binary
         rescue SyntaxError
-          raise(Uncompilable, 'syntax error')
+          raise(Uncompilable, "syntax error")
         end
       end
 
       def self.storage_to_output(binary, _args)
         RubyVM::InstructionSequence.load_from_binary(binary)
-      rescue RuntimeError => e
-        if e.message == 'broken binary format'
+      rescue RuntimeError => error
+        if error.message == "broken binary format"
           STDERR.puts("[Bootsnap::CompileCache] warning: rejecting broken binary")
           nil
         else
@@ -80,8 +81,8 @@ module Bootsnap
           Bootsnap::CompileCache::ISeq.fetch(path.to_s)
         rescue Errno::EACCES
           Bootsnap::CompileCache.permission_error(path)
-        rescue RuntimeError => e
-          if e.message =~ /unmatched platform/
+        rescue RuntimeError => error
+          if error.message =~ /unmatched platform/
             puts("unmatched platform for file #{path}")
           end
           raise

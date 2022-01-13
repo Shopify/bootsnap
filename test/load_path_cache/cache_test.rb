@@ -1,5 +1,6 @@
 # frozen_string_literal: true
-require('test_helper')
+
+require("test_helper")
 
 module Bootsnap
   module LoadPathCache
@@ -28,31 +29,31 @@ module Bootsnap
       # versions aren't a big deal, but feel free to fix the test.
       def test_builtin_features
         cache = Cache.new(NullCache, [])
-        assert_raises(ReturnFalse) { cache.find('thread') }
-        assert_raises(ReturnFalse) { cache.find('thread.rb') }
-        assert_raises(ReturnFalse) { cache.find('enumerator') }
-        assert_raises(ReturnFalse) { cache.find('enumerator.so') }
+        assert_raises(ReturnFalse) { cache.find("thread") }
+        assert_raises(ReturnFalse) { cache.find("thread.rb") }
+        assert_raises(ReturnFalse) { cache.find("enumerator") }
+        assert_raises(ReturnFalse) { cache.find("enumerator.so") }
         if RUBY_PLATFORM =~ /darwin/
-          assert_raises(ReturnFalse) { cache.find('enumerator.bundle') }
+          assert_raises(ReturnFalse) { cache.find("enumerator.bundle") }
         else
-          assert_raises(FallbackScan) { cache.find('enumerator.bundle') }
+          assert_raises(FallbackScan) { cache.find("enumerator.bundle") }
         end
 
-        bundle = RUBY_PLATFORM =~ /darwin/ ? 'bundle' : 'so'
+        bundle = RUBY_PLATFORM =~ /darwin/ ? "bundle" : "so"
 
-        refute(cache.find('thread.' + bundle))
-        refute(cache.find('enumerator.rb'))
-        refute(cache.find('encdb.' + bundle))
+        refute(cache.find("thread." + bundle))
+        refute(cache.find("enumerator.rb"))
+        refute(cache.find("encdb." + bundle))
       end
 
       def test_simple
         po = [@dir1]
         cache = Cache.new(NullCache, po)
-        assert_equal("#{@dir1}/a.rb", cache.find('a'))
-        refute(cache.find('a', try_extensions: false))
+        assert_equal("#{@dir1}/a.rb", cache.find("a"))
+        refute(cache.find("a", try_extensions: false))
         cache.push_paths(po, @dir2)
-        assert_equal("#{@dir2}/b.rb", cache.find('b'))
-        refute(cache.find('b', try_extensions: false))
+        assert_equal("#{@dir2}/b.rb", cache.find("b"))
+        refute(cache.find("b", try_extensions: false))
       end
 
       def test_extension_append_for_relative_paths
@@ -60,35 +61,35 @@ module Bootsnap
         cache = Cache.new(NullCache, po)
         dir1_basename = File.basename(@dir1)
         Dir.chdir(@dir1) do
-          assert_equal("#{@dir1}/a.rb",       cache.find('./a'))
-          assert_equal("#{@dir1}/a",          cache.find('./a', try_extensions: false))
+          assert_equal("#{@dir1}/a.rb",       cache.find("./a"))
+          assert_equal("#{@dir1}/a",          cache.find("./a", try_extensions: false))
           assert_equal("#{@dir1}/a.rb",       cache.find("../#{dir1_basename}/a"))
           assert_equal("#{@dir1}/a",          cache.find("../#{dir1_basename}/a", try_extensions: false))
-          assert_equal("#{@dir1}/dl#{DLEXT}", cache.find('./dl'))
-          assert_equal("#{@dir1}/dl",         cache.find('./dl', try_extensions: false))
-          assert_equal("#{@dir1}/enoent",     cache.find('./enoent'))
-          assert_equal("#{@dir1}/enoent",     cache.find('./enoent', try_extensions: false))
+          assert_equal("#{@dir1}/dl#{DLEXT}", cache.find("./dl"))
+          assert_equal("#{@dir1}/dl",         cache.find("./dl", try_extensions: false))
+          assert_equal("#{@dir1}/enoent",     cache.find("./enoent"))
+          assert_equal("#{@dir1}/enoent",     cache.find("./enoent", try_extensions: false))
         end
       end
 
       def test_unshifted_paths_have_higher_precedence
         po = [@dir1]
         cache = Cache.new(NullCache, po)
-        assert_equal("#{@dir1}/conflict.rb", cache.find('conflict'))
-        assert_equal("#{@dir1}/conflict.rb", cache.find('conflict.rb', try_extensions: false))
+        assert_equal("#{@dir1}/conflict.rb", cache.find("conflict"))
+        assert_equal("#{@dir1}/conflict.rb", cache.find("conflict.rb", try_extensions: false))
         cache.unshift_paths(po, @dir2)
-        assert_equal("#{@dir2}/conflict.rb", cache.find('conflict'))
-        assert_equal("#{@dir2}/conflict.rb", cache.find('conflict.rb', try_extensions: false))
+        assert_equal("#{@dir2}/conflict.rb", cache.find("conflict"))
+        assert_equal("#{@dir2}/conflict.rb", cache.find("conflict.rb", try_extensions: false))
       end
 
       def test_pushed_paths_have_lower_precedence
         po = [@dir1]
         cache = Cache.new(NullCache, po)
-        assert_equal("#{@dir1}/conflict.rb", cache.find('conflict'))
-        assert_equal("#{@dir1}/conflict.rb", cache.find('conflict.rb', try_extensions: false))
+        assert_equal("#{@dir1}/conflict.rb", cache.find("conflict"))
+        assert_equal("#{@dir1}/conflict.rb", cache.find("conflict.rb", try_extensions: false))
         cache.push_paths(po, @dir2)
-        assert_equal("#{@dir1}/conflict.rb", cache.find('conflict'))
-        assert_equal("#{@dir1}/conflict.rb", cache.find('conflict.rb', try_extensions: false))
+        assert_equal("#{@dir1}/conflict.rb", cache.find("conflict"))
+        assert_equal("#{@dir1}/conflict.rb", cache.find("conflict.rb", try_extensions: false))
       end
 
       def test_directory_caching
@@ -100,8 +101,8 @@ module Bootsnap
 
       def test_extension_permutations
         cache = Cache.new(NullCache, [@dir1])
-        assert_equal("#{@dir1}/dl#{DLEXT}", cache.find('dl'))
-        refute(cache.find('dl', try_extensions: false))
+        assert_equal("#{@dir1}/dl#{DLEXT}", cache.find("dl"))
+        refute(cache.find("dl", try_extensions: false))
         assert_equal("#{@dir1}/dl#{DLEXT}", cache.find("dl#{DLEXT}"))
         assert_equal("#{@dir1}/both.rb", cache.find("both"))
         refute(cache.find("both", try_extensions: false))
@@ -114,14 +115,14 @@ module Bootsnap
       def test_relative_paths_rescanned
         Dir.chdir(@dir2) do
           cache = Cache.new(NullCache, %w(foo))
-          refute(cache.find('bar/baz'))
+          refute(cache.find("bar/baz"))
           Dir.chdir(@dir1) do
             # one caveat here is that you get the actual path back when
             # resolving relative paths. On darwin, this means that
             # /var/folders/... comes back as /private/var/folders/... -- In
             # production, this should be fine, but for this test to pass, we
             # have to resolve it.
-            assert_equal(File.realpath("#{@dir1}/foo/bar/baz.rb"), cache.find('bar/baz'))
+            assert_equal(File.realpath("#{@dir1}/foo/bar/baz.rb"), cache.find("bar/baz"))
           end
         end
       end
@@ -136,14 +137,14 @@ module Bootsnap
         FileUtils.touch("#{@dir1}/new.rb")
 
         dev_no_cache.stubs(:now).returns(time + 31)
-        refute(dev_no_cache.find('new'))
+        refute(dev_no_cache.find("new"))
 
         dev_yes_cache.stubs(:now).returns(time + 28)
         assert_raises(Bootsnap::LoadPathCache::FallbackScan) do
-          dev_yes_cache.find('new')
+          dev_yes_cache.find("new")
         end
         dev_yes_cache.stubs(:now).returns(time + 31)
-        assert(dev_yes_cache.find('new'))
+        assert(dev_yes_cache.find("new"))
       end
 
       def test_path_obj_equal?
@@ -152,35 +153,35 @@ module Bootsnap
 
         path_obj.unshift(@dir1)
 
-        assert_equal("#{@dir1}/a.rb", cache.find('a'))
+        assert_equal("#{@dir1}/a.rb", cache.find("a"))
       end
 
-      if RUBY_VERSION >= '2.5' && !(RbConfig::CONFIG['host_os'] =~ /mswin|mingw|cygwin/)
+      if RUBY_VERSION >= "2.5" && RbConfig::CONFIG["host_os"] !~ /mswin|mingw|cygwin/
         # https://github.com/ruby/ruby/pull/4061
         # https://bugs.ruby-lang.org/issues/17517
-        OS_ASCII_PATH_ENCODING = RUBY_VERSION >= '3.1' ? Encoding::UTF_8 : Encoding::US_ASCII
+        OS_ASCII_PATH_ENCODING = RUBY_VERSION >= "3.1" ? Encoding::UTF_8 : Encoding::US_ASCII
 
         def test_path_encoding
           po = [@dir1]
           cache = Cache.new(NullCache, po)
 
-          path = cache.find('a')
+          path = cache.find("a")
 
           assert_equal("#{@dir1}/a.rb", path)
           require path
           internal_path = $LOADED_FEATURES.last
           assert_equal(OS_ASCII_PATH_ENCODING, internal_path.encoding)
           assert_equal(OS_ASCII_PATH_ENCODING, path.encoding)
-          File.write(path, '')
+          File.write(path, "")
           assert_same path, internal_path
 
-          utf8_path = cache.find('béé')
+          utf8_path = cache.find("béé")
           require utf8_path
           internal_utf8_path = $LOADED_FEATURES.last
           assert_equal("#{@dir1}/béé.rb", utf8_path)
           assert_equal(Encoding::UTF_8, internal_utf8_path.encoding)
           assert_equal(Encoding::UTF_8, utf8_path.encoding)
-          File.write(utf8_path, '')
+          File.write(utf8_path, "")
           assert_same utf8_path, internal_utf8_path
         end
       end
