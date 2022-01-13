@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require('test_helper')
+require("test_helper")
 
 module Bootsnap
   module LoadPathCache
     class RealpathCacheTest < MiniTest::Test
-      EXTENSIONS = ['', *CACHED_EXTENSIONS]
+      EXTENSIONS = ["", *CACHED_EXTENSIONS].freeze
 
       def setup
         @cache = RealpathCache.new
@@ -16,13 +16,13 @@ module Bootsnap
         @symlinked_dir = "#{@base_dir}/symlink"
         FileUtils.ln_s(@absolute_dir, @symlinked_dir)
 
-        real_caller = File.new("#{@absolute_dir}/real_caller.rb", 'w').tap(&:close).path
+        real_caller = File.new("#{@absolute_dir}/real_caller.rb", "w").tap(&:close).path
         symlinked_caller = "#{@absolute_dir}/symlinked_caller.rb"
 
         FileUtils.ln_s(real_caller, symlinked_caller)
 
         EXTENSIONS.each do |ext|
-          real_required = File.new("#{@absolute_dir}/real_required#{ext}", 'w').tap(&:close).path
+          real_required = File.new("#{@absolute_dir}/real_required#{ext}", "w").tap(&:close).path
 
           symlinked_required = "#{@absolute_dir}/symlinked_required#{ext}"
           FileUtils.ln_s(real_required, symlinked_required)
@@ -40,9 +40,11 @@ module Bootsnap
         end
       end
 
-      variants = %w(absolute symlink).product(%w(absolute symlink),
+      variants = %w(absolute symlink).product(
+        %w(absolute symlink),
         %w(real_caller symlinked_caller),
-        %w(real_required symlinked_required))
+        %w(real_required symlinked_required),
+      )
 
       variants.each do |caller_dir, required_dir, caller_file, required_file|
         method_name = "test_with_#{caller_dir}_caller_dir_" \

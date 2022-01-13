@@ -63,6 +63,7 @@ module Bootsnap
           loop do
             job, *args = Marshal.load(@pipe_out)
             return if job == :exit
+
             @jobs.fetch(job).call(*args)
           end
         rescue IOError

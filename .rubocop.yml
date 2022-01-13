@@ -1,13 +1,8 @@
-inherit_from: .rubocop_todo.yml
-
-inherit_gem:
-  rubocop-shopify: rubocop.yml
-
 AllCops:
   Exclude:
     - 'vendor/**/*'
     - 'tmp/**/*'
-  TargetRubyVersion: 2.5
+  TargetRubyVersion: 2.3
 
 # This doesn't take into account retrying from an exception
 Lint/SuppressedException:
@@ -17,6 +12,149 @@ Lint/SuppressedException:
 Style/EmptyLiteral:
   Enabled: false
 
+Style/EmptyMethod:
+  Enabled: false
+
 # allow the use of globals which makes sense in a CLI app like this
 Style/GlobalVars:
   Enabled: false
+
+Style/PercentLiteralDelimiters:
+  Enabled: false
+
+Style/TrailingCommaInHashLiteral:
+  EnforcedStyleForMultiline: comma
+
+Style/TrailingCommaInArguments:
+  EnforcedStyleForMultiline: comma
+
+Layout/LineLength:
+  Max: 120
+
+Style/TrailingCommaInArguments:
+  EnforcedStyleForMultiline: comma
+
+Metrics/AbcSize:
+  Enabled: false
+
+Metrics/MethodLength:
+  Enabled: false
+
+Metrics/BlockLength:
+  Enabled: false
+
+Metrics/ClassLength:
+  Enabled: false
+
+Metrics/CyclomaticComplexity:
+  Enabled: false
+
+Metrics/ModuleLength:
+  Enabled: false
+
+Metrics/ParameterLists:
+  Enabled: false
+
+Metrics/PerceivedComplexity:
+  Enabled: false
+
+Naming/MethodName:
+  Exclude:
+    - 'test/**/*'
+
+Layout/SpaceInsideHashLiteralBraces:
+  EnforcedStyle: no_space
+
+Naming/RescuedExceptionsVariableName:
+  PreferredName: error
+
+Bundler/OrderedGems:
+  Enabled: false
+
+Gemspec/OrderedDependencies:
+  Enabled: false
+
+Gemspec/DuplicatedAssignment:
+  Enabled: false
+
+Layout/MultilineMethodCallIndentation:
+  EnforcedStyle: indented
+
+Style/SymbolArray:
+  Enabled: false
+
+Style/StderrPuts:
+  Enabled: false
+
+Style/ModuleFunction:
+  Enabled: false
+
+Style/IfUnlessModifier:
+  Enabled: false
+
+Style/GuardClause:
+  Enabled: false
+
+Layout/EndAlignment:
+  EnforcedStyleAlignWith: start_of_line
+
+Layout/RescueEnsureAlignment:
+  Enabled: false
+
+Layout/FirstHashElementIndentation:
+  EnforcedStyle: consistent
+
+Style/NumericPredicate:
+  Enabled: false
+
+Layout/SpaceInsideHashLiteralBraces:
+  EnforcedStyle: no_space
+
+Lint/AssignmentInCondition:
+  AllowSafeAssignment: true
+
+Lint/UnusedMethodArgument:
+  AllowUnusedKeywordArguments: true
+
+Security/MarshalLoad:
+  Enabled: false
+
+Security/YAMLLoad:
+  Enabled: false
+
+Style/Alias:
+  EnforcedStyle: prefer_alias_method
+
+Style/Documentation:
+  Enabled: false
+
+Style/DoubleNegation:
+  Enabled: false
+
+Style/CommentedKeyword:
+  Enabled: false
+
+Naming/VariableNumber:
+  Enabled: false
+
+Style/Next:
+  Enabled: false
+
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+
+Lint/RaiseException:
+  Enabled: true
+
+Lint/StructNewOverride:
+  Enabled: true
+
+Style/HashEachMethods:
+  Enabled: true
+
+Style/HashTransformKeys:
+  Enabled: true
+
+Style/HashTransformValues:
+  Enabled: true

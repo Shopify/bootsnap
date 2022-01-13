@@ -1,5 +1,6 @@
 # frozen_string_literal: true
-require_relative('path_scanner')
+
+require_relative("path_scanner")
 
 module Bootsnap
   module LoadPathCache
@@ -43,6 +44,7 @@ module Bootsnap
           # set to zero anyway, just in case we change the stability heuristics.
           _, entries, dirs = store.get(expanded_path)
           return [entries, dirs] if entries # cache hit
+
           entries, dirs = scan!
           store.set(expanded_path, [0, entries, dirs])
           return [entries, dirs]
@@ -93,8 +95,8 @@ module Bootsnap
 
       # Built-in ruby lib stuff doesn't change, but things can occasionally be
       # installed into sitedir, which generally lives under libdir.
-      RUBY_LIBDIR  = RbConfig::CONFIG['libdir']
-      RUBY_SITEDIR = RbConfig::CONFIG['sitedir']
+      RUBY_LIBDIR  = RbConfig::CONFIG["libdir"]
+      RUBY_SITEDIR = RbConfig::CONFIG["sitedir"]
 
       def stability
         @stability ||= begin

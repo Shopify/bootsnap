@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Bootsnap
   module LoadPathCache
     module CoreExt
@@ -13,7 +14,7 @@ module Bootsnap
 end
 
 module Kernel
-  module_function # rubocop:disable Style/ModuleFunction
+  module_function
 
   alias_method(:require_without_bootsnap, :require)
 
@@ -32,9 +33,9 @@ module Kernel
     end
 
     raise(Bootsnap::LoadPathCache::CoreExt.make_load_error(path))
-  rescue LoadError => e
-    e.instance_variable_set(Bootsnap::LoadPathCache::ERROR_TAG_IVAR, true)
-    raise(e)
+  rescue LoadError => error
+    error.instance_variable_set(Bootsnap::LoadPathCache::ERROR_TAG_IVAR, true)
+    raise(error)
   rescue Bootsnap::LoadPathCache::ReturnFalse
     false
   rescue Bootsnap::LoadPathCache::FallbackScan
@@ -75,9 +76,9 @@ class Module
     # added to $LOADED_FEATURES and won't be able to hook that modification
     # since it's done in C-land.
     autoload_without_bootsnap(const, Bootsnap::LoadPathCache.load_path_cache.find(path) || path)
-  rescue LoadError => e
-    e.instance_variable_set(Bootsnap::LoadPathCache::ERROR_TAG_IVAR, true)
-    raise(e)
+  rescue LoadError => error
+    error.instance_variable_set(Bootsnap::LoadPathCache::ERROR_TAG_IVAR, true)
+    raise(error)
   rescue Bootsnap::LoadPathCache::ReturnFalse
     false
   rescue Bootsnap::LoadPathCache::FallbackScan

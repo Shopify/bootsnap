@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative('../explicit_require')
+require_relative("../explicit_require")
 
 module Bootsnap
   module LoadPathCache
@@ -28,15 +28,16 @@ module Bootsnap
       BUILTIN_FEATURES = $LOADED_FEATURES.each_with_object({}) do |feat, features|
         # Builtin features are of the form 'enumerator.so'.
         # All others include paths.
-        next unless feat.size < 20 && !feat.include?('/')
+        next unless feat.size < 20 && !feat.include?("/")
 
-        base = File.basename(feat, '.*') # enumerator.so -> enumerator
+        base = File.basename(feat, ".*") # enumerator.so -> enumerator
         ext  = File.extname(feat) # .so
 
         features[feat] = nil # enumerator.so
         features[base] = nil # enumerator
 
         next unless [DOT_SO, *DL_EXTENSIONS].include?(ext)
+
         DL_EXTENSIONS.each do |dl_ext|
           features["#{base}#{dl_ext}"] = nil # enumerator.bundle
         end
@@ -50,7 +51,7 @@ module Bootsnap
 
         return feature if Bootsnap.absolute_path?(feature)
 
-        if feature.start_with?('./', '../')
+        if feature.start_with?("./", "../")
           return try_extensions ? expand_path(feature) : File.expand_path(feature).freeze
         end
 
@@ -64,7 +65,7 @@ module Bootsnap
           # returns false as if it were already loaded; however, there is no
           # file to find on disk. We've pre-built a list of these, and we
           # return false if any of them is loaded.
-          raise(LoadPathCache::ReturnFalse, '', []) if BUILTIN_FEATURES.key?(feature)
+          raise(LoadPathCache::ReturnFalse, "", []) if BUILTIN_FEATURES.key?(feature)
 
           # The feature wasn't found on our preliminary search through the index.
           # We resolve this differently depending on what the extension was.
@@ -73,13 +74,14 @@ module Bootsnap
           # native dynamic extension, e.g. .bundle or .so), we know it was a
           # failure and there's nothing more we can do to find the file.
           # no extension, .rb, (.bundle or .so)
-          when '', *CACHED_EXTENSIONS
+          when "", *CACHED_EXTENSIONS
             nil
           # Ruby allows specifying native extensions as '.so' even when DLEXT
           # is '.bundle'. This is where we handle that case.
           when DOT_SO
             x = search_index(feature[0..-4] + DLEXT)
             return x if x
+
             if DLEXT2
               x = search_index(feature[0..-4] + DLEXT2)
               return x if x
@@ -87,7 +89,7 @@ module Bootsnap
           else
             # other, unknown extension. For example, `.rake`. Since we haven't
             # cached these, we legitimately need to run the load path search.
-            raise(LoadPathCache::FallbackScan, '', [])
+            raise(LoadPathCache::FallbackScan, "", [])
           end
         end
 
@@ -95,16 +97,18 @@ module Bootsnap
         # cases where the file doesn't appear to be on the load path. We should
         # be able to detect newly-created files without rebooting the
         # application.
-        raise(LoadPathCache::FallbackScan, '', []) if @development_mode
+        raise(LoadPathCache::FallbackScan, "", []) if @development_mode
       end
 
       def unshift_paths(sender, *paths)
         return unless sender == @path_obj
+
         @mutex.synchronize { unshift_paths_locked(*paths) }
       end
 
       def push_paths(sender, *paths)
         return unless sender == @path_obj
+
         @mutex.synchronize { push_paths_locked(*paths) }
       end
 
@@ -137,6 +141,7 @@ module Bootsnap
             p = Path.new(path)
             @has_relative_paths = true if p.relative?
             next if p.non_directory?
+
             expanded_path = p.expanded_path
             entries, dirs = p.entries_and_dirs(@store)
             # push -> low precedence -> set only if unset
@@ -151,6 +156,7 @@ module Bootsnap
           paths.map(&:to_s).reverse_each do |path|
             p = Path.new(path)
             next if p.non_directory?
+
             expanded_path = p.expanded_path
             entries, dirs = p.entries_and_dirs(@store)
             # unshift -> high precedence -> unconditional set
@@ -173,56 +179,62 @@ module Bootsnap
       end
 
       if DLEXT2
-        def search_index(f, try_extensions: true)
+        def search_index(feature, try_extensions: true)
           if try_extensions
-            try_index(f + DOT_RB) || try_index(f + DLEXT) || try_index(f + DLEXT2) || try_index(f)
+            try_index(feature + DOT_RB) ||
+              try_index(feature + DLEXT) ||
+              try_index(feature + DLEXT2) ||
+              try_index(feature)
           else
-            try_index(f)
+            try_index(feature)
           end
         end
 
-        def maybe_append_extension(f)
-          try_ext(f + DOT_RB) || try_ext(f + DLEXT) || try_ext(f + DLEXT2) || f
+        def maybe_append_extension(feature)
+          try_ext(feature + DOT_RB) ||
+            try_ext(feature + DLEXT) ||
+            try_ext(feature + DLEXT2) ||
+            feature
         end
       else
-        def search_index(f, try_extensions: true)
+        def search_index(feature, try_extensions: true)
           if try_extensions
-            try_index(f + DOT_RB) || try_index(f + DLEXT) || try_index(f)
+            try_index(feature + DOT_RB) || try_index(feature + DLEXT) || try_index(feature)
           else
-            try_index(f)
+            try_index(feature)
           end
         end
 
-        def maybe_append_extension(f)
-          try_ext(f + DOT_RB) || try_ext(f + DLEXT) || f
+        def maybe_append_extension(feature)
+          try_ext(feature + DOT_RB) || try_ext(feature + DLEXT) || feature
         end
       end
 
       s = rand.to_s.force_encoding(Encoding::US_ASCII).freeze
       if s.respond_to?(:-@)
-        if (-s).equal?(s) && (-s.dup).equal?(s) || RUBY_VERSION >= '2.7'
-          def try_index(f)
-            if (p = @index[f])
-              -(File.join(p, f).freeze)
+        if (-s).equal?(s) && (-s.dup).equal?(s) || RUBY_VERSION >= "2.7"
+          def try_index(feature)
+            if (path = @index[feature])
+              -File.join(path, feature).freeze
             end
           end
         else
-          def try_index(f)
-            if (p = @index[f])
-              -File.join(p, f).untaint
+          def try_index(feature)
+            if (path = @index[feature])
+              -File.join(path, feature).untaint
             end
           end
         end
       else
-        def try_index(f)
-          if (p = @index[f])
-            File.join(p, f)
+        def try_index(feature)
+          if (path = @index[feature])
+            File.join(path, feature)
           end
         end
       end
 
-      def try_ext(f)
-        f if File.exist?(f)
+      def try_ext(feature)
+        feature if File.exist?(feature)
       end
     end
   end

@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require 'bootsnap'
-require 'bootsnap/cli/worker_pool'
-require 'optparse'
-require 'fileutils'
-require 'etc'
+require "bootsnap"
+require "bootsnap/cli/worker_pool"
+require "optparse"
+require "fileutils"
+require "etc"
 
 module Bootsnap
   class CLI
@@ -25,7 +25,7 @@ module Bootsnap
 
     def initialize(argv)
       @argv = argv
-      self.cache_dir = ENV.fetch('BOOTSNAP_CACHE_DIR', 'tmp/cache')
+      self.cache_dir = ENV.fetch("BOOTSNAP_CACHE_DIR", "tmp/cache")
       self.compile_gemfile = false
       self.exclude = nil
       self.verbose = false
@@ -36,16 +36,16 @@ module Bootsnap
     end
 
     def precompile_command(*sources)
-      require 'bootsnap/compile_cache/iseq'
-      require 'bootsnap/compile_cache/yaml'
-      require 'bootsnap/compile_cache/json'
+      require "bootsnap/compile_cache/iseq"
+      require "bootsnap/compile_cache/yaml"
+      require "bootsnap/compile_cache/json"
 
       fix_default_encoding do
-        Bootsnap::CompileCache::ISeq.cache_dir = self.cache_dir
+        Bootsnap::CompileCache::ISeq.cache_dir = cache_dir
         Bootsnap::CompileCache::YAML.init!
-        Bootsnap::CompileCache::YAML.cache_dir = self.cache_dir
+        Bootsnap::CompileCache::YAML.cache_dir = cache_dir
         Bootsnap::CompileCache::JSON.init!
-        Bootsnap::CompileCache::JSON.cache_dir = self.cache_dir
+        Bootsnap::CompileCache::JSON.cache_dir = cache_dir
 
         @work_pool = WorkerPool.create(size: jobs, jobs: {
           ruby: method(:precompile_ruby),
@@ -61,7 +61,7 @@ module Bootsnap
 
         if compile_gemfile
           # Some gems embed their tests, they're very unlikely to be loaded, so not worth precompiling.
-          gem_exclude = Regexp.union([exclude, '/spec/', '/test/'].compact)
+          gem_exclude = Regexp.union([exclude, "/spec/", "/test/"].compact)
           precompile_ruby_files($LOAD_PATH.map { |d| File.expand_path(d) }, exclude: gem_exclude)
 
           # Gems that include JSON or YAML files usually don't put them in `lib/`.
@@ -72,7 +72,7 @@ module Bootsnap
           precompile_json_files(gem_paths, exclude: gem_exclude)
         end
 
-        if exitstatus = @work_pool.shutdown
+        if (exitstatus = @work_pool.shutdown)
           exit(exitstatus)
         end
       end
@@ -89,7 +89,7 @@ module Bootsnap
     if dir_sort
       def list_files(path, pattern)
         if File.directory?(path)
-          Dir[File.join(path,  pattern), sort: false]
+          Dir[File.join(path, pattern), sort: false]
         elsif File.exist?(path)
           [path]
         else
@@ -99,7 +99,7 @@ module Bootsnap
     else
       def list_files(path, pattern)
         if File.directory?(path)
-          Dir[File.join(path,  pattern)]
+          Dir[File.join(path, pattern)]
         elsif File.exist?(path)
           [path]
         else
@@ -126,9 +126,9 @@ module Bootsnap
 
       load_paths.each do |path|
         if !exclude || !exclude.match?(path)
-          list_files(path, '**/*.{yml,yaml}').each do |yaml_file|
+          list_files(path, "**/*.{yml,yaml}").each do |yaml_file|
             # We ignore hidden files to not match the various .ci.yml files
-            if !File.basename(yaml_file).start_with?('.') && (!exclude || !exclude.match?(yaml_file))
+            if !File.basename(yaml_file).start_with?(".") && (!exclude || !exclude.match?(yaml_file))
               @work_pool.push(:yaml, yaml_file)
             end
           end
@@ -149,9 +149,9 @@ module Bootsnap
 
       load_paths.each do |path|
         if !exclude || !exclude.match?(path)
-          list_files(path, '**/*.json').each do |json_file|
+          list_files(path, "**/*.json").each do |json_file|
             # We ignore hidden files to not match the various .config.json files
-            if !File.basename(json_file).start_with?('.') && (!exclude || !exclude.match?(json_file))
+            if !File.basename(json_file).start_with?(".") && (!exclude || !exclude.match?(json_file))
               @work_pool.push(:json, json_file)
             end
           end
@@ -172,7 +172,7 @@ module Bootsnap
 
       load_paths.each do |path|
         if !exclude || !exclude.match?(path)
-          list_files(path, '**/*.rb').each do |ruby_file|
+          list_files(path, "**/*.rb").each do |ruby_file|
             if !exclude || !exclude.match?(ruby_file)
               @work_pool.push(:ruby, ruby_file)
             end
@@ -210,7 +210,7 @@ module Bootsnap
     end
 
     def cache_dir=(dir)
-      @cache_dir = File.expand_path(File.join(dir, 'bootsnap/compile-cache'))
+      @cache_dir = File.expand_path(File.join(dir, "bootsnap/compile-cache"))
     end
 
     def exclude_pattern(pattern)
@@ -225,24 +225,24 @@ module Bootsnap
         opts.separator "GLOBAL OPTIONS"
         opts.separator ""
 
-        help = <<~EOS
+        help = <<~HELP
           Path to the bootsnap cache directory. Defaults to tmp/cache
-        EOS
-        opts.on('--cache-dir DIR', help.strip) do |dir|
+        HELP
+        opts.on("--cache-dir DIR", help.strip) do |dir|
           self.cache_dir = dir
         end
 
-        help = <<~EOS
+        help = <<~HELP
           Print precompiled paths.
-        EOS
-        opts.on('--verbose', '-v', help.strip) do
+        HELP
+        opts.on("--verbose", "-v", help.strip) do
           self.verbose = true
         end
 
-        help = <<~EOS
+        help = <<~HELP
           Number of workers to use. Default to number of processors, set to 0 to disable multi-processing.
-        EOS
-        opts.on('--jobs JOBS', '-j', help.strip) do |jobs|
+        HELP
+        opts.on("--jobs JOBS", "-j", help.strip) do |jobs|
           self.jobs = Integer(jobs)
         end
 
@@ -251,30 +251,30 @@ module Bootsnap
         opts.separator ""
         opts.separator "    precompile [DIRECTORIES...]: Precompile all .rb files in the passed directories"
 
-        help = <<~EOS
+        help = <<~HELP
           Precompile the gems in Gemfile
-        EOS
-        opts.on('--gemfile', help) { self.compile_gemfile = true }
+        HELP
+        opts.on("--gemfile", help) { self.compile_gemfile = true }
 
-        help = <<~EOS
+        help = <<~HELP
           Path pattern to not precompile. e.g. --exclude 'aws-sdk|google-api'
-        EOS
-        opts.on('--exclude PATTERN', help) { |pattern| exclude_pattern(pattern) }
+        HELP
+        opts.on("--exclude PATTERN", help) { |pattern| exclude_pattern(pattern) }
 
-        help = <<~EOS
+        help = <<~HELP
           Disable ISeq (.rb) precompilation.
-        EOS
-        opts.on('--no-iseq', help) { self.iseq = false }
+        HELP
+        opts.on("--no-iseq", help) { self.iseq = false }
 
-        help = <<~EOS
+        help = <<~HELP
           Disable YAML precompilation.
-        EOS
-        opts.on('--no-yaml', help) { self.yaml = false }
+        HELP
+        opts.on("--no-yaml", help) { self.yaml = false }
 
-        help = <<~EOS
+        help = <<~HELP
           Disable JSON precompilation.
-        EOS
-        opts.on('--no-json', help) { self.json = false }
+        HELP
+        opts.on("--no-json", help) { self.json = false }
       end
     end
   end

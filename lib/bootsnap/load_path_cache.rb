@@ -5,9 +5,9 @@ module Bootsnap
     ReturnFalse = Class.new(StandardError)
     FallbackScan = Class.new(StandardError)
 
-    DOT_RB = '.rb'
-    DOT_SO = '.so'
-    SLASH  = '/'
+    DOT_RB = ".rb"
+    DOT_SO = ".so"
+    SLASH  = "/"
 
     # If a NameError happens several levels deep, don't re-handle it
     # all the way up the chain: mark it once and bubble it up without
@@ -15,7 +15,7 @@ module Bootsnap
     ERROR_TAG_IVAR = :@__bootsnap_rescued
 
     DL_EXTENSIONS = ::RbConfig::CONFIG
-      .values_at('DLEXT', 'DLEXT2')
+      .values_at("DLEXT", "DLEXT2")
       .reject { |ext| !ext || ext.empty? }
       .map    { |ext| ".#{ext}" }
       .freeze
@@ -42,24 +42,24 @@ module Bootsnap
         @realpath_cache = RealpathCache.new
 
         @load_path_cache = Cache.new(store, $LOAD_PATH, development_mode: development_mode)
-        require_relative('load_path_cache/core_ext/kernel_require')
-        require_relative('load_path_cache/core_ext/loaded_features')
+        require_relative("load_path_cache/core_ext/kernel_require")
+        require_relative("load_path_cache/core_ext/loaded_features")
       end
 
       def supported?
-        RUBY_ENGINE == 'ruby' &&
-        RUBY_PLATFORM =~ /darwin|linux|bsd|mswin|mingw|cygwin/
+        RUBY_ENGINE == "ruby" &&
+          RUBY_PLATFORM =~ /darwin|linux|bsd|mswin|mingw|cygwin/
       end
     end
   end
 end
 
 if Bootsnap::LoadPathCache.supported?
-  require_relative('load_path_cache/path_scanner')
-  require_relative('load_path_cache/path')
-  require_relative('load_path_cache/cache')
-  require_relative('load_path_cache/store')
-  require_relative('load_path_cache/change_observer')
-  require_relative('load_path_cache/loaded_features_index')
-  require_relative('load_path_cache/realpath_cache')
+  require_relative("load_path_cache/path_scanner")
+  require_relative("load_path_cache/path")
+  require_relative("load_path_cache/cache")
+  require_relative("load_path_cache/store")
+  require_relative("load_path_cache/change_observer")
+  require_relative("load_path_cache/loaded_features_index")
+  require_relative("load_path_cache/realpath_cache")
 end

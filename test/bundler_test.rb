@@ -1,17 +1,18 @@
 # frozen_string_literal: true
-require('test_helper')
+
+require("test_helper")
 
 class BundlerTest < Minitest::Test
   def test_bundler_with_bundle_bin_path_env
     without_required_env_keys do
-      ENV['BUNDLE_BIN_PATH'] = 'foo'
+      ENV["BUNDLE_BIN_PATH"] = "foo"
       assert_predicate(Bootsnap, :bundler?)
     end
   end
 
   def test_bundler_with_bundle_gemfile_env
     without_required_env_keys do
-      ENV['BUNDLE_GEMFILE'] = 'foo'
+      ENV["BUNDLE_GEMFILE"] = "foo"
       assert_predicate(Bootsnap, :bundler?)
     end
   end

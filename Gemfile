@@ -1,5 +1,6 @@
 # frozen_string_literal: true
-source 'https://rubygems.org'
+
+source "https://rubygems.org"
 
 # Specify your gem's dependencies in bootsnap.gemspec
 gemspec
@@ -9,7 +10,7 @@ if ENV["PSYCH_4"]
 end
 
 group :development do
-  gem 'rubocop'
-  gem 'rubocop-shopify', require: false
-  gem 'byebug', platform: :ruby
+  gem "rubocop", "0.81.0" # Ruby 2.3 support
+  gem "rubocop-shopify", require: false
+  gem "byebug", platform: :ruby
 end

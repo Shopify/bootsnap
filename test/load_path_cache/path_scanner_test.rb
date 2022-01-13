@@ -1,11 +1,12 @@
 # frozen_string_literal: true
-require('test_helper')
+
+require("test_helper")
 
 module Bootsnap
   module LoadPathCache
     class PathScannerTest < MiniTest::Test
-      DLEXT = RbConfig::CONFIG['DLEXT']
-      OTHER_DLEXT = DLEXT == 'bundle' ? 'so' : 'bundle'
+      DLEXT = RbConfig::CONFIG["DLEXT"]
+      OTHER_DLEXT = DLEXT == "bundle" ? "so" : "bundle"
 
       def test_scans_requirables_and_dirs
         Dir.mktmpdir do |dir|

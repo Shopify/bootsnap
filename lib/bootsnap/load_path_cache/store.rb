@@ -1,14 +1,15 @@
 # frozen_string_literal: true
-require_relative('../explicit_require')
 
-Bootsnap::ExplicitRequire.with_gems('msgpack') { require('msgpack') }
-Bootsnap::ExplicitRequire.from_rubylibdir('fileutils')
+require_relative("../explicit_require")
+
+Bootsnap::ExplicitRequire.with_gems("msgpack") { require("msgpack") }
+Bootsnap::ExplicitRequire.from_rubylibdir("fileutils")
 
 module Bootsnap
   module LoadPathCache
     class Store
-      VERSION_KEY = '__bootsnap_ruby_version__'
-      CURRENT_VERSION = "#{RUBY_REVISION}-#{RUBY_PLATFORM}".freeze
+      VERSION_KEY = "__bootsnap_ruby_version__"
+      CURRENT_VERSION = "#{RUBY_REVISION}-#{RUBY_PLATFORM}".freeze # rubocop:disable Style/RedundantFreeze
 
       NestedTransactionError = Class.new(StandardError)
       SetOutsideTransactionNotAllowed = Class.new(StandardError)
@@ -26,6 +27,7 @@ module Bootsnap
 
       def fetch(key)
         raise(SetOutsideTransactionNotAllowed) unless @txn_mutex.owned?
+
         v = get(key)
         unless v
           @dirty = true
@@ -37,6 +39,7 @@ module Bootsnap
 
       def set(key, value)
         raise(SetOutsideTransactionNotAllowed) unless @txn_mutex.owned?
+
         if value != @data[key]
           @dirty = true
           @data[key] = value
@@ -45,6 +48,7 @@ module Bootsnap
 
       def transaction
         raise(NestedTransactionError) if @txn_mutex.owned?
+
         @txn_mutex.synchronize do
           begin
             yield
@@ -88,7 +92,7 @@ module Bootsnap
       def dump_data
         # Change contents atomically so other processes can't get invalid
         # caches if they read at an inopportune time.
-        tmp = "#{@store_path}.#{Process.pid}.#{(rand * 100000).to_i}.tmp"
+        tmp = "#{@store_path}.#{Process.pid}.#{(rand * 100_000).to_i}.tmp"
         FileUtils.mkpath(File.dirname(tmp))
         exclusive_write = File::Constants::CREAT | File::Constants::EXCL | File::Constants::WRONLY
         # `encoding:` looks redundant wrt `binwrite`, but necessary on windows
@@ -103,7 +107,7 @@ module Bootsnap
       end
 
       def default_data
-        { VERSION_KEY => CURRENT_VERSION }
+        {VERSION_KEY => CURRENT_VERSION}
       end
     end
   end

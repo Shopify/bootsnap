@@ -29,14 +29,15 @@ module Bootsnap
         @mutex = Mutex.new
 
         # In theory the user could mutate $LOADED_FEATURES and invalidate our
-        # cache. If this ever comes up in practice — or if you, the
-        # enterprising reader, feels inclined to solve this problem — we could
+        # cache. If this ever comes up in practice - or if you, the
+        # enterprising reader, feels inclined to solve this problem - we could
         # parallel the work done with ChangeObserver on $LOAD_PATH to mirror
         # updates to our @lfi.
         $LOADED_FEATURES.each do |feat|
           hash = feat.hash
           $LOAD_PATH.each do |lpe|
             next unless feat.start_with?(lpe)
+
             # /a/b/lib/my/foo.rb
             #          ^^^^^^^^^
             short = feat[(lpe.length + 1)..-1]
@@ -93,7 +94,7 @@ module Bootsnap
           ret = yield
           long = $LOADED_FEATURES[len..-1].detect do |feat|
             offset = 0
-            while offset = feat.index(short, offset)
+            while (offset = feat.index(short, offset))
               if feat.index(".", offset + 1) && !feat.index("/", offset + 2)
                 break true
               else
@@ -128,7 +129,7 @@ module Bootsnap
 
       private
 
-      STRIP_EXTENSION = /\.[^.]*?$/
+      STRIP_EXTENSION = /\.[^.]*?$/.freeze
       private_constant(:STRIP_EXTENSION)
 
       # Might Ruby automatically search for this extension if
@@ -145,15 +146,15 @@ module Bootsnap
       # with calling a Ruby file 'x.dylib.rb' and then requiring it as 'x.dylib'.)
       #
       # See <https://ruby-doc.org/core-2.6.4/Kernel.html#method-i-require>.
-      def extension_elidable?(f)
-        f.to_s.end_with?('.rb', '.so', '.o', '.dll', '.dylib')
+      def extension_elidable?(feature)
+        feature.to_s.end_with?(".rb", ".so", ".o", ".dll", ".dylib")
       end
 
-      def strip_extension_if_elidable(f)
-        if extension_elidable?(f)
-          f.sub(STRIP_EXTENSION, '')
+      def strip_extension_if_elidable(feature)
+        if extension_elidable?(feature)
+          feature.sub(STRIP_EXTENSION, "")
         else
-          f
+          feature
         end
       end
     end

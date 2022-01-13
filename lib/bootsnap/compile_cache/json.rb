@@ -1,5 +1,6 @@
 # frozen_string_literal: true
-require('bootsnap/bootsnap')
+
+require("bootsnap/bootsnap")
 
 module Bootsnap
   module CompileCache
@@ -13,7 +14,7 @@ module Bootsnap
         end
 
         def storage_to_output(data, kwargs)
-          if kwargs && kwargs.key?(:symbolize_names)
+          if kwargs&.key?(:symbolize_names)
             kwargs[:symbolize_keys] = kwargs.delete(:symbolize_names)
           end
           msgpack_factory.load(data, kwargs)
@@ -40,22 +41,23 @@ module Bootsnap
         end
 
         def init!
-          require('json')
-          require('msgpack')
+          require("json")
+          require("msgpack")
 
           self.msgpack_factory = MessagePack::Factory.new
           self.supported_options = [:symbolize_names]
           if ::JSON.parse('["foo"]', freeze: true).first.frozen?
             self.supported_options = [:freeze]
           end
-          self.supported_options.freeze
+          supported_options.freeze
         end
       end
 
       module Patch
         def load_file(path, *args)
           return super if args.size > 1
-          if kwargs = args.first
+
+          if (kwargs = args.first)
             return super unless kwargs.is_a?(Hash)
             return super unless (kwargs.keys - ::Bootsnap::CompileCache::JSON.supported_options).empty?
           end

@@ -1,5 +1,6 @@
 # frozen_string_literal: true
-require('bootsnap/bootsnap')
+
+require("bootsnap/bootsnap")
 
 module Bootsnap
   module CompileCache
@@ -16,7 +17,7 @@ module Bootsnap
         end
 
         def storage_to_output(data, kwargs)
-          if kwargs && kwargs.key?(:symbolize_names)
+          if kwargs&.key?(:symbolize_names)
             kwargs[:symbolize_keys] = kwargs.delete(:symbolize_names)
           end
           msgpack_factory.load(data, kwargs)
@@ -33,6 +34,7 @@ module Bootsnap
         def strict_load(payload, *args)
           ast = ::YAML.parse(payload)
           return ast unless ast
+
           strict_visitor.create(*args).visit(ast)
         end
         ruby2_keywords :strict_load if respond_to?(:ruby2_keywords, true)
@@ -52,14 +54,14 @@ module Bootsnap
         end
 
         def init!
-          require('yaml')
-          require('msgpack')
-          require('date')
+          require("yaml")
+          require("msgpack")
+          require("date")
 
           if Patch.method_defined?(:unsafe_load_file) && !::YAML.respond_to?(:unsafe_load_file)
             Patch.send(:remove_method, :unsafe_load_file)
           end
-          if Patch.method_defined?(:load_file) && ::YAML::VERSION >= '4'
+          if Patch.method_defined?(:load_file) && ::YAML::VERSION >= "4"
             Patch.send(:remove_method, :load_file)
           end
 
@@ -74,7 +76,7 @@ module Bootsnap
               MessagePack::Timestamp::TYPE, # or just -1
               Time,
               packer: MessagePack::Time::Packer,
-              unpacker: MessagePack::Time::Unpacker
+              unpacker: MessagePack::Time::Unpacker,
             )
 
             marshal_fallback = {
@@ -94,14 +96,14 @@ module Bootsnap
           self.supported_options = []
           params = ::YAML.method(:load).parameters
           if params.include?([:key, :symbolize_names])
-            self.supported_options << :symbolize_names
+            supported_options << :symbolize_names
           end
           if params.include?([:key, :freeze])
-            if factory.load(factory.dump('yaml'), freeze: true).frozen?
-              self.supported_options << :freeze
+            if factory.load(factory.dump("yaml"), freeze: true).frozen?
+              supported_options << :freeze
             end
           end
-          self.supported_options.freeze
+          supported_options.freeze
         end
 
         def strict_visitor
@@ -110,6 +112,7 @@ module Bootsnap
               if target.tag
                 raise Uncompilable, "YAML tags are not supported: #{target.tag}"
               end
+
               super
             end
           end
@@ -119,7 +122,8 @@ module Bootsnap
       module Patch
         def load_file(path, *args)
           return super if args.size > 1
-          if kwargs = args.first
+
+          if (kwargs = args.first)
             return super unless kwargs.is_a?(Hash)
             return super unless (kwargs.keys - ::Bootsnap::CompileCache::YAML.supported_options).empty?
           end
@@ -140,7 +144,8 @@ module Bootsnap
 
         def unsafe_load_file(path, *args)
           return super if args.size > 1
-          if kwargs = args.first
+
+          if (kwargs = args.first)
             return super unless kwargs.is_a?(Hash)
             return super unless (kwargs.keys - ::Bootsnap::CompileCache::YAML.supported_options).empty?
           end

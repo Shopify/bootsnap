@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Bootsnap
   module LoadPathCache
     module ChangeObserver
@@ -57,6 +58,7 @@ module Bootsnap
 
       def self.register(observer, arr)
         return if arr.frozen? # can't register observer, but no need to.
+
         arr.instance_variable_set(:@lpc_observer, observer)
         arr.extend(ArrayMixin)
       end

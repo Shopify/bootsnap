@@ -1,5 +1,6 @@
 # frozen_string_literal: true
-require('test_helper')
+
+require("test_helper")
 
 module Bootsnap
   module KernelRequireTest
@@ -24,10 +25,10 @@ module Bootsnap
       end
 
       def test_no_exstensions_for_kernel_load
-        assert_raises(LoadError) { load 'a' }
-        assert(load 'no_ext')
+        assert_raises(LoadError) { load "a" }
+        assert(load("no_ext"))
         Dir.chdir(@dir2)
-        assert(load 'loads.rb')
+        assert(load("loads.rb"))
       end
     end
   end

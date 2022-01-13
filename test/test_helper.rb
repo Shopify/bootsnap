@@ -1,5 +1,6 @@
 # frozen_string_literal: true
-$LOAD_PATH.unshift(File.expand_path('../../lib', __FILE__))
+
+$LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
 
 if defined? Warning
   if Warning.respond_to?(:[]=)
@@ -7,18 +8,18 @@ if defined? Warning
   end
 end
 
-require('bundler/setup')
-require('bootsnap')
-require('bootsnap/compile_cache/yaml')
-require('bootsnap/compile_cache/json')
+require("bundler/setup")
+require("bootsnap")
+require("bootsnap/compile_cache/yaml")
+require("bootsnap/compile_cache/json")
 
-require('tmpdir')
-require('fileutils')
+require("tmpdir")
+require("fileutils")
 
-require('minitest/autorun')
-require('mocha/minitest')
+require("minitest/autorun")
+require("mocha/minitest")
 
-cache_dir = File.expand_path('../../tmp/bootsnap/compile-cache', __FILE__)
+cache_dir = File.expand_path("../tmp/bootsnap/compile-cache", __dir__)
 Bootsnap::CompileCache.setup(cache_dir: cache_dir, iseq: true, yaml: false, json: false)
 
 if GC.respond_to?(:verify_compaction_references)
@@ -28,16 +29,16 @@ if GC.respond_to?(:verify_compaction_references)
 end
 
 module TestHandler
-  def self.input_to_storage(_i, p)
-    'neato ' + p
+  def self.input_to_storage(_input, path)
+    "neato " + path
   end
 
-  def self.storage_to_output(d, _a)
-    d.upcase
+  def self.storage_to_output(data, _kwargs)
+    data.upcase
   end
 
-  def self.input_to_output(_d, _a)
-    raise('but why tho')
+  def self.input_to_output(_data, _kwargs)
+    raise("but why tho")
   end
 end
 
@@ -67,7 +68,7 @@ module MiniTest
             hash ^= fnv1a_64(args_key)
           end
 
-          hex = hash.to_s(16).rjust(16, '0')
+          hex = hash.to_s(16).rjust(16, "0")
           "#{dir}/#{hex[0..1]}/#{hex[2..-1]}"
         end
 
@@ -95,7 +96,7 @@ module TmpdirHelper
   def setup
     super
     @prev_dir = Dir.pwd
-    @tmp_dir = Dir.mktmpdir('bootsnap-test')
+    @tmp_dir = Dir.mktmpdir("bootsnap-test")
     Dir.chdir(@tmp_dir)
     @prev = Bootsnap::CompileCache::ISeq.cache_dir
     Bootsnap::CompileCache::ISeq.cache_dir = @tmp_dir

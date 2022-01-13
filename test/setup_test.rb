@@ -1,12 +1,13 @@
 # frozen_string_literal: true
-require('test_helper')
+
+require("test_helper")
 
 module Bootsnap
   class SetupTest < Minitest::Test
     def setup
       @_old_env = ENV.to_h
-      @tmp_dir = Dir.mktmpdir('bootsnap-test')
-      ENV['BOOTSNAP_CACHE_DIR'] = @tmp_dir
+      @tmp_dir = Dir.mktmpdir("bootsnap-test")
+      ENV["BOOTSNAP_CACHE_DIR"] = @tmp_dir
     end
 
     def teardown
@@ -27,7 +28,7 @@ module Bootsnap
     end
 
     def test_default_setup_with_ENV_not_dev
-      ENV['ENV'] = 'something'
+      ENV["ENV"] = "something"
 
       Bootsnap.expects(:setup).with(
         cache_dir: @tmp_dir,
@@ -42,7 +43,7 @@ module Bootsnap
     end
 
     def test_default_setup_with_DISABLE_BOOTSNAP_LOAD_PATH_CACHE
-      ENV['DISABLE_BOOTSNAP_LOAD_PATH_CACHE'] = 'something'
+      ENV["DISABLE_BOOTSNAP_LOAD_PATH_CACHE"] = "something"
 
       Bootsnap.expects(:setup).with(
         cache_dir: @tmp_dir,
@@ -57,7 +58,7 @@ module Bootsnap
     end
 
     def test_default_setup_with_DISABLE_BOOTSNAP_COMPILE_CACHE
-      ENV['DISABLE_BOOTSNAP_COMPILE_CACHE'] = 'something'
+      ENV["DISABLE_BOOTSNAP_COMPILE_CACHE"] = "something"
 
       Bootsnap.expects(:setup).with(
         cache_dir: @tmp_dir,
@@ -72,14 +73,14 @@ module Bootsnap
     end
 
     def test_default_setup_with_DISABLE_BOOTSNAP
-      ENV['DISABLE_BOOTSNAP'] = 'something'
+      ENV["DISABLE_BOOTSNAP"] = "something"
 
       Bootsnap.expects(:setup).never
       Bootsnap.default_setup
     end
 
     def test_default_setup_with_BOOTSNAP_LOG
-      ENV['BOOTSNAP_LOG'] = 'something'
+      ENV["BOOTSNAP_LOG"] = "something"
 
       Bootsnap.expects(:setup).with(
         cache_dir: @tmp_dir,
