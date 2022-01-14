@@ -18,18 +18,15 @@ module Kernel
 
   alias_method(:require_without_bootsnap, :require)
 
-  # Note that require registers to $LOADED_FEATURES while load does not.
-  def require_with_bootsnap_lfi(path, resolved = nil)
-    Bootsnap::LoadPathCache.loaded_features_index.register(path, resolved) do
-      require_without_bootsnap(resolved || path)
-    end
-  end
-
   def require(path)
-    return false if Bootsnap::LoadPathCache.loaded_features_index.key?(path)
+    string_path = path.to_s
+    return false if Bootsnap::LoadPathCache.loaded_features_index.key?(string_path)
 
-    if (resolved = Bootsnap::LoadPathCache.load_path_cache.find(path))
-      return require_with_bootsnap_lfi(path, resolved)
+    if (resolved = Bootsnap::LoadPathCache.load_path_cache.find(string_path))
+      # Note that require registers to $LOADED_FEATURES while load does not.
+      ret = require_without_bootsnap(resolved)
+      Bootsnap::LoadPathCache.loaded_features_index.register(string_path, resolved)
+      return ret
     end
 
     raise(Bootsnap::LoadPathCache::CoreExt.make_load_error(path))
@@ -39,10 +36,13 @@ module Kernel
   rescue Bootsnap::LoadPathCache::ReturnFalse
     false
   rescue Bootsnap::LoadPathCache::FallbackScan
-    fallback = true
-  ensure
-    if fallback
-      require_with_bootsnap_lfi(path)
+    if (cursor = Bootsnap::LoadPathCache.loaded_features_index.cursor(string_path))
+      ret = require_without_bootsnap(path)
+      resolved = Bootsnap::LoadPathCache.loaded_features_index.identify(string_path, cursor)
+      Bootsnap::LoadPathCache.loaded_features_index.register(string_path, resolved)
+      ret
+    else # If we're not given a cursor, it means we don't need to register the path (likely an absolute path)
+      require_without_bootsnap(path)
     end
   end
 
@@ -82,10 +82,6 @@ class Module
   rescue Bootsnap::LoadPathCache::ReturnFalse
     false
   rescue Bootsnap::LoadPathCache::FallbackScan
-    fallback = true
-  ensure
-    if fallback
-      autoload_without_bootsnap(const, path)
-    end
+    autoload_without_bootsnap(const, path)
   end
 end
