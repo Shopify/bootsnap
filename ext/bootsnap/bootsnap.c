@@ -75,7 +75,7 @@ struct bs_cache_key {
 STATIC_ASSERT(sizeof(struct bs_cache_key) == KEY_SIZE);
 
 /* Effectively a schema version. Bumping invalidates all previous caches */
-static const uint32_t current_version = 3;
+static const uint32_t current_version = 4;
 
 /* hash of e.g. "x86_64-darwin17", invalidating when ruby is recompiled on a
  * new OS ABI, etc. */
@@ -91,8 +91,7 @@ static mode_t current_umask;
 static VALUE rb_mBootsnap;
 static VALUE rb_mBootsnap_CompileCache;
 static VALUE rb_mBootsnap_CompileCache_Native;
-static VALUE rb_eBootsnap_CompileCache_Uncompilable;
-static ID uncompilable;
+static VALUE rb_cBootsnap_CompileCache_UNCOMPILABLE;
 static ID instrumentation_method;
 static VALUE sym_miss;
 static VALUE sym_stale;
@@ -120,10 +119,8 @@ static uint32_t get_ruby_platform(void);
  * exception.
  */
 static int bs_storage_to_output(VALUE handler, VALUE args, VALUE storage_data, VALUE * output_data);
-static VALUE prot_storage_to_output(VALUE arg);
 static VALUE prot_input_to_output(VALUE arg);
 static void bs_input_to_output(VALUE handler, VALUE args, VALUE input_data, VALUE * output_data, int * exception_tag);
-static VALUE prot_input_to_storage(VALUE arg);
 static int bs_input_to_storage(VALUE handler, VALUE args, VALUE input_data, VALUE pathval, VALUE * storage_data);
 struct s2o_data;
 struct i2o_data;
@@ -151,12 +148,12 @@ Init_bootsnap(void)
   rb_mBootsnap = rb_define_module("Bootsnap");
   rb_mBootsnap_CompileCache = rb_define_module_under(rb_mBootsnap, "CompileCache");
   rb_mBootsnap_CompileCache_Native = rb_define_module_under(rb_mBootsnap_CompileCache, "Native");
-  rb_eBootsnap_CompileCache_Uncompilable = rb_define_class_under(rb_mBootsnap_CompileCache, "Uncompilable", rb_eStandardError);
+  rb_cBootsnap_CompileCache_UNCOMPILABLE = rb_const_get(rb_mBootsnap_CompileCache, rb_intern("UNCOMPILABLE"));
+  rb_global_variable(&rb_cBootsnap_CompileCache_UNCOMPILABLE);
 
   current_ruby_revision = get_ruby_revision();
   current_ruby_platform = get_ruby_platform();
 
-  uncompilable = rb_intern("__bootsnap_uncompilable__");
   instrumentation_method = rb_intern("_instrument");
 
   sym_miss = ID2SYM(rb_intern("miss"));
@@ -426,6 +423,7 @@ open_current_file(char * path, struct bs_cache_key * key, const char ** errno_pr
 #define ERROR_WITH_ERRNO -1
 #define CACHE_MISS -2
 #define CACHE_STALE -3
+#define CACHE_UNCOMPILABLE -4
 
 /*
  * Read the cache key from the given fd, which must have position 0 (e.g.
@@ -507,14 +505,14 @@ fetch_cached_data(int fd, ssize_t data_size, VALUE handler, VALUE args, VALUE * 
   if (data_size > 100000000000) {
     *errno_provenance = "bs_fetch:fetch_cached_data:datasize";
     errno = EINVAL; /* because wtf? */
-    ret = -1;
+    ret = ERROR_WITH_ERRNO;
     goto done;
   }
   data = ALLOC_N(char, data_size);
   nread = read(fd, data, data_size);
   if (nread < 0) {
     *errno_provenance = "bs_fetch:fetch_cached_data:read";
-    ret = -1;
+    ret = ERROR_WITH_ERRNO;
     goto done;
   }
   if (nread != data_size) {
@@ -525,6 +523,10 @@ fetch_cached_data(int fd, ssize_t data_size, VALUE handler, VALUE args, VALUE * 
   storage_data = rb_str_new(data, data_size);
 
   *exception_tag = bs_storage_to_output(handler, args, storage_data, output_data);
+  if (*output_data == rb_cBootsnap_CompileCache_UNCOMPILABLE) {
+    ret = CACHE_UNCOMPILABLE;
+    goto done;
+  }
   ret = 0;
 done:
   if (data != NULL) xfree(data);
@@ -737,7 +739,15 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args
       &output_data, &exception_tag, &errno_provenance
     );
     if (exception_tag != 0) goto raise;
-    else if (res == CACHE_MISS || res == CACHE_STALE) valid_cache = 0;
+    else if (res == CACHE_UNCOMPILABLE) {
+      /* If fetch_cached_data returned `Uncompilable` we fallback to `input_to_output`
+        This happens if we have say, an unsafe YAML cache, but try to load it in safe mode */
+      if (bs_read_contents(current_fd, current_key.size, &contents, &errno_provenance) < 0) goto fail_errno;
+      input_data = rb_str_new(contents, current_key.size);
+      bs_input_to_output(handler, args, input_data, &output_data, &exception_tag);
+      if (exception_tag != 0) goto raise;
+      goto succeed;
+    } else if (res == CACHE_MISS || res == CACHE_STALE) valid_cache = 0;
     else if (res == ERROR_WITH_ERRNO) goto fail_errno;
     else if (!NIL_P(output_data)) goto succeed; /* fast-path, goal */
   }
@@ -754,7 +764,7 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args
   if (exception_tag != 0) goto raise;
   /* If input_to_storage raised Bootsnap::CompileCache::Uncompilable, don't try
    * to cache anything; just return input_to_output(input_data) */
-  if (storage_data == uncompilable) {
+  if (storage_data == rb_cBootsnap_CompileCache_UNCOMPILABLE) {
     bs_input_to_output(handler, args, input_data, &output_data, &exception_tag);
     if (exception_tag != 0) goto raise;
     goto succeed;
@@ -772,9 +782,13 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args
   exception_tag = bs_storage_to_output(handler, args, storage_data, &output_data);
   if (exception_tag != 0) goto raise;
 
-  /* If output_data is nil, delete the cache entry and generate the output
-   * using input_to_output */
-  if (NIL_P(output_data)) {
+  if (output_data == rb_cBootsnap_CompileCache_UNCOMPILABLE) {
+    /* If storage_to_output returned `Uncompilable` we fallback to `input_to_output` */
+    bs_input_to_output(handler, args, input_data, &output_data, &exception_tag);
+    if (exception_tag != 0) goto raise;
+  } else if (NIL_P(output_data)) {
+    /* If output_data is nil, delete the cache entry and generate the output
+     * using input_to_output */
     if (unlink(cache_path) < 0) {
       errno_provenance = "bs_fetch:unlink";
       goto fail_errno;
@@ -856,7 +870,7 @@ bs_precompile(char * path, VALUE path_v, char * cache_path, VALUE handler)
 
   /* If input_to_storage raised Bootsnap::CompileCache::Uncompilable, don't try
    * to cache anything; just return false */
-  if (storage_data == uncompilable) {
+  if (storage_data == rb_cBootsnap_CompileCache_UNCOMPILABLE) {
     goto fail;
   }
   /* If storage_data isn't a string, we can't cache it */
@@ -919,7 +933,7 @@ struct i2s_data {
 };
 
 static VALUE
-prot_storage_to_output(VALUE arg)
+try_storage_to_output(VALUE arg)
 {
   struct s2o_data * data = (struct s2o_data *)arg;
   return rb_funcall(data->handler, rb_intern("storage_to_output"), 2, data->storage_data, data->args);
@@ -934,7 +948,7 @@ bs_storage_to_output(VALUE handler, VALUE args, VALUE storage_data, VALUE * outp
     .args         = args,
     .storage_data = storage_data,
   };
-  *output_data = rb_protect(prot_storage_to_output, (VALUE)&s2o_data, &state);
+  *output_data = rb_protect(try_storage_to_output, (VALUE)&s2o_data, &state);
   return state;
 }
 
@@ -963,22 +977,6 @@ try_input_to_storage(VALUE arg)
   return rb_funcall(data->handler, rb_intern("input_to_storage"), 2, data->input_data, data->pathval);
 }
 
-static VALUE
-rescue_input_to_storage(VALUE arg, VALUE e)
-{
-  return uncompilable;
-}
-
-static VALUE
-prot_input_to_storage(VALUE arg)
-{
-  struct i2s_data * data = (struct i2s_data *)arg;
-  return rb_rescue2(
-      try_input_to_storage, (VALUE)data,
-      rescue_input_to_storage, Qnil,
-      rb_eBootsnap_CompileCache_Uncompilable, 0);
-}
-
 static int
 bs_input_to_storage(VALUE handler, VALUE args, VALUE input_data, VALUE pathval, VALUE * storage_data)
 {
@@ -988,6 +986,6 @@ bs_input_to_storage(VALUE handler, VALUE args, VALUE input_data, VALUE pathval, 
     .input_data = input_data,
     .pathval    = pathval,
   };
-  *storage_data = rb_protect(prot_input_to_storage, (VALUE)&i2s_data, &state);
+  *storage_data = rb_protect(try_input_to_storage, (VALUE)&i2s_data, &state);
   return state;
 }

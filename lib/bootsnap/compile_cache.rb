@@ -2,7 +2,9 @@
 
 module Bootsnap
   module CompileCache
-    Error           = Class.new(StandardError)
+    UNCOMPILABLE = BasicObject.new
+
+    Error = Class.new(StandardError)
     PermissionError = Class.new(Error)
 
     def self.setup(cache_dir:, iseq:, yaml:, json:)
