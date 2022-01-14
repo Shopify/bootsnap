@@ -37,7 +37,7 @@ class CompileCacheTest < Minitest::Test
       # read-only files.
       pass
     else
-      path = Help.set_file("a.rb", "a = 3", 100)
+      path = Help.set_file("a.rb", "a = a = 3", 100)
       folder = File.dirname(Help.cache_path(@tmp_dir, path))
       FileUtils.mkdir_p(folder)
       FileUtils.chmod(0o400, folder)
