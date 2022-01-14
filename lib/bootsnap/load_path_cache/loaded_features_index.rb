@@ -69,6 +69,25 @@ module Bootsnap
         @mutex.synchronize { @lfi.key?(feature) }
       end
 
+      def cursor(short)
+        unless Bootsnap.absolute_path?(short.to_s)
+          $LOADED_FEATURES.size
+        end
+      end
+
+      def identify(short, cursor)
+        $LOADED_FEATURES[cursor..-1].detect do |feat|
+          offset = 0
+          while (offset = feat.index(short, offset))
+            if feat.index(".", offset + 1) && !feat.index("/", offset + 2)
+              break true
+            else
+              offset += 1
+            end
+          end
+        end
+      end
+
       # There is a relatively uncommon case where we could miss adding an
       # entry:
       #
@@ -83,28 +102,8 @@ module Bootsnap
       #    not quite right; or
       # 2. Inspect $LOADED_FEATURES upon return from yield to find the matching
       #    entry.
-      def register(short, long = nil)
-        # Absolute paths are not a concern.
-        if Bootsnap.absolute_path?(short.to_s)
-          return yield
-        end
-
-        if long.nil?
-          len = $LOADED_FEATURES.size
-          ret = yield
-          long = $LOADED_FEATURES[len..-1].detect do |feat|
-            offset = 0
-            while (offset = feat.index(short, offset))
-              if feat.index(".", offset + 1) && !feat.index("/", offset + 2)
-                break true
-              else
-                offset += 1
-              end
-            end
-          end
-        else
-          ret = yield
-        end
+      def register(short, long)
+        return if Bootsnap.absolute_path?(short)
 
         hash = long.hash
 
@@ -123,8 +122,6 @@ module Bootsnap
           @lfi[short] = hash
           (@lfi[altname] = hash) if altname
         end
-
-        ret
       end
 
       private

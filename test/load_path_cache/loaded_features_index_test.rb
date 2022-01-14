@@ -15,21 +15,9 @@ module Bootsnap
         refute(@index.key?("bundler"))
         refute(@index.key?("bundler.rb"))
         refute(@index.key?("foo"))
-        @index.register("bundler", "/a/b/bundler.rb") {}
+        @index.register("bundler", "/a/b/bundler.rb")
         assert(@index.key?("bundler"))
         assert(@index.key?("bundler.rb"))
-        refute(@index.key?("foo"))
-      end
-
-      def test_no_add_on_raise
-        refute(@index.key?("bundler"))
-        refute(@index.key?("bundler.rb"))
-        refute(@index.key?("foo"))
-        assert_raises(RuntimeError) do
-          @index.register("bundler", "/a/b/bundler.rb") { raise }
-        end
-        refute(@index.key?("bundler"))
-        refute(@index.key?("bundler.rb"))
         refute(@index.key?("foo"))
       end
 
@@ -37,7 +25,7 @@ module Bootsnap
         refute(@index.key?("bundler"))
         refute(@index.key?("bundler.rb"))
         refute(@index.key?("foo"))
-        @index.register("bundler.rb") {}
+        @index.register("bundler.rb", nil)
         assert(@index.key?("bundler"))
         assert(@index.key?("bundler.rb"))
         refute(@index.key?("foo"))
@@ -54,7 +42,7 @@ module Bootsnap
         refute(@index.key?("descriptor.rb"))
         refute(@index.key?("descriptor"))
         refute(@index.key?("foo"))
-        @index.register("descriptor.pb.rb") {}
+        @index.register("descriptor.pb.rb", nil)
         assert(@index.key?("descriptor.pb"))
         assert(@index.key?("descriptor.pb.rb"))
         refute(@index.key?("descriptor.rb"))
@@ -70,7 +58,7 @@ module Bootsnap
         refute(@index.key?("descriptor.rb"))
         refute(@index.key?("descriptor"))
         refute(@index.key?("foo"))
-        @index.register("libgit2.dylib") {}
+        @index.register("libgit2.dylib", nil)
         assert(@index.key?("libgit2.dylib"))
         refute(@index.key?("libgit2.dylib.rb"))
         refute(@index.key?("libgit2.rb"))
@@ -81,7 +69,7 @@ module Bootsnap
         refute(@index.key?("bundler"))
         refute(@index.key?("bundler.rb"))
         refute(@index.key?("foo"))
-        @index.register("bundler") {}
+        @index.register("bundler", nil)
         assert(@index.key?("bundler"))
         refute(@index.key?("bundler.rb"))
         refute(@index.key?("foo"))
@@ -91,7 +79,7 @@ module Bootsnap
         refute(@index.key?("bundler"))
         refute(@index.key?("bundler.rb"))
         refute(@index.key?("foo"))
-        @index.register("bundler", "/a/b/bundler.rb") {}
+        @index.register("bundler", "/a/b/bundler.rb")
         assert(@index.key?("bundler"))
         assert(@index.key?("bundler.rb"))
         refute(@index.key?("foo"))
@@ -105,7 +93,7 @@ module Bootsnap
         refute(@index.key?("bundler"))
         refute(@index.key?("bundler.rb"))
         refute(@index.key?("foo"))
-        @index.register("bundler", "/a/b/bundler.rb") {}
+        @index.register("bundler", "/a/b/bundler.rb")
         assert(@index.key?("bundler"))
         assert(@index.key?("bundler.rb"))
         refute(@index.key?("foo"))
@@ -119,7 +107,10 @@ module Bootsnap
         refute(@index.key?("bundler"))
         refute(@index.key?("bundler.rb"))
         refute(@index.key?("foo"))
-        @index.register("bundler", nil) { $LOADED_FEATURES << "/a/b/bundler.rb" }
+        cursor = @index.cursor("bundler")
+        $LOADED_FEATURES << "/a/b/bundler.rb"
+        long = @index.identify("bundler", cursor)
+        @index.register("bundler", long)
         assert(@index.key?("bundler"))
         assert(@index.key?("bundler.rb"))
         refute(@index.key?("foo"))
@@ -136,23 +127,11 @@ module Bootsnap
         refute(index.key?("minitest/autorun.so"))
       end
 
-      def test_works_with_pathname
-        path = "bundler.rb"
-        pathname = Pathname.new(path)
-        @index.register(pathname, path) { true }
-        assert(@index.key?(pathname))
-      end
-
       def test_ignores_absolute_paths
         path = "#{Dir.mktmpdir}/bundler.rb"
-        @index.register(path) { true }
+        assert_nil @index.cursor(path)
+        @index.register(path, path)
         refute(@index.key?(path))
-
-        path = "#{Dir.mktmpdir}/bundler.rb"
-        pathname = Pathname.new(path)
-        @index.register(pathname, path) { true }
-        refute(@index.key?(path))
-        refute(@index.key?(pathname))
       end
     end
   end
