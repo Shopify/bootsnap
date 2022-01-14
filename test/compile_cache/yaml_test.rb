@@ -51,12 +51,12 @@ class CompileCacheYAMLTest < Minitest::Test
   end
 
   def test_yaml_tags
-    error = assert_raises Bootsnap::CompileCache::Uncompilable do
+    error = assert_raises Bootsnap::CompileCache::YAML::UnsupportedTags do
       ::Bootsnap::CompileCache::YAML.strict_load("!many Boolean")
     end
     assert_equal "YAML tags are not supported: !many", error.message
 
-    error = assert_raises Bootsnap::CompileCache::Uncompilable do
+    error = assert_raises Bootsnap::CompileCache::YAML::UnsupportedTags do
       ::Bootsnap::CompileCache::YAML.strict_load("!ruby/object {}")
     end
     assert_equal "YAML tags are not supported: !ruby/object", error.message

@@ -5,15 +5,17 @@ require("bootsnap/bootsnap")
 module Bootsnap
   module CompileCache
     module YAML
+      UnsupportedTags = Class.new(StandardError)
+
       class << self
         attr_accessor(:msgpack_factory, :cache_dir, :supported_options)
 
         def input_to_storage(contents, _)
           obj = strict_load(contents)
           msgpack_factory.dump(obj)
-        rescue NoMethodError, RangeError
+        rescue NoMethodError, RangeError, UnsupportedTags
           # The object included things that we can't serialize
-          raise(Uncompilable)
+          return UNCOMPILABLE
         end
 
         def storage_to_output(data, kwargs)
@@ -110,7 +112,7 @@ module Bootsnap
           self::NoTagsVisitor ||= Class.new(Psych::Visitors::ToRuby) do
             def visit(target)
               if target.tag
-                raise Uncompilable, "YAML tags are not supported: #{target.tag}"
+                raise UnsupportedTags, "YAML tags are not supported: #{target.tag}"
               end
 
               super

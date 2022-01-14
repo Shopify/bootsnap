@@ -91,8 +91,7 @@ static mode_t current_umask;
 static VALUE rb_mBootsnap;
 static VALUE rb_mBootsnap_CompileCache;
 static VALUE rb_mBootsnap_CompileCache_Native;
-static VALUE rb_eBootsnap_CompileCache_Uncompilable;
-static ID uncompilable;
+static VALUE rb_cBootsnap_CompileCache_UNCOMPILABLE;
 static ID instrumentation_method;
 static VALUE sym_miss;
 static VALUE sym_stale;
@@ -123,7 +122,6 @@ static int bs_storage_to_output(VALUE handler, VALUE args, VALUE storage_data, V
 static VALUE prot_storage_to_output(VALUE arg);
 static VALUE prot_input_to_output(VALUE arg);
 static void bs_input_to_output(VALUE handler, VALUE args, VALUE input_data, VALUE * output_data, int * exception_tag);
-static VALUE prot_input_to_storage(VALUE arg);
 static int bs_input_to_storage(VALUE handler, VALUE args, VALUE input_data, VALUE pathval, VALUE * storage_data);
 struct s2o_data;
 struct i2o_data;
@@ -151,12 +149,12 @@ Init_bootsnap(void)
   rb_mBootsnap = rb_define_module("Bootsnap");
   rb_mBootsnap_CompileCache = rb_define_module_under(rb_mBootsnap, "CompileCache");
   rb_mBootsnap_CompileCache_Native = rb_define_module_under(rb_mBootsnap_CompileCache, "Native");
-  rb_eBootsnap_CompileCache_Uncompilable = rb_define_class_under(rb_mBootsnap_CompileCache, "Uncompilable", rb_eStandardError);
+  rb_cBootsnap_CompileCache_UNCOMPILABLE = rb_const_get(rb_mBootsnap_CompileCache, rb_intern("UNCOMPILABLE"));
+  rb_global_variable(&rb_cBootsnap_CompileCache_UNCOMPILABLE);
 
   current_ruby_revision = get_ruby_revision();
   current_ruby_platform = get_ruby_platform();
 
-  uncompilable = rb_intern("__bootsnap_uncompilable__");
   instrumentation_method = rb_intern("_instrument");
 
   sym_miss = ID2SYM(rb_intern("miss"));
@@ -754,7 +752,7 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args
   if (exception_tag != 0) goto raise;
   /* If input_to_storage raised Bootsnap::CompileCache::Uncompilable, don't try
    * to cache anything; just return input_to_output(input_data) */
-  if (storage_data == uncompilable) {
+  if (storage_data == rb_cBootsnap_CompileCache_UNCOMPILABLE) {
     bs_input_to_output(handler, args, input_data, &output_data, &exception_tag);
     if (exception_tag != 0) goto raise;
     goto succeed;
@@ -856,7 +854,7 @@ bs_precompile(char * path, VALUE path_v, char * cache_path, VALUE handler)
 
   /* If input_to_storage raised Bootsnap::CompileCache::Uncompilable, don't try
    * to cache anything; just return false */
-  if (storage_data == uncompilable) {
+  if (storage_data == rb_cBootsnap_CompileCache_UNCOMPILABLE) {
     goto fail;
   }
   /* If storage_data isn't a string, we can't cache it */
@@ -963,22 +961,6 @@ try_input_to_storage(VALUE arg)
   return rb_funcall(data->handler, rb_intern("input_to_storage"), 2, data->input_data, data->pathval);
 }
 
-static VALUE
-rescue_input_to_storage(VALUE arg, VALUE e)
-{
-  return uncompilable;
-}
-
-static VALUE
-prot_input_to_storage(VALUE arg)
-{
-  struct i2s_data * data = (struct i2s_data *)arg;
-  return rb_rescue2(
-      try_input_to_storage, (VALUE)data,
-      rescue_input_to_storage, Qnil,
-      rb_eBootsnap_CompileCache_Uncompilable, 0);
-}
-
 static int
 bs_input_to_storage(VALUE handler, VALUE args, VALUE input_data, VALUE pathval, VALUE * storage_data)
 {
@@ -988,6 +970,6 @@ bs_input_to_storage(VALUE handler, VALUE args, VALUE input_data, VALUE pathval, 
     .input_data = input_data,
     .pathval    = pathval,
   };
-  *storage_data = rb_protect(prot_input_to_storage, (VALUE)&i2s_data, &state);
+  *storage_data = rb_protect(try_input_to_storage, (VALUE)&i2s_data, &state);
   return state;
 }
