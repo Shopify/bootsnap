@@ -52,7 +52,9 @@ module Bootsnap
           self.msgpack_factory = MessagePack::Factory.new
           self.supported_options = [:symbolize_names]
           if ::JSON.parse('["foo"]', freeze: true).first.frozen?
-            self.supported_options = [:freeze]
+            if MessagePack.load(MessagePack.dump("foo"), freeze: true).frozen?
+              self.supported_options = [:freeze]
+            end
           end
           supported_options.freeze
         end

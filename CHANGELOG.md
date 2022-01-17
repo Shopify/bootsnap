@@ -1,5 +1,8 @@
 # Unreleased
 
+* Better check `freeze` option support in JSON compile cache.
+  Previously `JSON.load_file(..., freeze: true)` would be cached even when the msgpack version is missing support for it.
+
 # 1.10.1
 
 * Fix `Kernel#autoload`'s fallback path always being executed.
