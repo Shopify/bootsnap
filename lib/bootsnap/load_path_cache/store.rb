@@ -3,7 +3,6 @@
 require_relative("../explicit_require")
 
 Bootsnap::ExplicitRequire.with_gems("msgpack") { require("msgpack") }
-Bootsnap::ExplicitRequire.from_rubylibdir("fileutils")
 
 module Bootsnap
   module LoadPathCache
@@ -90,6 +89,8 @@ module Bootsnap
       end
 
       def dump_data
+        require "fileutils" unless defined? FileUtils
+
         # Change contents atomically so other processes can't get invalid
         # caches if they read at an inopportune time.
         tmp = "#{@store_path}.#{Process.pid}.#{(rand * 100_000).to_i}.tmp"
