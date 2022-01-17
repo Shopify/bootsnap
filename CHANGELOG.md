@@ -1,5 +1,7 @@
 # Unreleased
 
+* Consider `unlink` failing with `ENOENT` as a success.
+
 # 1.10.0
 
 * Delay requiring `FileUtils`. (#285)

@@ -790,8 +790,12 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args
     /* If output_data is nil, delete the cache entry and generate the output
      * using input_to_output */
     if (unlink(cache_path) < 0) {
-      errno_provenance = "bs_fetch:unlink";
-      goto fail_errno;
+      /* If the cache was already deleted, it might be that another process did it before us.
+      * No point raising an error */
+      if (errno != ENOENT) {
+        errno_provenance = "bs_fetch:unlink";
+        goto fail_errno;
+      }
     }
     bs_input_to_output(handler, args, input_data, &output_data, &exception_tag);
     if (exception_tag != 0) goto raise;
