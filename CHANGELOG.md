@@ -1,5 +1,10 @@
 # Unreleased
 
+# 1.10.0
+
+* Delay requiring `FileUtils`. (#285)
+  `FileUtils` can be installed as a gem, so it's best to wait for bundler to have setup the load path before requiring it.
+
 * Improve support of Psych 4. (#392)
   Since `1.8.0`, `YAML.load_file` was no longer cached when Psych 4 was used. This is because `load_file` loads
   in safe mode by default, so the Bootsnap cache could defeat that safety.
