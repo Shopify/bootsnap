@@ -2,7 +2,7 @@
 
 # 1.10.1
 
-* Fix `Kernel#autoload`'s fallback path always bing executed.
+* Fix `Kernel#autoload`'s fallback path always being executed.
 * Consider `unlink` failing with `ENOENT` as a success.
 
 # 1.10.0
