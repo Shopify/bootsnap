@@ -94,6 +94,8 @@ class Module
   ensure
     # We raise from `ensure` so that any further exception don't have FallbackScan as a cause
     # See: https://github.com/Shopify/bootsnap/issues/250
-    autoload_without_bootsnap(const, path)
+    if fallback
+      autoload_without_bootsnap(const, path)
+    end
   end
 end
