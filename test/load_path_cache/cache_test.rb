@@ -162,6 +162,12 @@ module Bootsnap
         OS_ASCII_PATH_ENCODING = RUBY_VERSION >= "3.1" ? Encoding::UTF_8 : Encoding::US_ASCII
 
         def test_path_encoding
+          unless Encoding.default_external == Encoding::UTF_8
+            # Encoding.default_external != Encoding::UTF_8 is likely a misconfiguration or a barebone system.
+            # Supporting this use case would have an overhead for relatively little gain.
+            skip "Encoding.default_external == #{Encoding.default_external}, expected Encoding::UTF_8."
+          end
+
           po = [@dir1]
           cache = Cache.new(NullCache, po)
 
@@ -176,9 +182,9 @@ module Bootsnap
           assert_same path, internal_path
 
           utf8_path = cache.find("béé")
+          assert_equal("#{@dir1}/béé.rb", utf8_path)
           require utf8_path
           internal_utf8_path = $LOADED_FEATURES.last
-          assert_equal("#{@dir1}/béé.rb", utf8_path)
           assert_equal(Encoding::UTF_8, internal_utf8_path.encoding)
           assert_equal(Encoding::UTF_8, utf8_path.encoding)
           File.write(utf8_path, "")
