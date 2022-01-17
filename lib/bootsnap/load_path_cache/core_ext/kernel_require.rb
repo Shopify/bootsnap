@@ -19,6 +19,7 @@ module Kernel
   alias_method(:require_without_bootsnap, :require)
 
   def require(path)
+    fallback = false
     string_path = path.to_s
     return false if Bootsnap::LoadPathCache.loaded_features_index.key?(string_path)
 
@@ -36,13 +37,19 @@ module Kernel
   rescue Bootsnap::LoadPathCache::ReturnFalse
     false
   rescue Bootsnap::LoadPathCache::FallbackScan
-    if (cursor = Bootsnap::LoadPathCache.loaded_features_index.cursor(string_path))
-      ret = require_without_bootsnap(path)
-      resolved = Bootsnap::LoadPathCache.loaded_features_index.identify(string_path, cursor)
-      Bootsnap::LoadPathCache.loaded_features_index.register(string_path, resolved)
-      ret
-    else # If we're not given a cursor, it means we don't need to register the path (likely an absolute path)
-      require_without_bootsnap(path)
+    fallback = true
+  ensure
+    # We raise from `ensure` so that any further exception don't have FallbackScan as a cause
+    # See: https://github.com/Shopify/bootsnap/issues/250
+    if fallback
+      if (cursor = Bootsnap::LoadPathCache.loaded_features_index.cursor(string_path))
+        ret = require_without_bootsnap(path)
+        resolved = Bootsnap::LoadPathCache.loaded_features_index.identify(string_path, cursor)
+        Bootsnap::LoadPathCache.loaded_features_index.register(string_path, resolved)
+        ret
+      else # If we're not given a cursor, it means we don't need to register the path (likely an absolute path)
+        require_without_bootsnap(path)
+      end
     end
   end
 
@@ -68,6 +75,7 @@ end
 class Module
   alias_method(:autoload_without_bootsnap, :autoload)
   def autoload(const, path)
+    fallback = false
     # NOTE: This may defeat LoadedFeaturesIndex, but it's not immediately
     # obvious how to make it work. This feels like a pretty niche case, unclear
     # if it will ever burn anyone.
@@ -82,6 +90,10 @@ class Module
   rescue Bootsnap::LoadPathCache::ReturnFalse
     false
   rescue Bootsnap::LoadPathCache::FallbackScan
+    fallback = true
+  ensure
+    # We raise from `ensure` so that any further exception don't have FallbackScan as a cause
+    # See: https://github.com/Shopify/bootsnap/issues/250
     autoload_without_bootsnap(const, path)
   end
 end
