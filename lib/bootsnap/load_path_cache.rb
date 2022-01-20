@@ -9,11 +9,6 @@ module Bootsnap
     DOT_SO = ".so"
     SLASH  = "/"
 
-    # If a NameError happens several levels deep, don't re-handle it
-    # all the way up the chain: mark it once and bubble it up without
-    # more retries.
-    ERROR_TAG_IVAR = :@__bootsnap_rescued
-
     DL_EXTENSIONS = ::RbConfig::CONFIG
       .values_at("DLEXT", "DLEXT2")
       .reject { |ext| !ext || ext.empty? }
