@@ -1,11 +1,14 @@
 # Unreleased
 
+* Reduce the `Kernel.require` extra stack frames some more. Now bootsnap should only add one extra frame per `require` call.
+
 * Better check `freeze` option support in JSON compile cache.
   Previously `JSON.load_file(..., freeze: true)` would be cached even when the msgpack version is missing support for it.
 
 # 1.10.1
 
 * Fix `Kernel#autoload`'s fallback path always being executed.
+
 * Consider `unlink` failing with `ENOENT` as a success.
 
 # 1.10.0

@@ -65,7 +65,7 @@ module Bootsnap
           # returns false as if it were already loaded; however, there is no
           # file to find on disk. We've pre-built a list of these, and we
           # return false if any of them is loaded.
-          raise(LoadPathCache::ReturnFalse, "", []) if BUILTIN_FEATURES.key?(feature)
+          return false if BUILTIN_FEATURES.key?(feature)
 
           # The feature wasn't found on our preliminary search through the index.
           # We resolve this differently depending on what the extension was.
@@ -89,7 +89,7 @@ module Bootsnap
           else
             # other, unknown extension. For example, `.rake`. Since we haven't
             # cached these, we legitimately need to run the load path search.
-            raise(LoadPathCache::FallbackScan, "", [])
+            return FALLBACK_SCAN
           end
         end
 
@@ -97,7 +97,7 @@ module Bootsnap
         # cases where the file doesn't appear to be on the load path. We should
         # be able to detect newly-created files without rebooting the
         # application.
-        raise(LoadPathCache::FallbackScan, "", []) if @development_mode
+        return FALLBACK_SCAN if @development_mode
       end
 
       def unshift_paths(sender, *paths)

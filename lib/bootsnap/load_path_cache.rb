@@ -2,8 +2,7 @@
 
 module Bootsnap
   module LoadPathCache
-    ReturnFalse = Class.new(StandardError)
-    FallbackScan = Class.new(StandardError)
+    FALLBACK_SCAN = BasicObject.new
 
     DOT_RB = ".rb"
     DOT_SO = ".so"

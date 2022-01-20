@@ -29,14 +29,15 @@ module Bootsnap
       # versions aren't a big deal, but feel free to fix the test.
       def test_builtin_features
         cache = Cache.new(NullCache, [])
-        assert_raises(ReturnFalse) { cache.find("thread") }
-        assert_raises(ReturnFalse) { cache.find("thread.rb") }
-        assert_raises(ReturnFalse) { cache.find("enumerator") }
-        assert_raises(ReturnFalse) { cache.find("enumerator.so") }
+        assert_equal false, cache.find("thread")
+        assert_equal false, cache.find("thread.rb")
+        assert_equal false, cache.find("enumerator")
+        assert_equal false, cache.find("enumerator.so")
+
         if RUBY_PLATFORM =~ /darwin/
-          assert_raises(ReturnFalse) { cache.find("enumerator.bundle") }
+          assert_equal false, cache.find("enumerator.bundle")
         else
-          assert_raises(FallbackScan) { cache.find("enumerator.bundle") }
+          assert_same FALLBACK_SCAN, cache.find("enumerator.bundle")
         end
 
         bundle = RUBY_PLATFORM =~ /darwin/ ? "bundle" : "so"
@@ -140,9 +141,7 @@ module Bootsnap
         refute(dev_no_cache.find("new"))
 
         dev_yes_cache.stubs(:now).returns(time + 28)
-        assert_raises(Bootsnap::LoadPathCache::FallbackScan) do
-          dev_yes_cache.find("new")
-        end
+        assert_same Bootsnap::LoadPathCache::FALLBACK_SCAN, dev_yes_cache.find("new")
         dev_yes_cache.stubs(:now).returns(time + 31)
         assert(dev_yes_cache.find("new"))
       end

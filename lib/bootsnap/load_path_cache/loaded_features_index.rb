@@ -92,7 +92,7 @@ module Bootsnap
       # entry:
       #
       # If the user asked for e.g. `require 'bundler'`, and we went through the
-      # `FallbackScan` pathway in `kernel_require.rb` and therefore did not
+      # `FALLBACK_SCAN` pathway in `kernel_require.rb` and therefore did not
       # pass `long` (the full expanded absolute path), then we did are not able
       # to confidently add the `bundler.rb` form to @lfi.
       #
