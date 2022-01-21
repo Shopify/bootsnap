@@ -21,8 +21,8 @@ module Bootsnap
           require(pathish)
           FileUtils.rm_rf(dir)
         end
-        Process.wait(pid)
-        assert_predicate Process.last_status, :success?
+        _, status = Process.wait2(pid)
+        assert_predicate status, :success?
       ensure
         cache.close
         cache.unlink
