@@ -4,6 +4,31 @@ require("test_helper")
 
 module Bootsnap
   module KernelRequireTest
+    class KernelRequireTest < Minitest::Test
+      def test_uses_the_same_duck_type_as_require
+        assert_nil LoadPathCache.load_path_cache
+        cache = Tempfile.new("cache")
+        pid = fork do
+          LoadPathCache.setup(cache_path: cache, development_mode: true)
+          dir = File.realpath(Dir.mktmpdir)
+          $LOAD_PATH.push(dir)
+          FileUtils.touch("#{dir}/a.rb")
+          stringish = mock
+          stringish.expects(:to_str).returns("a").twice # bootsnap + ruby
+          pathish = mock
+          pathish.expects(:to_path).returns(stringish).twice # bootsnap + ruby
+          assert pathish.respond_to?(:to_path)
+          require(pathish)
+          FileUtils.rm_rf(dir)
+        end
+        Process.wait(pid)
+        assert_predicate Process.last_status, :success?
+      ensure
+        cache.close
+        cache.unlink
+      end
+    end
+
     class KernelLoadTest < MiniTest::Test
       def setup
         @initial_dir = Dir.pwd

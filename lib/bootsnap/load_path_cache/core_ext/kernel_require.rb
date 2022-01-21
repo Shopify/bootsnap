@@ -6,7 +6,8 @@ module Kernel
   alias_method(:require_without_bootsnap, :require)
 
   def require(path)
-    string_path = path.to_s
+    path_path = path.respond_to?(:to_path) ? path.to_path : path
+    string_path = String.try_convert(path_path) || raise(TypeError, "no implicit conversion of #{path_path.class} into String")
     return false if Bootsnap::LoadPathCache.loaded_features_index.key?(string_path)
 
     resolved = Bootsnap::LoadPathCache.load_path_cache.find(string_path)
