@@ -1,5 +1,7 @@
 # Unreleased
 
+# 1.10.2
+
 * Reduce the `Kernel.require` extra stack frames some more. Now bootsnap should only add one extra frame per `require` call.
 
 * Better check `freeze` option support in JSON compile cache.
