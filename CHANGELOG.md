@@ -22,7 +22,7 @@
   Since `1.8.0`, `YAML.load_file` was no longer cached when Psych 4 was used. This is because `load_file` loads
   in safe mode by default, so the Bootsnap cache could defeat that safety.
   Now when precompiling YAML files, Bootsnap first try to parse them in safe mode, and if it can't fallback to unsafe mode,
-  and the cache contains a flag that records wether it was generated in safe mode or not.
+  and the cache contains a flag that records whether it was generated in safe mode or not.
   `YAML.unsafe_load_file` will use safe caches just fine, but `YAML.load_file` will fallback to uncached YAML parsing
   if the cache was generated using unsafe parsing.
 
@@ -63,7 +63,7 @@
 
 # 1.8.0
 
-* Improve support for Pysch 4. (#368)
+* Improve support for Psych 4. (#368)
 
 # 1.7.7
 
@@ -81,8 +81,8 @@
 
 # 1.7.4
 
-* Stop raising errors when encoutering various file system errors. The cache is now best effort,
-  if somehow it can't be saved, bootsnapp will gracefully fallback to the original operation (e.g. `Kernel.require`).
+* Stop raising errors when encountering various file system errors. The cache is now best effort,
+  if somehow it can't be saved, bootsnap will gracefully fallback to the original operation (e.g. `Kernel.require`).
   (#353, #177, #262)
 
 # 1.7.3
