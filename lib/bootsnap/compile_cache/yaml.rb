@@ -5,7 +5,15 @@ require("bootsnap/bootsnap")
 module Bootsnap
   module CompileCache
     module YAML
-      UnsupportedTags = Class.new(StandardError)
+      Uncompilable = Class.new(StandardError)
+      UnsupportedTags = Class.new(Uncompilable)
+
+      SUPPORTED_INTERNAL_ENCODINGS = [
+        nil, # UTF-8
+        Encoding::UTF_8,
+        Encoding::ASCII,
+        Encoding::BINARY,
+      ].freeze
 
       class << self
         attr_accessor(:msgpack_factory, :supported_options)
@@ -16,7 +24,9 @@ module Bootsnap
         end
 
         def precompile(path)
-          Bootsnap::CompileCache::Native.precompile(
+          return false unless CompileCache::YAML.supported_internal_encoding?
+
+          CompileCache::Native.precompile(
             cache_dir,
             path.to_s,
             @implementation,
@@ -27,6 +37,44 @@ module Bootsnap
           self.cache_dir = cache_dir
           init!
           ::YAML.singleton_class.prepend(@implementation::Patch)
+        end
+
+        # Psych coerce strings to `Encoding.default_internal` but Message Pack only support
+        # UTF-8, US-ASCII and BINARY. So if Encoding.default_internal is set to anything else
+        # we can't safely use the cache
+        def supported_internal_encoding?
+          SUPPORTED_INTERNAL_ENCODINGS.include?(Encoding.default_internal)
+        end
+
+        module EncodingAwareSymbols
+          extend self
+
+          if Symbol.method_defined?(:name)
+            def pack(symbol)
+              if symbol.encoding == Encoding::UTF_8
+                1.chr << symbol.name
+              else
+                0.chr << symbol.name
+              end
+            end
+          else
+            def pack(symbol)
+              if symbol.encoding == Encoding::UTF_8
+                1.chr << symbol.to_s
+              else
+                0.chr << symbol.to_s
+              end
+            end
+          end
+
+          def unpack(payload)
+            payload.freeze
+            string = payload.byteslice(1..-1)
+            if payload.ord == 1 # Encoding::UTF_8
+              string.force_encoding(Encoding::UTF_8)
+            end
+            string.to_sym
+          end
         end
 
         def init!
@@ -43,7 +91,12 @@ module Bootsnap
           # We want them to roundtrip cleanly, so we use a custom factory.
           # see: https://github.com/msgpack/msgpack-ruby/pull/122
           factory = MessagePack::Factory.new
-          factory.register_type(0x00, Symbol)
+          factory.register_type(
+            0x00,
+            Symbol,
+            packer: EncodingAwareSymbols.method(:pack).to_proc,
+            unpacker: EncodingAwareSymbols.method(:unpack).to_proc,
+          )
 
           if defined? MessagePack::Timestamp
             factory.register_type(
@@ -124,7 +177,7 @@ module Bootsnap
             packer.pack(false) # not safe loaded
             packer.pack(obj)
             packer.to_s
-          rescue NoMethodError, RangeError, UnsupportedTags
+          rescue NoMethodError, RangeError, Uncompilable
             UNCOMPILABLE # The object included things that we can't serialize
           end
 
@@ -179,44 +232,48 @@ module Bootsnap
 
         module Patch
           def load_file(path, *args)
+            return super unless CompileCache::YAML.supported_internal_encoding?
+
             return super if args.size > 1
 
             if (kwargs = args.first)
               return super unless kwargs.is_a?(Hash)
-              return super unless (kwargs.keys - ::Bootsnap::CompileCache::YAML.supported_options).empty?
+              return super unless (kwargs.keys - CompileCache::YAML.supported_options).empty?
             end
 
             begin
-              ::Bootsnap::CompileCache::Native.fetch(
-                Bootsnap::CompileCache::YAML.cache_dir,
+              CompileCache::Native.fetch(
+                CompileCache::YAML.cache_dir,
                 File.realpath(path),
-                ::Bootsnap::CompileCache::YAML::Psych4::SafeLoad,
+                CompileCache::YAML::Psych4::SafeLoad,
                 kwargs,
               )
             rescue Errno::EACCES
-              ::Bootsnap::CompileCache.permission_error(path)
+              CompileCache.permission_error(path)
             end
           end
 
           ruby2_keywords :load_file if respond_to?(:ruby2_keywords, true)
 
           def unsafe_load_file(path, *args)
+            return super unless CompileCache::YAML.supported_internal_encoding?
+
             return super if args.size > 1
 
             if (kwargs = args.first)
               return super unless kwargs.is_a?(Hash)
-              return super unless (kwargs.keys - ::Bootsnap::CompileCache::YAML.supported_options).empty?
+              return super unless (kwargs.keys - CompileCache::YAML.supported_options).empty?
             end
 
             begin
-              ::Bootsnap::CompileCache::Native.fetch(
-                Bootsnap::CompileCache::YAML.cache_dir,
+              CompileCache::Native.fetch(
+                CompileCache::YAML.cache_dir,
                 File.realpath(path),
-                ::Bootsnap::CompileCache::YAML::Psych4::UnsafeLoad,
+                CompileCache::YAML::Psych4::UnsafeLoad,
                 kwargs,
               )
             rescue Errno::EACCES
-              ::Bootsnap::CompileCache.permission_error(path)
+              CompileCache.permission_error(path)
             end
           end
 
@@ -233,7 +290,7 @@ module Bootsnap
           packer.pack(false) # not safe loaded
           packer.pack(obj)
           packer.to_s
-        rescue NoMethodError, RangeError, UnsupportedTags
+        rescue NoMethodError, RangeError, Uncompilable
           UNCOMPILABLE # The object included things that we can't serialize
         end
 
@@ -253,44 +310,48 @@ module Bootsnap
 
         module Patch
           def load_file(path, *args)
+            return super unless CompileCache::YAML.supported_internal_encoding?
+
             return super if args.size > 1
 
             if (kwargs = args.first)
               return super unless kwargs.is_a?(Hash)
-              return super unless (kwargs.keys - ::Bootsnap::CompileCache::YAML.supported_options).empty?
+              return super unless (kwargs.keys - CompileCache::YAML.supported_options).empty?
             end
 
             begin
-              ::Bootsnap::CompileCache::Native.fetch(
-                Bootsnap::CompileCache::YAML.cache_dir,
+              CompileCache::Native.fetch(
+                CompileCache::YAML.cache_dir,
                 File.realpath(path),
-                ::Bootsnap::CompileCache::YAML::Psych3,
+                CompileCache::YAML::Psych3,
                 kwargs,
               )
             rescue Errno::EACCES
-              ::Bootsnap::CompileCache.permission_error(path)
+              CompileCache.permission_error(path)
             end
           end
 
           ruby2_keywords :load_file if respond_to?(:ruby2_keywords, true)
 
           def unsafe_load_file(path, *args)
+            return super unless CompileCache::YAML.supported_internal_encoding?
+
             return super if args.size > 1
 
             if (kwargs = args.first)
               return super unless kwargs.is_a?(Hash)
-              return super unless (kwargs.keys - ::Bootsnap::CompileCache::YAML.supported_options).empty?
+              return super unless (kwargs.keys - CompileCache::YAML.supported_options).empty?
             end
 
             begin
-              ::Bootsnap::CompileCache::Native.fetch(
-                Bootsnap::CompileCache::YAML.cache_dir,
+              CompileCache::Native.fetch(
+                CompileCache::YAML.cache_dir,
                 File.realpath(path),
-                ::Bootsnap::CompileCache::YAML::Psych3,
+                CompileCache::YAML::Psych3,
                 kwargs,
               )
             rescue Errno::EACCES
-              ::Bootsnap::CompileCache.permission_error(path)
+              CompileCache.permission_error(path)
             end
           end
 
