@@ -1,5 +1,19 @@
 # Unreleased
 
+* Improve the YAML compile cache to support `UTF-8` symbols. (#398)
+  [The default `MessagePack` symbol serializer assumes all symbols are ASCII](https://github.com/msgpack/msgpack-ruby/pull/211),
+  because of this, non-ASCII compatible symbol would be restored with `ASCII_8BIT` encoding (AKA `BINARY`).
+  Bootsnap now properly cache them in `UTF-8`.
+
+  Note that the above only apply for actual YAML symbols (e..g `--- :foo`).
+  The issue is still present for string keys parsed with `YAML.load_file(..., symbolize_names: true)`, that is a bug
+  in `msgpack` that will hopefully be solved soon, see: https://github.com/msgpack/msgpack-ruby/pull/246
+
+* Entirely disable the YAML compile cache if `Encoding.default_internal` is set to an encoding not supported by `msgpack`. (#398)
+  `Psych` coerce strings to `Encoding.default_internal`, but `MessagePack` doesn't. So in this scenario we can't provide
+  YAML caching at all without returning the strings in the wrong encoding.
+  This never came up in practice but might as well be safe.
+
 # 1.10.2
 
 * Reduce the `Kernel.require` extra stack frames some more. Now bootsnap should only add one extra frame per `require` call.

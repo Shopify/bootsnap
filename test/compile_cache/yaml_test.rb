@@ -49,6 +49,27 @@ class CompileCacheYAMLTest < Minitest::Test
     assert_equal "YAML tags are not supported: !ruby/object", error.message
   end
 
+  def test_symbols_encoding
+    symbols = [:ascii, :utf8_fée]
+    Help.set_file("a.yml", YAML.dump(symbols), 100)
+
+    loaded_symbols = FakeYaml.load_file("a.yml")
+    assert_equal(symbols, loaded_symbols)
+    assert_equal(symbols.map(&:encoding), loaded_symbols.map(&:encoding))
+  end
+
+  def test_custom_symbols_encoding
+    sym  = "壁に耳あり、障子に目あり".to_sym
+    Help.set_file("a.yml", YAML.dump(sym), 100)
+    # YAML is limited to UTF-8 and UTF-16 by spec, but Psych does respect Encoding.default_internal
+    # so strings and symbol can actually be of any encoding.
+    assert_raises FakeYaml::Fallback do
+      with_default_encoding_internal(Encoding::EUC_JP) do
+        FakeYaml.load_file("a.yml")
+      end
+    end
+  end
+
   if YAML::VERSION >= "4"
     def test_load_psych_4_with_alias
       Help.set_file("a.yml", "foo: &foo\n  bar: 42\nplop:\n  <<: *foo", 100)
@@ -168,6 +189,22 @@ class CompileCacheYAMLTest < Minitest::Test
     def test_unsafe_load_file
       Help.set_file("a.yml", "foo: &foo\n  bar: 42\nplop:\n  <<: *foo", 100)
       assert_equal({"foo" => {"bar" => 42}, "plop" => {"bar" => 42}}, FakeYaml.unsafe_load_file("a.yml"))
+    end
+  end
+
+  private
+
+  def with_default_encoding_internal(encoding)
+    original_internal = Encoding.default_internal
+    $VERBOSE = false
+    Encoding.default_internal = encoding
+    $VERBOSE = true
+    begin
+      yield
+    ensure
+      $VERBOSE = false
+      Encoding.default_internal = original_internal
+      $VERBOSE = true
     end
   end
 end
