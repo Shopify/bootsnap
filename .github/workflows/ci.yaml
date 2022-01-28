@@ -23,8 +23,19 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
-      - run: bundle install
+          bundler-cache: true
       - run: bundle exec rake
+
+  rubocop:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '2.3'
+          bundler-cache: true
+      - run: bundle exec rubocop
+
   rubies:
     strategy:
       matrix:
@@ -36,7 +47,7 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
-      - run: bundle install
+          bundler-cache: true
       - run: bundle exec rake
 
   psych4:
@@ -53,9 +64,8 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
-      - run: bundle install
+          bundler-cache: true
       - run: bundle exec rake
-    
 
   minimal:
     strategy:
@@ -69,5 +79,5 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
-      - run: bundle install
+          bundler-cache: true
       - run: bin/test-minimal-support

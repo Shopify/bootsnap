@@ -31,9 +31,6 @@ Style/TrailingCommaInArguments:
 Layout/LineLength:
   Max: 120
 
-Style/TrailingCommaInArguments:
-  EnforcedStyleForMultiline: comma
-
 Metrics/AbcSize:
   Enabled: false
 
@@ -61,9 +58,6 @@ Metrics/PerceivedComplexity:
 Naming/MethodName:
   Exclude:
     - 'test/**/*'
-
-Layout/SpaceInsideHashLiteralBraces:
-  EnforcedStyle: no_space
 
 Naming/RescuedExceptionsVariableName:
   PreferredName: error
@@ -158,3 +152,9 @@ Style/HashTransformKeys:
 
 Style/HashTransformValues:
   Enabled: true
+
+Style/RedundantReturn:
+  Enabled: false
+
+Style/YodaCondition:
+  Enabled: false

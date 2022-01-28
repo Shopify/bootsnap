@@ -63,7 +63,7 @@ class CompileCacheYAMLTest < Minitest::Test
     end
 
     def test_load_psych_4_with_unsafe_class
-      Help.set_file("a.yml",  "---\nfoo: !ruby/regexp /bar/\n", 100)
+      Help.set_file("a.yml", "---\nfoo: !ruby/regexp /bar/\n", 100)
 
       expected = {"foo" => /bar/}
       assert_equal(expected, FakeYaml.unsafe_load_file("a.yml"))
