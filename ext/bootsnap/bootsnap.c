@@ -135,6 +135,12 @@ bs_rb_coverage_running(VALUE self)
   return RTEST(cov) ? Qtrue : Qfalse;
 }
 
+static VALUE
+bs_rb_get_path(VALUE self, VALUE fname)
+{
+    return rb_get_path(fname);
+}
+
 /*
  * Ruby C extensions are initialized by calling Init_<extname>.
  *
@@ -146,6 +152,9 @@ void
 Init_bootsnap(void)
 {
   rb_mBootsnap = rb_define_module("Bootsnap");
+
+  rb_define_singleton_method(rb_mBootsnap, "rb_get_path", bs_rb_get_path, 1);
+
   rb_mBootsnap_CompileCache = rb_define_module_under(rb_mBootsnap, "CompileCache");
   rb_mBootsnap_CompileCache_Native = rb_define_module_under(rb_mBootsnap_CompileCache, "Native");
   rb_cBootsnap_CompileCache_UNCOMPILABLE = rb_const_get(rb_mBootsnap_CompileCache, rb_intern("UNCOMPILABLE"));

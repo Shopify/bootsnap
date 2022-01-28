@@ -1,9 +1,13 @@
 # Unreleased
 
+* Better respect `Kernel#require` duck typing. While it almost never comes up in practice, `Kernel#require`
+  follow a fairly intricate duck-typing protocol on its argument implemented as `rb_get_path(VALUE)` in MRI.
+  So when applicable we bind `rb_get_path` and use it for improved compatibility. See #396 and #406.
+
 * Get rid of the `Kernel.require_relative` decorator by resolving `$LOAD_PATH` members to their real path.
   This way we handle symlinks in `$LOAD_PATH` much more efficiently. See #402 for the detailed explanation.
   
-* Drop support for Ruby 2.3 (to allow gettind rid of the `Kernel.require_relative` decorator).
+* Drop support for Ruby 2.3 (to allow getting rid of the `Kernel.require_relative` decorator).
 
 # 1.10.3
 
