@@ -49,31 +49,8 @@ module Bootsnap
         module EncodingAwareSymbols
           extend self
 
-          if Symbol.method_defined?(:name)
-            def pack(symbol)
-              if symbol.encoding == Encoding::UTF_8
-                1.chr << symbol.name
-              else
-                0.chr << symbol.name
-              end
-            end
-          else
-            def pack(symbol)
-              if symbol.encoding == Encoding::UTF_8
-                1.chr << symbol.to_s
-              else
-                0.chr << symbol.to_s
-              end
-            end
-          end
-
           def unpack(payload)
-            payload.freeze
-            string = payload.byteslice(1..-1)
-            if payload.ord == 1 # Encoding::UTF_8
-              string.force_encoding(Encoding::UTF_8)
-            end
-            string.to_sym
+            payload.force_encoding(Encoding::UTF_8).to_sym
           end
         end
 
@@ -94,7 +71,7 @@ module Bootsnap
           factory.register_type(
             0x00,
             Symbol,
-            packer: EncodingAwareSymbols.method(:pack).to_proc,
+            packer: :to_msgpack_ext,
             unpacker: EncodingAwareSymbols.method(:unpack).to_proc,
           )
 
