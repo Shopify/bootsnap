@@ -2,7 +2,7 @@
  * Suggested reading order:
  * 1. Skim Init_bootsnap
  * 2. Skim bs_fetch
- * 3. The rest of everything
+ * 3. The rest of everyrything
  *
  * Init_bootsnap sets up the ruby objects and binds bs_fetch to
  * Bootsnap::CompileCache::Native.fetch.
@@ -75,7 +75,7 @@ struct bs_cache_key {
 STATIC_ASSERT(sizeof(struct bs_cache_key) == KEY_SIZE);
 
 /* Effectively a schema version. Bumping invalidates all previous caches */
-static const uint32_t current_version = 5;
+static const uint32_t current_version = 4;
 
 /* hash of e.g. "x86_64-darwin17", invalidating when ruby is recompiled on a
  * new OS ABI, etc. */

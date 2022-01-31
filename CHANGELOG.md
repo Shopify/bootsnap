@@ -1,6 +1,6 @@
 # Unreleased
 
-* Improve the YAML compile cache to support `UTF-8` symbols. (#398)
+* Improve the YAML compile cache to support `UTF-8` symbols. (#398, #399)
   [The default `MessagePack` symbol serializer assumes all symbols are ASCII](https://github.com/msgpack/msgpack-ruby/pull/211),
   because of this, non-ASCII compatible symbol would be restored with `ASCII_8BIT` encoding (AKA `BINARY`).
   Bootsnap now properly cache them in `UTF-8`.
