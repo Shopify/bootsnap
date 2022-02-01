@@ -185,10 +185,30 @@ class CompileCacheYAMLTest < Minitest::Test
     end
   end
 
+  def test_precompile_regexp
+    Help.set_file("a.yml", ::YAML.dump(foo: /bar/), 100)
+    assert Bootsnap::CompileCache::YAML.precompile("a.yml")
+  end
+
+  def test_precompile_date
+    Help.set_file("a.yml", ::YAML.dump(Date.today), 100)
+    assert Bootsnap::CompileCache::YAML.precompile("a.yml")
+  end
+
+  def test_precompile_object
+    Help.set_file("a.yml", ::YAML.dump(Object.new), 100)
+    refute Bootsnap::CompileCache::YAML.precompile("a.yml")
+  end
+
   if YAML.respond_to?(:unsafe_load_file)
     def test_unsafe_load_file
       Help.set_file("a.yml", "foo: &foo\n  bar: 42\nplop:\n  <<: *foo", 100)
       assert_equal({"foo" => {"bar" => 42}, "plop" => {"bar" => 42}}, FakeYaml.unsafe_load_file("a.yml"))
+    end
+
+    def test_unsafe_load_file_supports_regexp
+      Help.set_file("a.yml", ::YAML.dump(foo: /bar/), 100)
+      assert_equal({foo: /bar/}, FakeYaml.unsafe_load_file("a.yml"))
     end
   end
 

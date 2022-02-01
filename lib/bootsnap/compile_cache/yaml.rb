@@ -50,7 +50,7 @@ module Bootsnap
           extend self
 
           def unpack(payload)
-            payload.force_encoding(Encoding::UTF_8).to_sym
+            (+payload).force_encoding(Encoding::UTF_8).to_sym
           end
         end
 
@@ -149,13 +149,15 @@ module Bootsnap
           extend self
 
           def input_to_storage(contents, _)
-            obj = CompileCache::YAML.strict_load(contents)
+            obj = ::YAML.unsafe_load(contents)
             packer = CompileCache::YAML.msgpack_factory.packer
             packer.pack(false) # not safe loaded
-            packer.pack(obj)
+            begin
+              packer.pack(obj)
+            rescue NoMethodError, RangeError
+              return UNCOMPILABLE # The object included things that we can't serialize
+            end
             packer.to_s
-          rescue NoMethodError, RangeError, Uncompilable
-            UNCOMPILABLE # The object included things that we can't serialize
           end
 
           def storage_to_output(data, kwargs)
@@ -178,13 +180,20 @@ module Bootsnap
           extend self
 
           def input_to_storage(contents, _)
-            obj = ::YAML.load(contents)
+            obj = begin
+              CompileCache::YAML.strict_load(contents)
+            rescue Psych::DisallowedClass, Psych::BadAlias, Uncompilable
+              return UNCOMPILABLE
+            end
+
             packer = CompileCache::YAML.msgpack_factory.packer
             packer.pack(true) # safe loaded
-            packer.pack(obj)
+            begin
+              packer.pack(obj)
+            rescue NoMethodError, RangeError
+              return UNCOMPILABLE
+            end
             packer.to_s
-          rescue NoMethodError, RangeError, Psych::DisallowedClass, Psych::BadAlias
-            UNCOMPILABLE # The object included things that we can't serialize
           end
 
           def storage_to_output(data, kwargs)
@@ -262,13 +271,15 @@ module Bootsnap
         extend self
 
         def input_to_storage(contents, _)
-          obj = CompileCache::YAML.strict_load(contents)
+          obj = ::YAML.load(contents)
           packer = CompileCache::YAML.msgpack_factory.packer
           packer.pack(false) # not safe loaded
-          packer.pack(obj)
+          begin
+            packer.pack(obj)
+          rescue NoMethodError, RangeError
+            return UNCOMPILABLE # The object included things that we can't serialize
+          end
           packer.to_s
-        rescue NoMethodError, RangeError, Uncompilable
-          UNCOMPILABLE # The object included things that we can't serialize
         end
 
         def storage_to_output(data, kwargs)
