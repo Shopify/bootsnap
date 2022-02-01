@@ -3,6 +3,9 @@
 module Bootsnap
   module CompileCache
     UNCOMPILABLE = BasicObject.new
+    def UNCOMPILABLE.inspect
+      "<Bootsnap::UNCOMPILABLE>"
+    end
 
     Error = Class.new(StandardError)
     PermissionError = Class.new(Error)
