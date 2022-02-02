@@ -1,5 +1,9 @@
 # Unreleased
 
+# 1.10.3
+
+* Fix Regexp and Date type support in YAML compile cache. (#400)
+
 * Improve the YAML compile cache to support `UTF-8` symbols. (#398, #399)
   [The default `MessagePack` symbol serializer assumes all symbols are ASCII](https://github.com/msgpack/msgpack-ruby/pull/211),
   because of this, non-ASCII compatible symbol would be restored with `ASCII_8BIT` encoding (AKA `BINARY`).
