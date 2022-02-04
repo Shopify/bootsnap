@@ -26,7 +26,6 @@ module Bootsnap
             pre_patch_require_relative(path)
           end
         end
-
       end
 
       def teardown
