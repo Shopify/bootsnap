@@ -33,6 +33,7 @@ module Bootsnap
         FileUtils.rm_rf(@dir1)
         Kernel.module_eval do
           module_function
+
           undef :require_relative
           alias_method :require_relative, :pre_patch_require_relative
           undef :pre_patch_require_relative
