@@ -22,7 +22,7 @@ module Bootsnap
     CACHED_EXTENSIONS = DLEXT2 ? [DOT_RB, DLEXT, DLEXT2] : [DOT_RB, DLEXT]
 
     class << self
-      attr_reader(:load_path_cache, :loaded_features_index, :realpath_cache)
+      attr_reader(:load_path_cache, :loaded_features_index)
 
       def setup(cache_path:, development_mode:)
         unless supported?
@@ -33,7 +33,6 @@ module Bootsnap
         store = Store.new(cache_path)
 
         @loaded_features_index = LoadedFeaturesIndex.new
-        @realpath_cache = RealpathCache.new
 
         @load_path_cache = Cache.new(store, $LOAD_PATH, development_mode: development_mode)
         require_relative("load_path_cache/core_ext/kernel_require")
@@ -55,5 +54,4 @@ if Bootsnap::LoadPathCache.supported?
   require_relative("load_path_cache/store")
   require_relative("load_path_cache/change_observer")
   require_relative("load_path_cache/loaded_features_index")
-  require_relative("load_path_cache/realpath_cache")
 end

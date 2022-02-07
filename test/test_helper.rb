@@ -81,10 +81,10 @@ module MiniTest
           hash
         end
 
-        def set_file(path, contents, mtime)
+        def set_file(path, contents, mtime = nil)
           FileUtils.mkdir_p(File.dirname(path))
           File.write(path, contents)
-          FileUtils.touch(path, mtime: mtime)
+          FileUtils.touch(path, mtime: mtime) if mtime
           path
         end
       end

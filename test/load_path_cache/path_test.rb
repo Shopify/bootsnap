@@ -55,7 +55,7 @@ module Bootsnap
           entries, dirs = PathScanner.call(dir)
           path = Path.new(dir) # volatile, since it'll be in /tmp
 
-          @cache.expects(:get).with(dir).returns([100, entries, dirs])
+          @cache.expects(:get).with(path.expanded_path).returns([100, entries, dirs])
 
           path.entries_and_dirs(@cache)
         end
@@ -68,11 +68,11 @@ module Bootsnap
 
           FileUtils.touch(a_b, mtime: Time.at(101))
 
-          @cache.expects(:get).with(dir).returns([100, entries, dirs])
-          @cache.expects(:set).with(dir, [101, entries, dirs])
+          @cache.expects(:get).with(path.expanded_path).returns([100, entries, dirs])
+          @cache.expects(:set).with(path.expanded_path, [101, entries, dirs])
 
           # next read doesn't regen
-          @cache.expects(:get).with(dir).returns([101, entries, dirs])
+          @cache.expects(:get).with(path.expanded_path).returns([101, entries, dirs])
 
           path.entries_and_dirs(@cache)
           path.entries_and_dirs(@cache)
@@ -84,8 +84,8 @@ module Bootsnap
           entries, dirs = PathScanner.call(dir)
           path = Path.new(dir) # volatile, since it'll be in /tmp
 
-          @cache.expects(:get).with(dir).returns(nil)
-          @cache.expects(:set).with(dir, [100, entries, dirs])
+          @cache.expects(:get).with(path.expanded_path).returns(nil)
+          @cache.expects(:set).with(path.expanded_path, [100, entries, dirs])
 
           path.entries_and_dirs(@cache)
         end
@@ -101,7 +101,7 @@ module Bootsnap
 
           # It's unfortunate that we're stubbing the impl of #fetch here.
           PathScanner.expects(:call).never
-          @cache.expects(:get).with(dir).returns([100, entries, dirs])
+          @cache.expects(:get).with(path.expanded_path).returns([100, entries, dirs])
 
           path.entries_and_dirs(@cache)
         end
