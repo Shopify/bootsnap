@@ -2,37 +2,16 @@ AllCops:
   Exclude:
     - 'vendor/**/*'
     - 'tmp/**/*'
-  TargetRubyVersion: 2.3
+  TargetRubyVersion: 2.4
 
-# This doesn't take into account retrying from an exception
-Lint/SuppressedException:
+Bundler/OrderedGems:
   Enabled: false
 
-# allow String.new to create mutable strings
-Style/EmptyLiteral:
+Gemspec/OrderedDependencies:
   Enabled: false
 
-Style/EmptyMethod:
+Gemspec/DuplicatedAssignment:
   Enabled: false
-
-# allow the use of globals which makes sense in a CLI app like this
-Style/GlobalVars:
-  Enabled: false
-
-Style/PercentLiteralDelimiters:
-  Enabled: false
-
-Style/TrailingCommaInHashLiteral:
-  EnforcedStyleForMultiline: comma
-
-Style/TrailingCommaInArrayLiteral:
-  EnforcedStyleForMultiline: comma
-
-Style/TrailingCommaInArguments:
-  EnforcedStyleForMultiline: comma
-
-Layout/LineLength:
-  Max: 120
 
 Metrics/AbcSize:
   Enabled: false
@@ -65,17 +44,74 @@ Naming/MethodName:
 Naming/RescuedExceptionsVariableName:
   PreferredName: error
 
-Bundler/OrderedGems:
-  Enabled: false
-
-Gemspec/OrderedDependencies:
-  Enabled: false
-
-Gemspec/DuplicatedAssignment:
+Naming/VariableNumber:
   Enabled: false
 
 Layout/MultilineMethodCallIndentation:
   EnforcedStyle: indented
+
+Layout/EndAlignment:
+  EnforcedStyleAlignWith: start_of_line
+
+Layout/RescueEnsureAlignment:
+  Enabled: false
+
+Layout/FirstHashElementIndentation:
+  EnforcedStyle: consistent
+
+Layout/SpaceInsideHashLiteralBraces:
+  EnforcedStyle: no_space
+
+Layout/SpaceAroundMethodCallOperator:
+  Enabled: true
+
+Layout/LineLength:
+  Max: 120
+
+# This doesn't take into account retrying from an exception
+Lint/SuppressedException:
+  Enabled: false
+
+Lint/AssignmentInCondition:
+  AllowSafeAssignment: true
+
+Lint/UnusedMethodArgument:
+  AllowUnusedKeywordArguments: true
+
+Lint/RaiseException:
+  Enabled: true
+
+Lint/StructNewOverride:
+  Enabled: true
+
+Security/MarshalLoad:
+  Enabled: false
+
+Security/YAMLLoad:
+  Enabled: false
+
+# allow String.new to create mutable strings
+Style/EmptyLiteral:
+  Enabled: false
+
+Style/EmptyMethod:
+  Enabled: false
+
+# allow the use of globals which makes sense in a CLI app like this
+Style/GlobalVars:
+  Enabled: false
+
+Style/PercentLiteralDelimiters:
+  Enabled: false
+
+Style/TrailingCommaInHashLiteral:
+  EnforcedStyleForMultiline: comma
+
+Style/TrailingCommaInArrayLiteral:
+  EnforcedStyleForMultiline: comma
+
+Style/TrailingCommaInArguments:
+  EnforcedStyleForMultiline: comma
 
 Style/SymbolArray:
   Enabled: false
@@ -92,31 +128,7 @@ Style/IfUnlessModifier:
 Style/GuardClause:
   Enabled: false
 
-Layout/EndAlignment:
-  EnforcedStyleAlignWith: start_of_line
-
-Layout/RescueEnsureAlignment:
-  Enabled: false
-
-Layout/FirstHashElementIndentation:
-  EnforcedStyle: consistent
-
 Style/NumericPredicate:
-  Enabled: false
-
-Layout/SpaceInsideHashLiteralBraces:
-  EnforcedStyle: no_space
-
-Lint/AssignmentInCondition:
-  AllowSafeAssignment: true
-
-Lint/UnusedMethodArgument:
-  AllowUnusedKeywordArguments: true
-
-Security/MarshalLoad:
-  Enabled: false
-
-Security/YAMLLoad:
   Enabled: false
 
 Style/Alias:
@@ -131,21 +143,11 @@ Style/DoubleNegation:
 Style/CommentedKeyword:
   Enabled: false
 
-Naming/VariableNumber:
-  Enabled: false
-
 Style/Next:
   Enabled: false
 
 Style/StringLiterals:
   EnforcedStyle: double_quotes
-
-
-Lint/RaiseException:
-  Enabled: true
-
-Lint/StructNewOverride:
-  Enabled: true
 
 Style/HashEachMethods:
   Enabled: true
@@ -161,3 +163,6 @@ Style/RedundantReturn:
 
 Style/YodaCondition:
   Enabled: false
+
+Style/ExponentialNotation:
+  Enabled: true

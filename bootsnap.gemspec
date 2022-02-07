@@ -29,7 +29,7 @@ Gem::Specification.new do |spec|
   spec.bindir        = "exe"
   spec.executables   = %w(bootsnap)
 
-  spec.required_ruby_version = ">= 2.3.0"
+  spec.required_ruby_version = ">= 2.4.0"
 
   if RUBY_PLATFORM =~ /java/
     spec.platform = "java"

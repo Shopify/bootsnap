@@ -1,5 +1,7 @@
 # Unreleased
 
+* Drop support for Ruby 2.3. 
+
 # 1.10.3
 
 * Fix Regexp and Date type support in YAML compile cache. (#400)
