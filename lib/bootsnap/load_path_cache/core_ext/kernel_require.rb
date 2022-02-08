@@ -33,15 +33,6 @@ module Kernel
     end
   end
 
-  alias_method(:require_relative_without_bootsnap, :require_relative)
-  def require_relative(path)
-    location = caller_locations(1..1).first
-    realpath = Bootsnap::LoadPathCache.realpath_cache.call(
-      location.absolute_path || location.path, path
-    )
-    require(realpath)
-  end
-
   alias_method(:load_without_bootsnap, :load)
   def load(path, wrap = false)
     if (resolved = Bootsnap::LoadPathCache.load_path_cache.find(path, try_extensions: false))
