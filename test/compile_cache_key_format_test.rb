@@ -49,14 +49,14 @@ class CompileCacheKeyFormatTest < Minitest::Test
   def test_key_size
     key = cache_key_for_file(FILE)
     exp = File.size(FILE)
-    act = key[R[:size]].unpack("Q")[0]
+    act = key[R[:size]].unpack1("Q")
     assert_equal(exp, act)
   end
 
   def test_key_mtime
     key = cache_key_for_file(FILE)
     exp = File.mtime(FILE).to_i
-    act = key[R[:mtime]].unpack("Q")[0]
+    act = key[R[:mtime]].unpack1("Q")
     assert_equal(exp, act)
   end
 
