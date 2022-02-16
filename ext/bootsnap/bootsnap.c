@@ -2,7 +2,7 @@
  * Suggested reading order:
  * 1. Skim Init_bootsnap
  * 2. Skim bs_fetch
- * 3. The rest of everyrything
+ * 3. The rest of everything
  *
  * Init_bootsnap sets up the ruby objects and binds bs_fetch to
  * Bootsnap::CompileCache::Native.fetch.
