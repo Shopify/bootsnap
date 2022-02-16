@@ -187,7 +187,7 @@ module Bootsnap
       Help.set_file("test_case.rb", source)
 
       Help.set_file("test_case.rb", %{require "bootsnap/setup"\n#{source}})
-      assert system({"BOOTSNAP_CACHE_DIR" => "tmp/cache"}, RbConfig.ruby, "-I.", "test_case.rb")
+      assert system({"BOOTSNAP_CACHE_DIR" => "tmp/cache"}, RbConfig.ruby, "-Ilib:.", "test_case.rb")
     end
 
     def setup_symlinked_files

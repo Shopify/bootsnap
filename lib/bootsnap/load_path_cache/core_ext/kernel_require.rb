@@ -6,7 +6,7 @@ module Kernel
   alias_method(:require_without_bootsnap, :require)
 
   def require(path)
-    string_path = path.to_s
+    string_path = Bootsnap.rb_get_path(path)
     return false if Bootsnap::LoadPathCache.loaded_features_index.key?(string_path)
 
     resolved = Bootsnap::LoadPathCache.load_path_cache.find(string_path)
@@ -35,7 +35,7 @@ module Kernel
 
   alias_method(:load_without_bootsnap, :load)
   def load(path, wrap = false)
-    if (resolved = Bootsnap::LoadPathCache.load_path_cache.find(path, try_extensions: false))
+    if (resolved = Bootsnap::LoadPathCache.load_path_cache.find(Bootsnap.rb_get_path(path), try_extensions: false))
       load_without_bootsnap(resolved, wrap)
     else
       load_without_bootsnap(path, wrap)
@@ -53,7 +53,7 @@ class Module
     # The challenge is that we don't control the point at which the entry gets
     # added to $LOADED_FEATURES and won't be able to hook that modification
     # since it's done in C-land.
-    resolved = Bootsnap::LoadPathCache.load_path_cache.find(path)
+    resolved = Bootsnap::LoadPathCache.load_path_cache.find(Bootsnap.rb_get_path(path))
     if Bootsnap::LoadPathCache::FALLBACK_SCAN.equal?(resolved)
       autoload_without_bootsnap(const, path)
     elsif resolved == false
