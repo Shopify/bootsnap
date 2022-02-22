@@ -69,7 +69,7 @@ module Bootsnap
       def load_data
         @data = begin
           data = File.open(@store_path, encoding: Encoding::BINARY) do |io|
-            MessagePack.load(io)
+            MessagePack.load(io, freeze: true)
           end
           if data.is_a?(Hash) && data[VERSION_KEY] == CURRENT_VERSION
             data
@@ -99,7 +99,7 @@ module Bootsnap
         # `encoding:` looks redundant wrt `binwrite`, but necessary on windows
         # because binary is part of mode.
         File.open(tmp, mode: exclusive_write, encoding: Encoding::BINARY) do |io|
-          MessagePack.dump(@data, io, freeze: true)
+          MessagePack.dump(@data, io)
         end
         FileUtils.mv(tmp, @store_path)
       rescue Errno::EEXIST
