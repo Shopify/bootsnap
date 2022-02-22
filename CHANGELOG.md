@@ -1,5 +1,7 @@
 # Unreleased
 
+* Drop dependency on `fileutils`.
+
 * Better respect `Kernel#require` duck typing. While it almost never comes up in practice, `Kernel#require`
   follow a fairly intricate duck-typing protocol on its argument implemented as `rb_get_path(VALUE)` in MRI.
   So when applicable we bind `rb_get_path` and use it for improved compatibility. See #396 and #406.
