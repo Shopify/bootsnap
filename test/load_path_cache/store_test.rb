@@ -71,7 +71,7 @@ module Bootsnap
 
         MessagePack.expects(:dump).in_sequence(retries).raises(Errno::EEXIST.new("File exists @ rb_sysopen"))
         MessagePack.expects(:dump).in_sequence(retries).returns(1)
-        FileUtils.expects(:mv).in_sequence(retries)
+        File.expects(:rename).in_sequence(retries)
 
         store.transaction { store.set("a", 1) }
       end

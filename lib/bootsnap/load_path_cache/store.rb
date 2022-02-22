@@ -89,19 +89,17 @@ module Bootsnap
       end
 
       def dump_data
-        require "fileutils" unless defined? FileUtils
-
         # Change contents atomically so other processes can't get invalid
         # caches if they read at an inopportune time.
         tmp = "#{@store_path}.#{Process.pid}.#{(rand * 100_000).to_i}.tmp"
-        FileUtils.mkpath(File.dirname(tmp))
+        mkdir_p(File.dirname(tmp))
         exclusive_write = File::Constants::CREAT | File::Constants::EXCL | File::Constants::WRONLY
         # `encoding:` looks redundant wrt `binwrite`, but necessary on windows
         # because binary is part of mode.
         File.open(tmp, mode: exclusive_write, encoding: Encoding::BINARY) do |io|
-          MessagePack.dump(@data, io, freeze: true)
+          MessagePack.dump(@data, io)
         end
-        FileUtils.mv(tmp, @store_path)
+        File.rename(tmp, @store_path)
       rescue Errno::EEXIST
         retry
       rescue SystemCallError
@@ -109,6 +107,21 @@ module Bootsnap
 
       def default_data
         {VERSION_KEY => CURRENT_VERSION}
+      end
+
+      def mkdir_p(path)
+        stack = []
+        until File.directory?(path)
+          stack.push path
+          path = File.dirname(path)
+        end
+        stack.reverse_each do |dir|
+          begin
+            Dir.mkdir(dir)
+          rescue SystemCallError
+            raise unless File.directory?(dir)
+          end
+        end
       end
     end
   end
