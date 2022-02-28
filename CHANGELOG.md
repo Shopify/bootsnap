@@ -1,5 +1,7 @@
 # Unreleased
 
+# 1.11.0
+
 * Drop dependency on `fileutils`.
 
 * Better respect `Kernel#require` duck typing. While it almost never comes up in practice, `Kernel#require`
