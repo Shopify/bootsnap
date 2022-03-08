@@ -37,6 +37,12 @@ module Bootsnap
         assert_equal("c", store3.get("a"))
       end
 
+      def test_modification_of_loaded_store
+        store.transaction { store.set("a", "b") }
+        store = Store.new(@path)
+        store.transaction { store.set("c", "d") }
+      end
+
       def test_stores_arrays
         store.transaction { store.set("a", [1234, %w(a b)]) }
 

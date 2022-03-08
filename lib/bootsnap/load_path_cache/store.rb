@@ -29,8 +29,8 @@ module Bootsnap
 
         v = get(key)
         unless v
-          @dirty = true
           v = yield
+          mark_for_mutation!
           @data[key] = v
         end
         v
@@ -40,7 +40,7 @@ module Bootsnap
         raise(SetOutsideTransactionNotAllowed) unless @txn_mutex.owned?
 
         if value != @data[key]
-          @dirty = true
+          mark_for_mutation!
           @data[key] = value
         end
       end
@@ -58,6 +58,11 @@ module Bootsnap
       end
 
       private
+
+      def mark_for_mutation!
+        @dirty = true
+        @data = @data.dup if @data.frozen?
+      end
 
       def commit_transaction
         if @dirty
