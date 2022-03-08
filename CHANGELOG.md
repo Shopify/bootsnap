@@ -1,5 +1,9 @@
 # Unreleased
 
+# 1.11.1
+
+* Fix the `can't modify frozen Hash` error on load path cache mutation. See #411.
+
 # 1.11.0
 
 * Drop dependency on `fileutils`.
