@@ -172,7 +172,7 @@ module Bootsnap
 
       load_paths.each do |path|
         if !exclude || !exclude.match?(path)
-          list_files(path, "**/*.rb").each do |ruby_file|
+          list_files(path, "**/{*.rb,*.rake,Rakefile}").each do |ruby_file|
             if !exclude || !exclude.match?(ruby_file)
               @work_pool.push(:ruby, ruby_file)
             end

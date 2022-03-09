@@ -18,6 +18,18 @@ module Bootsnap
       assert_equal 0, CLI.new(["precompile", "-j", "0", path]).run
     end
 
+    def test_precompile_rake_files
+      path = Help.set_file("a.rake", "a = a = 3", 100)
+      CompileCache::ISeq.expects(:precompile).with(File.expand_path(path))
+      assert_equal 0, CLI.new(["precompile", "-j", "0", path]).run
+    end
+
+    def test_precompile_rakefile
+      path = Help.set_file("Rakefile", "a = a = 3", 100)
+      CompileCache::ISeq.expects(:precompile).with(File.expand_path(path))
+      assert_equal 0, CLI.new(["precompile", "-j", "0", path]).run
+    end
+
     def test_no_iseq
       path = Help.set_file("a.rb", "a = a = 3", 100)
       CompileCache::ISeq.expects(:precompile).never
