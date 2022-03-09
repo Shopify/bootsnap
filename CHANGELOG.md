@@ -1,5 +1,8 @@
 # Unreleased
 
+* Remove `uname` and other patform specific version from the cache keys. `RUBY_PLATFORM + RUBY_REVISION` should be
+  enough to ensure bytecode compatibility. This should improve caching for alpine based setups. See #409.
+
 # 1.11.1
 
 * Fix the `can't modify frozen Hash` error on load path cache mutation. See #411.
