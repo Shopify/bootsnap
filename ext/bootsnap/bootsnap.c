@@ -19,12 +19,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#ifndef _WIN32
-#include <sys/utsname.h>
-#endif
-#ifdef __GLIBC__
-#include <gnu/libc-version.h>
-#endif
 
 /* 1000 is an arbitrary limit; FNV64 plus some slashes brings the cap down to
  * 981 for the cache dir */
@@ -205,29 +199,6 @@ bs_compile_option_crc32_set(VALUE self, VALUE crc32_v)
   return Qnil;
 }
 
-/*
- * We use FNV1a-64 to derive cache paths. The choice is somewhat arbitrary but
- * it has several nice properties:
- *
- *   - Tiny implementation
- *   - No external dependency
- *   - Solid performance
- *   - Solid randomness
- *   - 32 bits doesn't feel collision-resistant enough; 64 is nice.
- */
-static uint64_t
-fnv1a_64_iter_cstr(uint64_t h, const char *str)
-{
-  unsigned char *s = (unsigned char *)str;
-
-  while (*s) {
-    h ^= (uint64_t)*s++;
-    h += (h << 1) + (h << 4) + (h << 5) + (h << 7) + (h << 8) + (h << 40);
-  }
-
-  return h;
-}
-
 static uint64_t
 fnv1a_64_iter(uint64_t h, const VALUE str)
 {
@@ -272,10 +243,6 @@ get_ruby_revision(void)
 /*
  * When ruby's version doesn't change, but it's recompiled on a different OS
  * (or OS version), we need to invalidate the cache.
- *
- * We actually factor in some extra information here, to be extra confident
- * that we don't try to re-use caches that will not be compatible, by factoring
- * in utsname.version.
  */
 static uint32_t
 get_ruby_platform(void)
@@ -285,22 +252,7 @@ get_ruby_platform(void)
 
   ruby_platform = rb_const_get(rb_cObject, rb_intern("RUBY_PLATFORM"));
   hash = fnv1a_64(ruby_platform);
-
-#ifdef _WIN32
-  return (uint32_t)(hash >> 32) ^ (uint32_t)GetVersion();
-#elif defined(__GLIBC__)
-  hash = fnv1a_64_iter_cstr(hash, gnu_get_libc_version());
   return (uint32_t)(hash >> 32);
-#else
-  struct utsname utsname;
-
-  /* Not worth crashing if this fails; lose extra cache invalidation potential */
-  if (uname(&utsname) >= 0) {
-    hash = fnv1a_64_iter_cstr(hash, utsname.version);
-  }
-
-  return (uint32_t)(hash >> 32);
-#endif
 }
 
 /*
