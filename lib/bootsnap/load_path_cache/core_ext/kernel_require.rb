@@ -42,24 +42,3 @@ module Kernel
     end
   end
 end
-
-class Module
-  alias_method(:autoload_without_bootsnap, :autoload)
-  def autoload(const, path)
-    # NOTE: This may defeat LoadedFeaturesIndex, but it's not immediately
-    # obvious how to make it work. This feels like a pretty niche case, unclear
-    # if it will ever burn anyone.
-    #
-    # The challenge is that we don't control the point at which the entry gets
-    # added to $LOADED_FEATURES and won't be able to hook that modification
-    # since it's done in C-land.
-    resolved = Bootsnap::LoadPathCache.load_path_cache.find(Bootsnap.rb_get_path(path))
-    if Bootsnap::LoadPathCache::FALLBACK_SCAN.equal?(resolved)
-      autoload_without_bootsnap(const, path)
-    elsif resolved == false
-      return false
-    else
-      autoload_without_bootsnap(const, resolved || path)
-    end
-  end
-end
