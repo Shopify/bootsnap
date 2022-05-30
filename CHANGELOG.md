@@ -2,6 +2,8 @@
 
 * `bootsnap precompile` CLI will now also precompile `Rakefile` and `.rake` files.
 
+* Stop decorating `Module#autoload` as it was only useful for supporting Ruby 2.2 and older.
+
 * Remove `uname` and other patform specific version from the cache keys. `RUBY_PLATFORM + RUBY_REVISION` should be
   enough to ensure bytecode compatibility. This should improve caching for alpine based setups. See #409.
 
