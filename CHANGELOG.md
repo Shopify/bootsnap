@@ -1,5 +1,7 @@
 # Unreleased
 
+# 1.12.0
+
 * `bootsnap precompile` CLI will now also precompile `Rakefile` and `.rake` files.
 
 * Stop decorating `Module#autoload` as it was only useful for supporting Ruby 2.2 and older.
