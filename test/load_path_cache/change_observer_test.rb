@@ -8,7 +8,7 @@ module Bootsnap
       def setup
         @observer = Object.new
         @arr = []
-        ChangeObserver.register(@observer, @arr)
+        ChangeObserver.register(@arr, @observer)
       end
 
       def test_observes_changes
@@ -31,6 +31,25 @@ module Bootsnap
         @arr.prepend("j", "k")
       end
 
+      def test_unregister
+        @observer.expects(:push_paths).never
+        @observer.expects(:unshift_paths).never
+        @observer.expects(:reinitialize).never
+
+        ChangeObserver.unregister(@arr)
+
+        @arr << "a"
+        @arr.push("b", "c")
+        @arr.append("d", "e")
+        @arr.unshift("f", "g")
+        @arr.concat(%w(h i))
+        @arr.prepend("j", "k")
+        @arr.delete(3)
+        @arr.compact!
+        @arr.map!(&:upcase)
+        assert_equal %w(J K F G A B C D E H I), @arr
+      end
+
       def test_reinitializes_on_aggressive_modifications
         @observer.expects(:push_paths).with(@arr, "a", "b", "c")
         @arr.push("a", "b", "c")
@@ -45,11 +64,11 @@ module Bootsnap
 
       def test_register_frozen
         # just assert no crash
-        ChangeObserver.register(@observer, @arr.dup.freeze)
+        ChangeObserver.register(@arr.dup.freeze, @observer)
       end
 
       def test_register_twice_observes_once
-        ChangeObserver.register(@observer, @arr)
+        ChangeObserver.register(@arr, @observer)
 
         @observer.expects(:push_paths).with(@arr, "a").once
         @arr << "a"

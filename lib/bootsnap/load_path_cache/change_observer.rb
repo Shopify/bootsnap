@@ -56,11 +56,22 @@ module Bootsnap
         end
       end
 
-      def self.register(observer, arr)
+      def self.register(arr, observer)
         return if arr.frozen? # can't register observer, but no need to.
 
         arr.instance_variable_set(:@lpc_observer, observer)
-        arr.extend(ArrayMixin)
+        ArrayMixin.instance_methods.each do |method_name|
+          arr.singleton_class.send(:define_method, method_name, ArrayMixin.instance_method(method_name))
+        end
+      end
+
+      def self.unregister(arr)
+        return unless arr.instance_variable_get(:@lpc_observer)
+
+        ArrayMixin.instance_methods.each do |method_name|
+          arr.singleton_class.send(:remove_method, method_name)
+        end
+        arr.instance_variable_set(:@lpc_observer, nil)
       end
     end
   end

@@ -114,7 +114,7 @@ module Bootsnap
       def reinitialize(path_obj = @path_obj)
         @mutex.synchronize do
           @path_obj = path_obj
-          ChangeObserver.register(self, @path_obj)
+          ChangeObserver.register(@path_obj, self)
           @index = {}
           @dirs = {}
           @generated_at = now
