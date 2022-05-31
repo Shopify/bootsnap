@@ -6,6 +6,9 @@
 
   People still using the classic autoloader might want to stick to `bootsnap 1.12`.
 
+* Add `Bootsnap.unload_cache!`. Applications can call it at the end of their boot sequence when they know
+  no more code will be loaded to reclaim a bit of memory.
+
 # 1.12.0
 
 * `bootsnap precompile` CLI will now also precompile `Rakefile` and `.rake` files.

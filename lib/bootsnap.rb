@@ -76,6 +76,10 @@ module Bootsnap
       )
     end
 
+    def self.unload_cache!
+      LoadPathCache.unload!
+    end
+
     def iseq_cache_supported?
       return @iseq_cache_supported if defined? @iseq_cache_supported
 
