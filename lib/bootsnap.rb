@@ -47,29 +47,29 @@ module Bootsnap
     )
       unless autoload_paths_cache.nil?
         warn "[DEPRECATED] Bootsnap's `autoload_paths_cache:` option is deprecated and will be removed. " \
-          "If you use Zeitwerk this option is useless, and if you are still using the classic autoloader " \
-          "upgrading is recommended."
+             "If you use Zeitwerk this option is useless, and if you are still using the classic autoloader " \
+             "upgrading is recommended."
       end
 
       unless disable_trace.nil?
         warn "[DEPRECATED] Bootsnap's `disable_trace:` option is deprecated and will be removed. " \
-          "If you use Ruby 2.5 or newer this option is useless, if not upgrading is recommended."
+             "If you use Ruby 2.5 or newer this option is useless, if not upgrading is recommended."
       end
 
       if compile_cache_iseq && !iseq_cache_supported?
         warn "Ruby 2.5 has a bug that break code tracing when code is loaded from cache. It is recommened " \
-          "to turn `compile_cache_iseq` off on Ruby 2.5"
+             "to turn `compile_cache_iseq` off on Ruby 2.5"
       end
 
       if load_path_cache
         Bootsnap::LoadPathCache.setup(
-          cache_path: cache_dir + "/bootsnap/load-path-cache",
+          cache_path: "#{cache_dir}/bootsnap/load-path-cache",
           development_mode: development_mode,
         )
       end
 
       Bootsnap::CompileCache.setup(
-        cache_dir: cache_dir + "/bootsnap/compile-cache",
+        cache_dir: "#{cache_dir}/bootsnap/compile-cache",
         iseq: compile_cache_iseq,
         yaml: compile_cache_yaml,
         json: compile_cache_json,

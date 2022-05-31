@@ -22,5 +22,5 @@ if RUBY_ENGINE == "ruby"
 
   create_makefile("bootsnap/bootsnap")
 else
-  File.write("Makefile", dummy_makefile($srcdir).join(""))
+  File.write("Makefile", dummy_makefile($srcdir).join)
 end

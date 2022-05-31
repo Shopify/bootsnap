@@ -38,7 +38,7 @@ module Bootsnap
       FileUtils.touch("#{@dir1}/a.rb")
       FileUtils.touch("#{@dir1}/no_ext")
       @dir2 = File.realpath(Dir.mktmpdir)
-      File.open("#{@dir2}/loads.rb", "wb") { |f| f.write("load 'subdir/loaded'\nload './subdir/loaded'\n") }
+      File.binwrite("#{@dir2}/loads.rb", "load 'subdir/loaded'\nload './subdir/loaded'\n")
       FileUtils.mkdir("#{@dir2}/subdir")
       FileUtils.touch("#{@dir2}/subdir/loaded")
       $LOAD_PATH.push(@dir1)

@@ -34,14 +34,14 @@ module Bootsnap
           begin
             iseq.to_binary
           rescue TypeError
-            return UNCOMPILABLE # ruby bug #18250
+            UNCOMPILABLE # ruby bug #18250
           end
         end
       else
         def self.input_to_storage(_, path)
           RubyVM::InstructionSequence.compile_file(path).to_binary
         rescue SyntaxError
-          return UNCOMPILABLE # syntax error
+          UNCOMPILABLE # syntax error
         end
       end
 
@@ -49,7 +49,7 @@ module Bootsnap
         RubyVM::InstructionSequence.load_from_binary(binary)
       rescue RuntimeError => error
         if error.message == "broken binary format"
-          STDERR.puts("[Bootsnap::CompileCache] warning: rejecting broken binary")
+          $stderr.puts("[Bootsnap::CompileCache] warning: rejecting broken binary")
           nil
         else
           raise

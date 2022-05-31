@@ -66,7 +66,7 @@ module Bootsnap
 
           # Gems that include JSON or YAML files usually don't put them in `lib/`.
           # So we look at the gem root.
-          gem_pattern = %r{^#{Regexp.escape(Bundler.bundle_path.to_s)}/?(?:bundler/)?gems\/[^/]+}
+          gem_pattern = %r{^#{Regexp.escape(Bundler.bundle_path.to_s)}/?(?:bundler/)?gems/[^/]+}
           gem_paths = $LOAD_PATH.map { |p| p[gem_pattern] }.compact.uniq
           precompile_yaml_files(gem_paths, exclude: gem_exclude)
           precompile_json_files(gem_paths, exclude: gem_exclude)
@@ -138,8 +138,8 @@ module Bootsnap
 
     def precompile_yaml(*yaml_files)
       Array(yaml_files).each do |yaml_file|
-        if CompileCache::YAML.precompile(yaml_file)
-          STDERR.puts(yaml_file) if verbose
+        if CompileCache::YAML.precompile(yaml_file) && verbose
+          $stderr.puts(yaml_file)
         end
       end
     end
@@ -161,8 +161,8 @@ module Bootsnap
 
     def precompile_json(*json_files)
       Array(json_files).each do |json_file|
-        if CompileCache::JSON.precompile(json_file)
-          STDERR.puts(json_file) if verbose
+        if CompileCache::JSON.precompile(json_file) && verbose
+          $stderr.puts(json_file)
         end
       end
     end
@@ -183,8 +183,8 @@ module Bootsnap
 
     def precompile_ruby(*ruby_files)
       Array(ruby_files).each do |ruby_file|
-        if CompileCache::ISeq.precompile(ruby_file)
-          STDERR.puts(ruby_file) if verbose
+        if CompileCache::ISeq.precompile(ruby_file) && verbose
+          $stderr.puts(ruby_file)
         end
       end
     end
@@ -203,9 +203,9 @@ module Bootsnap
     end
 
     def invalid_usage!(message)
-      STDERR.puts message
-      STDERR.puts
-      STDERR.puts parser
+      $stderr.puts message
+      $stderr.puts
+      $stderr.puts parser
       1
     end
 

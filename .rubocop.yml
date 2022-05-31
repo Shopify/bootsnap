@@ -2,12 +2,17 @@ AllCops:
   Exclude:
     - 'vendor/**/*'
     - 'tmp/**/*'
-  TargetRubyVersion: 2.4
+  TargetRubyVersion: 2.5
+  NewCops: enable
+  SuggestExtensions: false
 
 Bundler/OrderedGems:
   Enabled: false
 
 Gemspec/OrderedDependencies:
+  Enabled: false
+
+Gemspec/RequireMFA:
   Enabled: false
 
 Gemspec/DuplicatedAssignment:
@@ -72,6 +77,13 @@ Layout/LineLength:
 Lint/SuppressedException:
   Enabled: false
 
+Lint/NoReturnInBeginEndBlocks:
+  Enabled: false
+
+# False positives...
+Lint/DuplicateBranch:
+  Enabled: false
+
 Lint/AssignmentInCondition:
   AllowSafeAssignment: true
 
@@ -80,6 +92,9 @@ Lint/UnusedMethodArgument:
 
 Lint/RaiseException:
   Enabled: true
+
+Lint/OrAssignmentToConstant:
+  Enabled: false
 
 Lint/StructNewOverride:
   Enabled: true
@@ -95,6 +110,9 @@ Style/EmptyLiteral:
   Enabled: false
 
 Style/EmptyMethod:
+  Enabled: false
+
+Style/FetchEnvVar:
   Enabled: false
 
 # allow the use of globals which makes sense in a CLI app like this
@@ -166,3 +184,7 @@ Style/YodaCondition:
 
 Style/ExponentialNotation:
   Enabled: true
+
+Style/OptionalBooleanParameter:
+  Exclude:
+    - '**/core_ext/**'

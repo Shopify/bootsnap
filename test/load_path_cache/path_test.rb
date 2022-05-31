@@ -16,12 +16,12 @@ module Bootsnap
         volatile        = Path.new(__FILE__)
         stable          = Path.new(time_file)
         unknown         = Path.new("/who/knows")
-        lib             = Path.new(RbConfig::CONFIG["libdir"]  + "/a")
-        site            = Path.new(RbConfig::CONFIG["sitedir"] + "/b")
+        lib             = Path.new("#{RbConfig::CONFIG['libdir']}/a")
+        site            = Path.new("#{RbConfig::CONFIG['sitedir']}/b")
         absolute_prefix = RbConfig::CONFIG["host_os"] =~ /mswin|mingw|cygwin/ ? ENV["SystemDrive"] : ""
-        bundler         = Path.new(absolute_prefix + "/bp/3")
+        bundler         = Path.new("#{absolute_prefix}/bp/3")
 
-        Bundler.stubs(:bundle_path).returns(absolute_prefix + "/bp")
+        Bundler.stubs(:bundle_path).returns("#{absolute_prefix}/bp")
 
         assert(stable.stable?, "The stable path #{stable.path.inspect} was unexpectedly not stable.")
         refute(stable.volatile?, "The stable path #{stable.path.inspect} was unexpectedly volatile.")
