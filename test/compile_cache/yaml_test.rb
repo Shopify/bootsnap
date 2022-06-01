@@ -59,7 +59,7 @@ class CompileCacheYAMLTest < Minitest::Test
   end
 
   def test_custom_symbols_encoding
-    sym = "壁に耳あり、障子に目あり".to_sym
+    sym = "壁に耳あり、障子に目あり".to_sym # rubocop:disable Lint/SymbolConversion
     Help.set_file("a.yml", YAML.dump(sym), 100)
     # YAML is limited to UTF-8 and UTF-16 by spec, but Psych does respect Encoding.default_internal
     # so strings and symbol can actually be of any encoding.

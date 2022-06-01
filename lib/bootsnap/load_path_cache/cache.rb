@@ -216,7 +216,7 @@ module Bootsnap
 
       s = rand.to_s.force_encoding(Encoding::US_ASCII).freeze
       if s.respond_to?(:-@)
-        if (-s).equal?(s) && (-s.dup).equal?(s) || RUBY_VERSION >= "2.7"
+        if ((-s).equal?(s) && (-s.dup).equal?(s)) || RUBY_VERSION >= "2.7"
           def try_index(feature)
             if (path = @index[feature])
               -File.join(path, feature).freeze

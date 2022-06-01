@@ -35,11 +35,11 @@ module Bootsnap
           return self
         end
 
-        if realpath != path
-          Path.new(realpath, real: true)
-        else
+        if realpath == path
           @real = true
           self
+        else
+          Path.new(realpath, real: true)
         end
       end
 
@@ -121,16 +121,14 @@ module Bootsnap
       RUBY_SITEDIR = RbConfig::CONFIG["sitedir"]
 
       def stability
-        @stability ||= begin
-          if Gem.path.detect { |p| expanded_path.start_with?(p.to_s) }
-            STABLE
-          elsif Bootsnap.bundler? && expanded_path.start_with?(Bundler.bundle_path.to_s)
-            STABLE
-          elsif expanded_path.start_with?(RUBY_LIBDIR) && !expanded_path.start_with?(RUBY_SITEDIR)
-            STABLE
-          else
-            VOLATILE
-          end
+        @stability ||= if Gem.path.detect { |p| expanded_path.start_with?(p.to_s) }
+          STABLE
+        elsif Bootsnap.bundler? && expanded_path.start_with?(Bundler.bundle_path.to_s)
+          STABLE
+        elsif expanded_path.start_with?(RUBY_LIBDIR) && !expanded_path.start_with?(RUBY_SITEDIR)
+          STABLE
+        else
+          VOLATILE
         end
       end
     end

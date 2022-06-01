@@ -55,7 +55,7 @@ module Bootsnap
           store.set("a", "b")
         end
         assert_raises(Store::SetOutsideTransactionNotAllowed) do
-          store.fetch("a") { "b" }
+          store.fetch("a") { 1 + 1 }
         end
       end
 

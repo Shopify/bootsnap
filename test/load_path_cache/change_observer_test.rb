@@ -63,7 +63,7 @@ module Bootsnap
 
       def test_uniq_with_block
         @observer.expects(:reinitialize).once
-        @arr.uniq! {}
+        @arr.uniq! { |i| i }
       end
     end
   end

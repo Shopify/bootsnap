@@ -64,6 +64,19 @@ module Bootsnap
             @implementation::Patch.send(:remove_method, :unsafe_load_file)
           end
 
+          unless const_defined?(:NoTagsVisitor)
+            visitor = Class.new(Psych::Visitors::ToRuby) do
+              def visit(target)
+                if target.tag
+                  raise UnsupportedTags, "YAML tags are not supported: #{target.tag}"
+                end
+
+                super
+              end
+            end
+            const_set(:NoTagsVisitor, visitor)
+          end
+
           # MessagePack serializes symbols as strings by default.
           # We want them to roundtrip cleanly, so we use a custom factory.
           # see: https://github.com/msgpack/msgpack-ruby/pull/122
@@ -102,10 +115,8 @@ module Bootsnap
           if params.include?([:key, :symbolize_names])
             supported_options << :symbolize_names
           end
-          if params.include?([:key, :freeze])
-            if factory.load(factory.dump("yaml"), freeze: true).frozen?
-              supported_options << :freeze
-            end
+          if params.include?([:key, :freeze]) && factory.load(factory.dump("yaml"), freeze: true).frozen?
+            supported_options << :freeze
           end
           supported_options.freeze
         end
@@ -118,19 +129,7 @@ module Bootsnap
           ast = ::YAML.parse(payload)
           return ast unless ast
 
-          strict_visitor.create.visit(ast)
-        end
-
-        def strict_visitor
-          self::NoTagsVisitor ||= Class.new(Psych::Visitors::ToRuby) do
-            def visit(target)
-              if target.tag
-                raise UnsupportedTags, "YAML tags are not supported: #{target.tag}"
-              end
-
-              super
-            end
-          end
+          NoTagsVisitor.create.visit(ast)
         end
       end
 

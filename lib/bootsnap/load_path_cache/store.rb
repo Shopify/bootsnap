@@ -49,11 +49,9 @@ module Bootsnap
         raise(NestedTransactionError) if @txn_mutex.owned?
 
         @txn_mutex.synchronize do
-          begin
-            yield
-          ensure
-            commit_transaction
-          end
+          yield
+        ensure
+          commit_transaction
         end
       end
 
@@ -121,11 +119,9 @@ module Bootsnap
           path = File.dirname(path)
         end
         stack.reverse_each do |dir|
-          begin
-            Dir.mkdir(dir)
-          rescue SystemCallError
-            raise unless File.directory?(dir)
-          end
+          Dir.mkdir(dir)
+        rescue SystemCallError
+          raise unless File.directory?(dir)
         end
       end
     end

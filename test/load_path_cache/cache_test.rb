@@ -42,9 +42,9 @@ module Bootsnap
 
         bundle = RUBY_PLATFORM =~ /darwin/ ? "bundle" : "so"
 
-        refute(cache.find("thread." + bundle))
+        refute(cache.find("thread.#{bundle}"))
         refute(cache.find("enumerator.rb"))
-        refute(cache.find("encdb." + bundle))
+        refute(cache.find("encdb.#{bundle}"))
       end
 
       def test_simple

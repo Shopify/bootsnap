@@ -2,10 +2,8 @@
 
 $LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
 
-if defined? Warning
-  if Warning.respond_to?(:[]=)
-    Warning[:deprecated] = true
-  end
+if Warning.respond_to?(:[]=)
+  Warning[:deprecated] = true
 end
 
 require("bundler/setup")
@@ -34,7 +32,7 @@ end
 
 module TestHandler
   def self.input_to_storage(_input, path)
-    "neato " + path
+    "neato #{path}"
   end
 
   def self.storage_to_output(data, _kwargs)
