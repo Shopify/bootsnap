@@ -32,13 +32,4 @@ module Kernel
       return ret
     end
   end
-
-  alias_method(:load_without_bootsnap, :load)
-  def load(path, wrap = false)
-    if (resolved = Bootsnap::LoadPathCache.load_path_cache.find(Bootsnap.rb_get_path(path), try_extensions: false))
-      load_without_bootsnap(resolved, wrap)
-    else
-      load_without_bootsnap(path, wrap)
-    end
-  end
 end

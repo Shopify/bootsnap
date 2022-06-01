@@ -1,5 +1,11 @@
 # Unreleased
 
+* Stop decorating `Kernel.load`. This used to be very useful in development because the Rails "classic" autoloader
+  was using `Kernel.load` in dev and `Kernel.require` in production. But Zeitwerk is now the default, and it doesn't
+  use `Kernel.load` at all.
+
+  People still using the classic autoloader might want to stick to `bootsnap 1.12`.
+
 # 1.12.0
 
 * `bootsnap precompile` CLI will now also precompile `Rakefile` and `.rake` files.
