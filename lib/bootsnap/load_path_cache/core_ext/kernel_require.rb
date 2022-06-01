@@ -6,6 +6,8 @@ module Kernel
   alias_method(:require_without_bootsnap, :require)
 
   def require(path)
+    return require_without_bootsnap(path) unless Bootsnap::LoadPathCache.enabled?
+
     string_path = Bootsnap.rb_get_path(path)
     return false if Bootsnap::LoadPathCache.loaded_features_index.key?(string_path)
 
