@@ -1,5 +1,7 @@
 # Unreleased
 
+* Fix `Bootsnap.unload_cache!`, it simply wouldn't work at all becaue of a merge mistake. See #421.
+
 # 1.13.0
 
 * Stop decorating `Kernel.load`. This used to be very useful in development because the Rails "classic" autoloader

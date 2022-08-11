@@ -76,7 +76,7 @@ module Bootsnap
       )
     end
 
-    def self.unload_cache!
+    def unload_cache!
       LoadPathCache.unload!
     end
 

@@ -50,7 +50,6 @@ module Bootsnap
         @realpath_cache = nil
         @load_path_cache = nil
         ChangeObserver.unregister($LOAD_PATH)
-        ::Kernel.alias_method(:require_relative, :require_relative_without_bootsnap)
       end
 
       def supported?

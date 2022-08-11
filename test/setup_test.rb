@@ -94,5 +94,9 @@ module Bootsnap
 
       Bootsnap.default_setup
     end
+
+    def test_unload_cache
+      Bootsnap.unload_cache!
+    end
   end
 end
