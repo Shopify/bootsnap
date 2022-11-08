@@ -15,7 +15,11 @@ module Bootsnap
         ""
       end
 
+      @ignored_directories = %w(node_modules)
+
       class << self
+        attr_accessor :ignored_directories
+
         def call(path)
           path = File.expand_path(path.to_s).freeze
           return [[], []] unless File.directory?(path)
@@ -50,6 +54,8 @@ module Bootsnap
 
             absolute_path = "#{absolute_dir_path}/#{name}"
             if File.directory?(absolute_path)
+              next if ignored_directories.include?(name)
+
               if yield relative_path, absolute_path, true
                 walk(absolute_path, relative_path, &block)
               end

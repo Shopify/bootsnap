@@ -28,7 +28,7 @@ module Bootsnap
       alias_method :enabled?, :enabled
       remove_method(:enabled)
 
-      def setup(cache_path:, development_mode:)
+      def setup(cache_path:, development_mode:, ignore_directories:)
         unless supported?
           warn("[bootsnap/setup] Load path caching is not supported on this implementation of Ruby") if $VERBOSE
           return
@@ -39,6 +39,7 @@ module Bootsnap
         @loaded_features_index = LoadedFeaturesIndex.new
 
         @load_path_cache = Cache.new(store, $LOAD_PATH, development_mode: development_mode)
+        PathScanner.ignored_directories = ignore_directories if ignore_directories
         @enabled = true
         require_relative("load_path_cache/core_ext/kernel_require")
         require_relative("load_path_cache/core_ext/loaded_features")

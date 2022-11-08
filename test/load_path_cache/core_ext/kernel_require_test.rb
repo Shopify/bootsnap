@@ -10,7 +10,7 @@ module Bootsnap
         assert_nil LoadPathCache.load_path_cache
         cache = Tempfile.new("cache")
         pid = Process.fork do
-          LoadPathCache.setup(cache_path: cache, development_mode: true)
+          LoadPathCache.setup(cache_path: cache, development_mode: true, ignore_directories: nil)
           dir = File.realpath(Dir.mktmpdir)
           $LOAD_PATH.push(dir)
           FileUtils.touch("#{dir}/a.rb")

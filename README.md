@@ -52,10 +52,11 @@ require 'bootsnap'
 env = ENV['RAILS_ENV'] || "development"
 Bootsnap.setup(
   cache_dir:            'tmp/cache',          # Path to your cache
+  ignored_directories   ['node_modules'],     # Directory names to skip.
   development_mode:     env == 'development', # Current working environment, e.g. RACK_ENV, RAILS_ENV, etc
   load_path_cache:      true,                 # Optimize the LOAD_PATH with a cache
   compile_cache_iseq:   true,                 # Compile Ruby code into ISeq cache, breaks coverage reporting.
-  compile_cache_yaml:   true                  # Compile YAML into a cache
+  compile_cache_yaml:   true,                 # Compile YAML into a cache
 )
 ```
 
@@ -77,6 +78,9 @@ well together, and are both included in a newly-generated Rails applications by 
 - `DISABLE_BOOTSNAP_LOAD_PATH_CACHE` allows to disable load path caching.
 - `DISABLE_BOOTSNAP_COMPILE_CACHE` allows to disable ISeq and YAML caches.
 - `BOOTSNAP_LOG` configure bootsnap to log all caches misses to STDERR.
+- `BOOTSNAP_IGNORE_DIRECTORIES` a comma separated list of directories that shouldn't be scanned.
+  Useful when you have large directories of non-ruby files inside `$LOAD_PATH`.
+  It default to ignore any directory named `node_modules`.
 
 ### Environments
 
