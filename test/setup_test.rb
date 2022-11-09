@@ -22,6 +22,7 @@ module Bootsnap
         compile_cache_iseq: Bootsnap.iseq_cache_supported?,
         compile_cache_yaml: true,
         compile_cache_json: true,
+        ignore_directories: nil,
       )
 
       Bootsnap.default_setup
@@ -37,6 +38,7 @@ module Bootsnap
         compile_cache_iseq: Bootsnap.iseq_cache_supported?,
         compile_cache_yaml: true,
         compile_cache_json: true,
+        ignore_directories: nil,
       )
 
       Bootsnap.default_setup
@@ -52,6 +54,7 @@ module Bootsnap
         compile_cache_iseq: Bootsnap.iseq_cache_supported?,
         compile_cache_yaml: true,
         compile_cache_json: true,
+        ignore_directories: nil,
       )
 
       Bootsnap.default_setup
@@ -67,6 +70,7 @@ module Bootsnap
         compile_cache_iseq: false,
         compile_cache_yaml: false,
         compile_cache_json: false,
+        ignore_directories: nil,
       )
 
       Bootsnap.default_setup
@@ -89,8 +93,25 @@ module Bootsnap
         compile_cache_iseq: Bootsnap.iseq_cache_supported?,
         compile_cache_yaml: true,
         compile_cache_json: true,
+        ignore_directories: nil,
       )
       Bootsnap.expects(:logger=).with($stderr.method(:puts))
+
+      Bootsnap.default_setup
+    end
+
+    def test_default_setup_with_BOOTSNAP_IGNORE_DIRECTORIES
+      ENV["BOOTSNAP_IGNORE_DIRECTORIES"] = "foo,bar"
+
+      Bootsnap.expects(:setup).with(
+        cache_dir: @tmp_dir,
+        development_mode: true,
+        load_path_cache: true,
+        compile_cache_iseq: Bootsnap.iseq_cache_supported?,
+        compile_cache_yaml: true,
+        compile_cache_json: true,
+        ignore_directories: %w[foo bar],
+      )
 
       Bootsnap.default_setup
     end

@@ -1,5 +1,8 @@
 # Unreleased
 
+* Add a way to skip direcftories during load path scanning.
+  If you have large non-ruby directories in the middle of your load path, it can severly slow down scanning.
+  Typically this is a problem with `node_modules`. See #277.
 * Fix `Bootsnap.unload_cache!`, it simply wouldn't work at all becaue of a merge mistake. See #421.
 
 # 1.13.0

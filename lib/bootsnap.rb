@@ -41,6 +41,7 @@ module Bootsnap
       load_path_cache: true,
       autoload_paths_cache: nil,
       disable_trace: nil,
+      ignore_directories: nil,
       compile_cache_iseq: true,
       compile_cache_yaml: true,
       compile_cache_json: true
@@ -65,6 +66,7 @@ module Bootsnap
         Bootsnap::LoadPathCache.setup(
           cache_path: "#{cache_dir}/bootsnap/load-path-cache",
           development_mode: development_mode,
+          ignore_directories: ignore_directories,
         )
       end
 
@@ -113,6 +115,10 @@ module Bootsnap
           cache_dir = File.join(app_root, "tmp", "cache")
         end
 
+        ignore_directories = if ENV.key?("BOOTSNAP_IGNORE_DIRECTORIES")
+          ENV["BOOTSNAP_IGNORE_DIRECTORIES"].split(",")
+        end
+
         setup(
           cache_dir: cache_dir,
           development_mode: development_mode,
@@ -120,6 +126,7 @@ module Bootsnap
           compile_cache_iseq: !ENV["DISABLE_BOOTSNAP_COMPILE_CACHE"] && iseq_cache_supported?,
           compile_cache_yaml: !ENV["DISABLE_BOOTSNAP_COMPILE_CACHE"],
           compile_cache_json: !ENV["DISABLE_BOOTSNAP_COMPILE_CACHE"],
+          ignore_directories: ignore_directories,
         )
 
         if ENV["BOOTSNAP_LOG"]
