@@ -73,7 +73,7 @@ class CompileCacheKeyFormatTest < Minitest::Test
     assert_equal("NEATO #{target.upcase}", actual)
 
     data = File.read(expected_file)
-    assert_equal("neato #{target}", data.force_encoding(Encoding::BINARY)[64..-1])
+    assert_equal("neato #{target}", data.force_encoding(Encoding::BINARY)[64..])
 
     actual = Bootsnap::CompileCache::Native.fetch(@tmp_dir, target, TestHandler, nil)
     assert_equal("NEATO #{target.upcase}", actual)

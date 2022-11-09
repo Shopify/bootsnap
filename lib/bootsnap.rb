@@ -44,11 +44,6 @@ module Bootsnap
       compile_cache_yaml: true,
       compile_cache_json: true
     )
-      if compile_cache_iseq && !iseq_cache_supported?
-        warn "Ruby 2.5 has a bug that break code tracing when code is loaded from cache. It is recommened " \
-             "to turn `compile_cache_iseq` off on Ruby 2.5"
-      end
-
       if load_path_cache
         Bootsnap::LoadPathCache.setup(
           cache_path: "#{cache_dir}/bootsnap/load-path-cache",
@@ -67,13 +62,6 @@ module Bootsnap
 
     def unload_cache!
       LoadPathCache.unload!
-    end
-
-    def iseq_cache_supported?
-      return @iseq_cache_supported if defined? @iseq_cache_supported
-
-      ruby_version = Gem::Version.new(RUBY_VERSION)
-      @iseq_cache_supported = ruby_version < Gem::Version.new("2.5.0") || ruby_version >= Gem::Version.new("2.6.0")
     end
 
     def default_setup
@@ -110,7 +98,7 @@ module Bootsnap
           cache_dir: cache_dir,
           development_mode: development_mode,
           load_path_cache: !ENV["DISABLE_BOOTSNAP_LOAD_PATH_CACHE"],
-          compile_cache_iseq: !ENV["DISABLE_BOOTSNAP_COMPILE_CACHE"] && iseq_cache_supported?,
+          compile_cache_iseq: !ENV["DISABLE_BOOTSNAP_COMPILE_CACHE"],
           compile_cache_yaml: !ENV["DISABLE_BOOTSNAP_COMPILE_CACHE"],
           compile_cache_json: !ENV["DISABLE_BOOTSNAP_COMPILE_CACHE"],
           ignore_directories: ignore_directories,

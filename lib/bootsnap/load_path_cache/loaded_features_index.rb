@@ -40,7 +40,7 @@ module Bootsnap
 
             # /a/b/lib/my/foo.rb
             #          ^^^^^^^^^
-            short = feat[(lpe.length + 1)..-1]
+            short = feat[(lpe.length + 1)..]
             stripped = strip_extension_if_elidable(short)
             @lfi[short] = hash
             @lfi[stripped] = hash
@@ -76,7 +76,7 @@ module Bootsnap
       end
 
       def identify(short, cursor)
-        $LOADED_FEATURES[cursor..-1].detect do |feat|
+        $LOADED_FEATURES[cursor..].detect do |feat|
           offset = 0
           while (offset = feat.index(short, offset))
             if feat.index(".", offset + 1) && !feat.index("/", offset + 2)

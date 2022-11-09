@@ -71,7 +71,7 @@ module MiniTest
           end
 
           hex = hash.to_s(16).rjust(16, "0")
-          "#{dir}/#{hex[0..1]}/#{hex[2..-1]}"
+          "#{dir}/#{hex[0..1]}/#{hex[2..]}"
         end
 
         def fnv1a_64(data)

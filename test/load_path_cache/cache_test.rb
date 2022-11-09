@@ -141,7 +141,7 @@ module Bootsnap
         assert_equal("#{@dir1}/a.rb", cache.find("a"))
       end
 
-      if RUBY_VERSION >= "2.5" && RbConfig::CONFIG["host_os"] !~ /mswin|mingw|cygwin/
+      if RbConfig::CONFIG["host_os"] !~ /mswin|mingw|cygwin/
         # https://github.com/ruby/ruby/pull/4061
         # https://bugs.ruby-lang.org/issues/17517
         OS_ASCII_PATH_ENCODING = RUBY_VERSION >= "3.1" ? Encoding::UTF_8 : Encoding::US_ASCII
