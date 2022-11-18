@@ -66,7 +66,7 @@ module Bootsnap
       end
 
       def self.unregister(arr)
-        return unless arr.instance_variable_get(:@lpc_observer)
+        return unless arr.instance_variable_defined?(:@lpc_observer) && arr.instance_variable_get(:@lpc_observer)
 
         ArrayMixin.instance_methods.each do |method_name|
           arr.singleton_class.send(:remove_method, method_name)
