@@ -52,7 +52,7 @@ require 'bootsnap'
 env = ENV['RAILS_ENV'] || "development"
 Bootsnap.setup(
   cache_dir:            'tmp/cache',          # Path to your cache
-  ignored_directories   ['node_modules'],     # Directory names to skip.
+  ignore_directories:   ['node_modules'],     # Directory names to skip.
   development_mode:     env == 'development', # Current working environment, e.g. RACK_ENV, RAILS_ENV, etc
   load_path_cache:      true,                 # Optimize the LOAD_PATH with a cache
   compile_cache_iseq:   true,                 # Compile Ruby code into ISeq cache, breaks coverage reporting.
