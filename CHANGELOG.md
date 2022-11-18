@@ -1,5 +1,7 @@
 # Unreleased
 
+# 1.14.0
+
 * Require Ruby 2.6.
 * Add a way to skip directories during load path scanning.
   If you have large non-ruby directories in the middle of your load path, it can severly slow down scanning.
