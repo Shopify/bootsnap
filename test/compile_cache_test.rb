@@ -5,6 +5,11 @@ require("test_helper")
 class CompileCacheTest < Minitest::Test
   include(TmpdirHelper)
 
+  def teardown
+    super
+    Bootsnap::CompileCache::Native.readonly = false
+  end
+
   def test_compile_option_crc32
     # Just assert that this works.
     Bootsnap::CompileCache::Native.compile_option_crc32 = 0xffffffff
@@ -109,6 +114,32 @@ class CompileCacheTest < Minitest::Test
 
     load(path)
     Help.set_file(path, "a = 33", 100)
+    load(path)
+  end
+
+  def test_dont_store_cache_after_a_miss_when_readonly
+    Bootsnap::CompileCache::Native.readonly = true
+
+    path = Help.set_file("a.rb", "a = a = 3", 100)
+    output = RubyVM::InstructionSequence.compile_file(path)
+    Bootsnap::CompileCache::ISeq.expects(:input_to_storage).never
+    Bootsnap::CompileCache::ISeq.expects(:storage_to_output).never
+    Bootsnap::CompileCache::ISeq.expects(:input_to_output).once.returns(output)
+
+    load(path)
+  end
+
+  def test_dont_store_cache_after_a_stale_when_readonly
+    path = Help.set_file("a.rb", "a = a = 3", 100)
+    load(path)
+
+    Bootsnap::CompileCache::Native.readonly = true
+
+    output = RubyVM::InstructionSequence.compile_file(path)
+    Bootsnap::CompileCache::ISeq.expects(:input_to_storage).never
+    Bootsnap::CompileCache::ISeq.expects(:storage_to_output).once.returns(output)
+    Bootsnap::CompileCache::ISeq.expects(:input_to_output).never
+
     load(path)
   end
 

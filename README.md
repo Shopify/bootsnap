@@ -57,6 +57,7 @@ Bootsnap.setup(
   load_path_cache:      true,                 # Optimize the LOAD_PATH with a cache
   compile_cache_iseq:   true,                 # Compile Ruby code into ISeq cache, breaks coverage reporting.
   compile_cache_yaml:   true,                 # Compile YAML into a cache
+  readonly:             true,                 # Use the caches but don't update them on miss or stale entries.
 )
 ```
 
@@ -77,6 +78,7 @@ well together, and are both included in a newly-generated Rails applications by 
 - `DISABLE_BOOTSNAP` allows to entirely disable bootsnap.
 - `DISABLE_BOOTSNAP_LOAD_PATH_CACHE` allows to disable load path caching.
 - `DISABLE_BOOTSNAP_COMPILE_CACHE` allows to disable ISeq and YAML caches.
+- `BOOTSNAP_READONLY` configure bootsnap to not update the cache on miss or stale entries.
 - `BOOTSNAP_LOG` configure bootsnap to log all caches misses to STDERR.
 - `BOOTSNAP_IGNORE_DIRECTORIES` a comma separated list of directories that shouldn't be scanned.
   Useful when you have large directories of non-ruby files inside `$LOAD_PATH`.

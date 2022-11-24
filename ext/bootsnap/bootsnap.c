@@ -90,9 +90,11 @@ static ID instrumentation_method;
 static VALUE sym_miss;
 static VALUE sym_stale;
 static bool instrumentation_enabled = false;
+static bool readonly = false;
 
 /* Functions exposed as module functions on Bootsnap::CompileCache::Native */
 static VALUE bs_instrumentation_enabled_set(VALUE self, VALUE enabled);
+static VALUE bs_readonly_set(VALUE self, VALUE enabled);
 static VALUE bs_compile_option_crc32_set(VALUE self, VALUE crc32_v);
 static VALUE bs_rb_fetch(VALUE self, VALUE cachedir_v, VALUE path_v, VALUE handler, VALUE args);
 static VALUE bs_rb_precompile(VALUE self, VALUE cachedir_v, VALUE path_v, VALUE handler);
@@ -166,6 +168,7 @@ Init_bootsnap(void)
   rb_global_variable(&sym_stale);
 
   rb_define_module_function(rb_mBootsnap, "instrumentation_enabled=", bs_instrumentation_enabled_set, 1);
+  rb_define_module_function(rb_mBootsnap_CompileCache_Native, "readonly=", bs_readonly_set, 1);
   rb_define_module_function(rb_mBootsnap_CompileCache_Native, "coverage_running?", bs_rb_coverage_running, 0);
   rb_define_module_function(rb_mBootsnap_CompileCache_Native, "fetch", bs_rb_fetch, 4);
   rb_define_module_function(rb_mBootsnap_CompileCache_Native, "precompile", bs_rb_precompile, 3);
@@ -179,6 +182,13 @@ static VALUE
 bs_instrumentation_enabled_set(VALUE self, VALUE enabled)
 {
   instrumentation_enabled = RTEST(enabled);
+  return enabled;
+}
+
+static VALUE
+bs_readonly_set(VALUE self, VALUE enabled)
+{
+  readonly = RTEST(enabled);
   return enabled;
 }
 
@@ -945,12 +955,17 @@ try_input_to_storage(VALUE arg)
 static int
 bs_input_to_storage(VALUE handler, VALUE args, VALUE input_data, VALUE pathval, VALUE * storage_data)
 {
-  int state;
-  struct i2s_data i2s_data = {
-    .handler    = handler,
-    .input_data = input_data,
-    .pathval    = pathval,
-  };
-  *storage_data = rb_protect(try_input_to_storage, (VALUE)&i2s_data, &state);
-  return state;
+  if (readonly) {
+    *storage_data = rb_cBootsnap_CompileCache_UNCOMPILABLE;
+    return 0;
+  } else {
+    int state;
+    struct i2s_data i2s_data = {
+      .handler    = handler,
+      .input_data = input_data,
+      .pathval    = pathval,
+    };
+    *storage_data = rb_protect(try_input_to_storage, (VALUE)&i2s_data, &state);
+    return state;
+  }
 }

@@ -10,7 +10,7 @@ module Bootsnap
     Error = Class.new(StandardError)
     PermissionError = Class.new(Error)
 
-    def self.setup(cache_dir:, iseq:, yaml:, json:)
+    def self.setup(cache_dir:, iseq:, yaml:, json:, readonly: false)
       if iseq
         if supported?
           require_relative("compile_cache/iseq")
@@ -36,6 +36,10 @@ module Bootsnap
         elsif $VERBOSE
           warn("[bootsnap/setup] JSON parsing caching is not supported on this implementation of Ruby")
         end
+      end
+
+      if supported? && defined?(Bootsnap::CompileCache::Native)
+        Bootsnap::CompileCache::Native.readonly = readonly
       end
     end
 

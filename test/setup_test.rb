@@ -23,6 +23,7 @@ module Bootsnap
         compile_cache_yaml: true,
         compile_cache_json: true,
         ignore_directories: nil,
+        readonly: false,
       )
 
       Bootsnap.default_setup
@@ -39,6 +40,7 @@ module Bootsnap
         compile_cache_yaml: true,
         compile_cache_json: true,
         ignore_directories: nil,
+        readonly: false,
       )
 
       Bootsnap.default_setup
@@ -55,6 +57,7 @@ module Bootsnap
         compile_cache_yaml: true,
         compile_cache_json: true,
         ignore_directories: nil,
+        readonly: false,
       )
 
       Bootsnap.default_setup
@@ -71,6 +74,7 @@ module Bootsnap
         compile_cache_yaml: false,
         compile_cache_json: false,
         ignore_directories: nil,
+        readonly: false,
       )
 
       Bootsnap.default_setup
@@ -94,6 +98,7 @@ module Bootsnap
         compile_cache_yaml: true,
         compile_cache_json: true,
         ignore_directories: nil,
+        readonly: false,
       )
       Bootsnap.expects(:logger=).with($stderr.method(:puts))
 
@@ -111,6 +116,7 @@ module Bootsnap
         compile_cache_yaml: true,
         compile_cache_json: true,
         ignore_directories: %w[foo bar],
+        readonly: false,
       )
 
       Bootsnap.default_setup

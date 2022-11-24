@@ -40,6 +40,7 @@ module Bootsnap
       development_mode: true,
       load_path_cache: true,
       ignore_directories: nil,
+      readonly: false,
       compile_cache_iseq: true,
       compile_cache_yaml: true,
       compile_cache_json: true
@@ -49,6 +50,7 @@ module Bootsnap
           cache_path: "#{cache_dir}/bootsnap/load-path-cache",
           development_mode: development_mode,
           ignore_directories: ignore_directories,
+          readonly: readonly,
         )
       end
 
@@ -57,6 +59,7 @@ module Bootsnap
         iseq: compile_cache_iseq,
         yaml: compile_cache_yaml,
         json: compile_cache_json,
+        readonly: readonly,
       )
     end
 
@@ -101,6 +104,7 @@ module Bootsnap
           compile_cache_iseq: !ENV["DISABLE_BOOTSNAP_COMPILE_CACHE"],
           compile_cache_yaml: !ENV["DISABLE_BOOTSNAP_COMPILE_CACHE"],
           compile_cache_json: !ENV["DISABLE_BOOTSNAP_COMPILE_CACHE"],
+          readonly: !!ENV["BOOTSNAP_READONLY"],
           ignore_directories: ignore_directories,
         )
 
