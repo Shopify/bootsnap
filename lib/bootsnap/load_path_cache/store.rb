@@ -13,10 +13,11 @@ module Bootsnap
       NestedTransactionError = Class.new(StandardError)
       SetOutsideTransactionNotAllowed = Class.new(StandardError)
 
-      def initialize(store_path)
+      def initialize(store_path, readonly: false)
         @store_path = store_path
         @txn_mutex = Mutex.new
         @dirty = false
+        @readonly = readonly
         load_data
       end
 
@@ -63,7 +64,7 @@ module Bootsnap
       end
 
       def commit_transaction
-        if @dirty
+        if @dirty && !@readonly
           dump_data
           @dirty = false
         end

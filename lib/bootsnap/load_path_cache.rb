@@ -28,13 +28,13 @@ module Bootsnap
       alias_method :enabled?, :enabled
       remove_method(:enabled)
 
-      def setup(cache_path:, development_mode:, ignore_directories:)
+      def setup(cache_path:, development_mode:, ignore_directories:, readonly: false)
         unless supported?
           warn("[bootsnap/setup] Load path caching is not supported on this implementation of Ruby") if $VERBOSE
           return
         end
 
-        store = Store.new(cache_path)
+        store = Store.new(cache_path, readonly: readonly)
 
         @loaded_features_index = LoadedFeaturesIndex.new
 
