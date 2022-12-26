@@ -82,7 +82,7 @@ well together, and are both included in a newly-generated Rails applications by 
 - `BOOTSNAP_LOG` configure bootsnap to log all caches misses to STDERR.
 - `BOOTSNAP_IGNORE_DIRECTORIES` a comma separated list of directories that shouldn't be scanned.
   Useful when you have large directories of non-ruby files inside `$LOAD_PATH`.
-  It default to ignore any directory named `node_modules`.
+  It defaults to ignore any directory named `node_modules`.
 
 ### Environments
 
