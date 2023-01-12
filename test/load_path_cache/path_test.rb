@@ -16,7 +16,7 @@ module Bootsnap
         volatile        = Path.new(__FILE__)
         stable          = Path.new(time_file)
         unknown         = Path.new("/who/knows")
-        lib             = Path.new("#{RbConfig::CONFIG['libdir']}/a")
+        lib             = Path.new("#{RbConfig::CONFIG['rubylibdir']}/a")
         site            = Path.new("#{RbConfig::CONFIG['sitedir']}/b")
         absolute_prefix = RbConfig::CONFIG["host_os"] =~ /mswin|mingw|cygwin/ ? ENV["SystemDrive"] : ""
         bundler         = Path.new("#{absolute_prefix}/bp/3")

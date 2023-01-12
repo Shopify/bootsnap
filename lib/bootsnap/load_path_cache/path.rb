@@ -115,17 +115,16 @@ module Bootsnap
       STABLE   = :stable
       VOLATILE = :volatile
 
-      # Built-in ruby lib stuff doesn't change, but things can occasionally be
-      # installed into sitedir, which generally lives under libdir.
-      RUBY_LIBDIR  = RbConfig::CONFIG["libdir"]
-      RUBY_SITEDIR = RbConfig::CONFIG["sitedir"]
+      # Condiser Ruby StdLib dir to be stable.
+      RUBY_LIBDIR = RbConfig::CONFIG["rubylibdir"]
+      RUBY_ARCHDIR = RbConfig::CONFIG["rubyarchdir"]
 
       def stability
         @stability ||= if Gem.path.detect { |p| expanded_path.start_with?(p.to_s) }
           STABLE
         elsif Bootsnap.bundler? && expanded_path.start_with?(Bundler.bundle_path.to_s)
           STABLE
-        elsif expanded_path.start_with?(RUBY_LIBDIR) && !expanded_path.start_with?(RUBY_SITEDIR)
+        elsif expanded_path.start_with?(RUBY_LIBDIR) || expanded_path.start_with?(RUBY_ARCHDIR)
           STABLE
         else
           VOLATILE
