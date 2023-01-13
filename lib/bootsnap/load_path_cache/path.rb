@@ -116,8 +116,8 @@ module Bootsnap
       VOLATILE = :volatile
 
       # Built-in ruby lib stuff doesn't change, but things can occasionally be
-      # installed into sitedir, which generally lives under libdir.
-      RUBY_LIBDIR  = RbConfig::CONFIG["libdir"]
+      # installed into sitedir, which generally lives under rubylibdir.
+      RUBY_LIBDIR  = RbConfig::CONFIG["rubylibdir"]
       RUBY_SITEDIR = RbConfig::CONFIG["sitedir"]
 
       def stability

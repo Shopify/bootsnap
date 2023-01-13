@@ -1,5 +1,7 @@
 # Unreleased
 
+* Use `RbConfig::CONFIG["rubylibdir"]` instead of `RbConfig::CONFIG["libdir"]` to check for stdlib files. See #431.
+
 # 1.15.0
 
 * Add a readonly mode, for environments in which the updated cache wouldn't be persisted. See #428 and #423.
