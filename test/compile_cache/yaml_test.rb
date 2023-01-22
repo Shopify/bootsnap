@@ -37,6 +37,38 @@ class CompileCacheYAMLTest < Minitest::Test
     assert_equal expected, document
   end
 
+  def test_strict_load_reject_dates
+    error = assert_raises Psych::DisallowedClass do
+      ::Bootsnap::CompileCache::YAML.strict_load(<<~YAML)
+        ---
+        :foo: 2023-01-20
+      YAML
+    end
+    assert_includes error.message, "Date"
+  end
+
+  def test_strict_load_reject_times
+    error = assert_raises Psych::DisallowedClass do
+      ::Bootsnap::CompileCache::YAML.strict_load(<<~YAML)
+        ---
+        :foo: 2023-01-20 13:18:31.083375000 -05:00
+      YAML
+    end
+    assert_includes error.message, "Time"
+  end
+
+  def test_strict_load_reject_aliases
+    assert_raises Psych::BadAlias do
+      ::Bootsnap::CompileCache::YAML.strict_load(<<~YAML)
+        ---
+        foo: &foo
+          a: b
+        bar:
+          <<: *foo
+      YAML
+    end
+  end
+
   def test_yaml_tags
     error = assert_raises Bootsnap::CompileCache::YAML::UnsupportedTags do
       ::Bootsnap::CompileCache::YAML.strict_load("!many Boolean")
