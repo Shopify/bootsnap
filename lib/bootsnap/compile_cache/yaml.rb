@@ -65,7 +65,7 @@ module Bootsnap
           end
 
           unless const_defined?(:NoTagsVisitor)
-            visitor = Class.new(Psych::Visitors::ToRuby) do
+            visitor = Class.new(Psych::Visitors::NoAliasRuby) do
               def visit(target)
                 if target.tag
                   raise UnsupportedTags, "YAML tags are not supported: #{target.tag}"
@@ -129,7 +129,10 @@ module Bootsnap
           ast = ::YAML.parse(payload)
           return ast unless ast
 
-          NoTagsVisitor.create.visit(ast)
+          loader = ::Psych::ClassLoader::Restricted.new(["Symbol"], [])
+          scanner = ::Psych::ScalarScanner.new(loader)
+
+          NoTagsVisitor.new(scanner, loader).visit(ast)
         end
       end
 

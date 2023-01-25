@@ -1,6 +1,9 @@
 # Unreleased
 
 * Use `RbConfig::CONFIG["rubylibdir"]` instead of `RbConfig::CONFIG["libdir"]` to check for stdlib files. See #431.
+* Fix the cached version of `YAML.load_file` being slightly more permissive than the default `Psych` one. See #434.
+  `Date` and `Time` values are now properly rejected, as well as aliases.
+  If this causes a regression in your application, it is recommended to load *trusted* YAML files with `YAML.unsafe_load_file`.
 
 # 1.15.0
 
