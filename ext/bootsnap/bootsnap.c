@@ -467,7 +467,6 @@ open_cache_file(const char * path, struct bs_cache_key * key, const char ** errn
 static int
 fetch_cached_data(int fd, ssize_t data_size, VALUE handler, VALUE args, VALUE * output_data, int * exception_tag, const char ** errno_provenance)
 {
-  char * data = NULL;
   ssize_t nread;
   int ret;
 
@@ -479,8 +478,8 @@ fetch_cached_data(int fd, ssize_t data_size, VALUE handler, VALUE args, VALUE * 
     ret = ERROR_WITH_ERRNO;
     goto done;
   }
-  data = ALLOC_N(char, data_size);
-  nread = read(fd, data, data_size);
+  storage_data = rb_str_buf_new(data_size);
+  nread = read(fd, RSTRING_PTR(storage_data), data_size);
   if (nread < 0) {
     *errno_provenance = "bs_fetch:fetch_cached_data:read";
     ret = ERROR_WITH_ERRNO;
@@ -491,7 +490,7 @@ fetch_cached_data(int fd, ssize_t data_size, VALUE handler, VALUE args, VALUE * 
     goto done;
   }
 
-  storage_data = rb_str_new(data, data_size);
+  rb_str_set_len(storage_data, nread);
 
   *exception_tag = bs_storage_to_output(handler, args, storage_data, output_data);
   if (*output_data == rb_cBootsnap_CompileCache_UNCOMPILABLE) {
@@ -500,7 +499,6 @@ fetch_cached_data(int fd, ssize_t data_size, VALUE handler, VALUE args, VALUE * 
   }
   ret = 0;
 done:
-  if (data != NULL) xfree(data);
   return ret;
 }
 
@@ -607,17 +605,22 @@ atomic_write_cache_file(char * path, struct bs_cache_key * key, VALUE data, cons
 
 
 /* Read contents from an fd, whose contents are asserted to be +size+ bytes
- * long, into a buffer */
-static ssize_t
-bs_read_contents(int fd, size_t size, char ** contents, const char ** errno_provenance)
+ * long, returning a Ruby string on success and Qfalse on failure */
+static VALUE
+bs_read_contents(int fd, size_t size, const char ** errno_provenance)
 {
+  VALUE contents;
   ssize_t nread;
-  *contents = ALLOC_N(char, size);
-  nread = read(fd, *contents, size);
+  contents = rb_str_buf_new(size);
+  nread = read(fd, RSTRING_PTR(contents), size);
+
   if (nread < 0) {
     *errno_provenance = "bs_fetch:bs_read_contents:read";
+    return Qfalse;
+  } else {
+    rb_str_set_len(contents, nread);
+    return contents;
   }
-  return nread;
 }
 
 /*
@@ -668,7 +671,6 @@ static VALUE
 bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args)
 {
   struct bs_cache_key cached_key, current_key;
-  char * contents = NULL;
   int cache_fd = -1, current_fd = -1;
   int res, valid_cache = 0, exception_tag = 0;
   const char * errno_provenance = NULL;
@@ -713,8 +715,7 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args
     else if (res == CACHE_UNCOMPILABLE) {
       /* If fetch_cached_data returned `Uncompilable` we fallback to `input_to_output`
         This happens if we have say, an unsafe YAML cache, but try to load it in safe mode */
-      if (bs_read_contents(current_fd, current_key.size, &contents, &errno_provenance) < 0) goto fail_errno;
-      input_data = rb_str_new(contents, current_key.size);
+      if ((input_data = bs_read_contents(current_fd, current_key.size, &errno_provenance)) == Qfalse) goto fail_errno;
       bs_input_to_output(handler, args, input_data, &output_data, &exception_tag);
       if (exception_tag != 0) goto raise;
       goto succeed;
@@ -727,8 +728,7 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args
   /* Cache is stale, invalid, or missing. Regenerate and write it out. */
 
   /* Read the contents of the source file into a buffer */
-  if (bs_read_contents(current_fd, current_key.size, &contents, &errno_provenance) < 0) goto fail_errno;
-  input_data = rb_str_new(contents, current_key.size);
+  if ((input_data = bs_read_contents(current_fd, current_key.size, &errno_provenance)) == Qfalse) goto fail_errno;
 
   /* Try to compile the input_data using input_to_storage(input_data) */
   exception_tag = bs_input_to_storage(handler, args, input_data, path_v, &storage_data);
@@ -775,7 +775,6 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args
   goto succeed; /* output_data is now the correct return. */
 
 #define CLEANUP \
-  if (contents != NULL) xfree(contents);   \
   if (current_fd >= 0)  close(current_fd); \
   if (cache_fd >= 0)    close(cache_fd);
 
@@ -836,8 +835,7 @@ bs_precompile(char * path, VALUE path_v, char * cache_path, VALUE handler)
   /* Cache is stale, invalid, or missing. Regenerate and write it out. */
 
   /* Read the contents of the source file into a buffer */
-  if (bs_read_contents(current_fd, current_key.size, &contents, &errno_provenance) < 0) goto fail;
-  input_data = rb_str_new(contents, current_key.size);
+  if ((input_data = bs_read_contents(current_fd, current_key.size, &errno_provenance)) == Qfalse) goto fail;
 
   /* Try to compile the input_data using input_to_storage(input_data) */
   exception_tag = bs_input_to_storage(handler, Qnil, input_data, path_v, &storage_data);
@@ -858,7 +856,6 @@ bs_precompile(char * path, VALUE path_v, char * cache_path, VALUE handler)
   goto succeed;
 
 #define CLEANUP \
-  if (contents != NULL) xfree(contents);   \
   if (current_fd >= 0)  close(current_fd); \
   if (cache_fd >= 0)    close(cache_fd);
 
