@@ -377,7 +377,9 @@ open_current_file(char * path, struct bs_cache_key * key, const char ** errno_pr
 
   if (fstat(fd, &statbuf) < 0) {
     *errno_provenance = "bs_fetch:open_current_file:fstat";
+    int previous_errno = errno;
     close(fd);
+    errno = previous_errno;
     return -1;
   }
 
