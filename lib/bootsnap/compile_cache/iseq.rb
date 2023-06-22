@@ -40,6 +40,9 @@ module Bootsnap
       else
         def self.input_to_storage(_, path)
           RubyVM::InstructionSequence.compile_file(path).to_binary
+        rescue Encoding::InvalidByteSequenceError
+          p [:compile_file, path]
+          UNCOMPILABLE
         rescue SyntaxError
           UNCOMPILABLE # syntax error
         end
