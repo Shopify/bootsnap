@@ -7,6 +7,7 @@ module Bootsnap
     include TmpdirHelper
 
     def test_require_symlinked_file_twice
+      skip("https://github.com/oracle/truffleruby/issues/3138")
       setup_symlinked_files
       if RUBY_VERSION >= "3.1"
         # Fixed in https://github.com/ruby/ruby/commit/79a4484a072e9769b603e7b4fbdb15b1d7eccb15 (Ruby 3.1)
@@ -40,6 +41,7 @@ module Bootsnap
     end
 
     def test_require_relative_symlinked_file_twice
+      skip("https://github.com/oracle/truffleruby/issues/3138")
       setup_symlinked_files
       if RUBY_VERSION >= "3.1"
         # Fixed in https://github.com/ruby/ruby/commit/79a4484a072e9769b603e7b4fbdb15b1d7eccb15 (Ruby 3.1)
@@ -82,6 +84,7 @@ module Bootsnap
     end
 
     def test_require_deep_symlinked_file_twice
+      skip("https://github.com/oracle/truffleruby/issues/3138")
       setup_symlinked_files
       if RUBY_VERSION >= "3.1"
         # Fixed in https://github.com/ruby/ruby/commit/79a4484a072e9769b603e7b4fbdb15b1d7eccb15 (Ruby 3.1)
@@ -115,6 +118,7 @@ module Bootsnap
     end
 
     def test_require_relative_deep_symlinked_file_twice
+      skip("https://github.com/oracle/truffleruby/issues/3138")
       setup_symlinked_files
       if RUBY_VERSION >= "3.1"
         # Fixed in https://github.com/ruby/ruby/commit/79a4484a072e9769b603e7b4fbdb15b1d7eccb15 (Ruby 3.1)
