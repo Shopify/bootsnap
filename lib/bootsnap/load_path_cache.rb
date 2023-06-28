@@ -54,7 +54,7 @@ module Bootsnap
       end
 
       def supported?
-        RUBY_ENGINE == "ruby" &&
+        ["ruby", "truffleruby"].include?(RUBY_ENGINE) &&
           RUBY_PLATFORM =~ /darwin|linux|bsd|mswin|mingw|cygwin/
       end
     end

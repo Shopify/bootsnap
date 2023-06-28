@@ -28,12 +28,13 @@ module Bootsnap
       BUILTIN_FEATURES = $LOADED_FEATURES.each_with_object({}) do |feat, features|
         # Builtin features are of the form 'enumerator.so'.
         # All others include paths.
-        next unless feat.size < 20 && !feat.include?("/")
+        next unless (feat.size < 20 && !feat.include?("/")) || feat.include?("languages/ruby/lib/truffle")
 
+        base_with_ext = File.basename(feat) # enumerator.so
         base = File.basename(feat, ".*") # enumerator.so -> enumerator
         ext  = File.extname(feat) # .so
 
-        features[feat] = nil # enumerator.so
+        features[base_with_ext] = nil # enumerator.so
         features[base] = nil # enumerator
 
         next unless [DOT_SO, *DL_EXTENSIONS].include?(ext)

@@ -97,21 +97,29 @@ end
 module TmpdirHelper
   def setup
     super
+    
     @prev_dir = Dir.pwd
     @tmp_dir = Dir.mktmpdir("bootsnap-test")
     Dir.chdir(@tmp_dir)
-    @prev = Bootsnap::CompileCache::ISeq.cache_dir
-    Bootsnap::CompileCache::ISeq.cache_dir = @tmp_dir
-    Bootsnap::CompileCache::YAML.cache_dir = @tmp_dir
-    Bootsnap::CompileCache::JSON.cache_dir = @tmp_dir
+
+    if Bootsnap::CompileCache.supported?
+      @prev = Bootsnap::CompileCache::ISeq.cache_dir
+      Bootsnap::CompileCache::ISeq.cache_dir = @tmp_dir
+      Bootsnap::CompileCache::YAML.cache_dir = @tmp_dir
+      Bootsnap::CompileCache::JSON.cache_dir = @tmp_dir
+    end
   end
 
   def teardown
     super
+
     Dir.chdir(@prev_dir)
-    FileUtils.remove_entry(@tmp_dir)
-    Bootsnap::CompileCache::ISeq.cache_dir = @prev
-    Bootsnap::CompileCache::YAML.cache_dir = @prev
-    Bootsnap::CompileCache::JSON.cache_dir = @prev
+
+    if Bootsnap::CompileCache.supported?
+      FileUtils.remove_entry(@tmp_dir)
+      Bootsnap::CompileCache::ISeq.cache_dir = @prev
+      Bootsnap::CompileCache::YAML.cache_dir = @prev
+      Bootsnap::CompileCache::JSON.cache_dir = @prev
+    end
   end
 end
