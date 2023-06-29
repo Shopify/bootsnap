@@ -19,6 +19,7 @@ class CompileCacheYAMLTest < Minitest::Test
   end
 
   def setup
+    skip("Unsupported platform") unless Bootsnap::CompileCache.supported?
     super
     Bootsnap::CompileCache::YAML.init!
     FakeYaml.singleton_class.prepend(Bootsnap::CompileCache::YAML.patch)

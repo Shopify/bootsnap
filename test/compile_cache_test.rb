@@ -3,6 +3,7 @@
 require("test_helper")
 
 class CompileCacheTest < Minitest::Test
+  include(CompileCacheISeqHelper)
   include(TmpdirHelper)
 
   def teardown

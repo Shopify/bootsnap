@@ -3,6 +3,7 @@
 require("test_helper")
 
 class HelperTest < MiniTest::Test
+  include(CompileCacheISeqHelper)
   include(TmpdirHelper)
 
   def test_validate_cache_path

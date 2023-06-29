@@ -4,6 +4,8 @@ require("test_helper")
 
 module Bootsnap
   class KernelRequireTest < Minitest::Test
+    include LoadPathCacheHelper
+
     def test_uses_the_same_duck_type_as_require
       skip("Need a working Process.fork to test in isolation") unless Process.respond_to?(:fork)
       begin

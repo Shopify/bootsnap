@@ -4,6 +4,7 @@ require("test_helper")
 
 module Bootsnap
   class KernelTest < Minitest::Test
+    include LoadPathCacheHelper
     include TmpdirHelper
 
     def test_require_symlinked_file_twice

@@ -94,6 +94,24 @@ module MiniTest
   end
 end
 
+module CompileCacheISeqHelper
+  def setup
+    unless defined?(Bootsnap::CompileCache::ISeq) && Bootsnap::CompileCache::ISeq.supported?
+      skip("Unsupported platform")
+    end
+
+    super
+  end
+end
+
+module LoadPathCacheHelper
+  def setup
+    skip("Unsupported platform") unless Bootsnap::LoadPathCache.supported?
+
+    super
+  end
+end
+
 module TmpdirHelper
   def setup
     super

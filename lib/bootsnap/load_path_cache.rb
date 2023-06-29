@@ -50,7 +50,7 @@ module Bootsnap
         @loaded_features_index = nil
         @realpath_cache = nil
         @load_path_cache = nil
-        ChangeObserver.unregister($LOAD_PATH)
+        ChangeObserver.unregister($LOAD_PATH) if supported?
       end
 
       def supported?

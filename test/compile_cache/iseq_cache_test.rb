@@ -3,6 +3,7 @@
 require("test_helper")
 
 class CompileCacheISeqTest < Minitest::Test
+  include(CompileCacheISeqHelper)
   include(TmpdirHelper)
 
   def test_ruby_bug_18250

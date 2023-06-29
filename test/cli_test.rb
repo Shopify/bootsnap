@@ -13,30 +13,35 @@ module Bootsnap
     end
 
     def test_precompile_single_file
+      skip_unless_iseq
       path = Help.set_file("a.rb", "a = a = 3", 100)
       CompileCache::ISeq.expects(:precompile).with(File.expand_path(path))
       assert_equal 0, CLI.new(["precompile", "-j", "0", path]).run
     end
 
     def test_precompile_rake_files
+      skip_unless_iseq
       path = Help.set_file("a.rake", "a = a = 3", 100)
       CompileCache::ISeq.expects(:precompile).with(File.expand_path(path))
       assert_equal 0, CLI.new(["precompile", "-j", "0", path]).run
     end
 
     def test_precompile_rakefile
+      skip_unless_iseq
       path = Help.set_file("Rakefile", "a = a = 3", 100)
       CompileCache::ISeq.expects(:precompile).with(File.expand_path(path))
       assert_equal 0, CLI.new(["precompile", "-j", "0", path]).run
     end
 
     def test_no_iseq
+      skip_unless_iseq
       path = Help.set_file("a.rb", "a = a = 3", 100)
       CompileCache::ISeq.expects(:precompile).never
       assert_equal 0, CLI.new(["precompile", "-j", "0", "--no-iseq", path]).run
     end
 
     def test_precompile_directory
+      skip_unless_iseq
       path_a = Help.set_file("foo/a.rb", "a = a = 3", 100)
       path_b = Help.set_file("foo/b.rb", "b = b = 3", 100)
 
@@ -46,6 +51,7 @@ module Bootsnap
     end
 
     def test_precompile_exclude
+      skip_unless_iseq
       path_a = Help.set_file("foo/a.rb", "a = a = 3", 100)
       Help.set_file("foo/b.rb", "b = b = 3", 100)
 
@@ -67,6 +73,12 @@ module Bootsnap
       path = Help.set_file("a.yaml", "foo: bar", 100)
       CompileCache::YAML.expects(:precompile).never
       assert_equal 0, CLI.new(["precompile", "-j", "0", "--no-yaml", path]).run
+    end
+
+    private
+
+    def skip_unless_iseq
+      skip("Unsupported platform") unless defined?(CompileCache::ISeq) && CompileCache::ISeq.supported?
     end
   end
 end

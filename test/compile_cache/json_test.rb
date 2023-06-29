@@ -15,6 +15,7 @@ class CompileCacheJSONTest < Minitest::Test
   end
 
   def setup
+    skip("Unsupported platform") unless Bootsnap::CompileCache.supported?
     super
     Bootsnap::CompileCache::JSON.init!
     FakeJson.singleton_class.prepend(Bootsnap::CompileCache::JSON::Patch)
