@@ -5,7 +5,10 @@ require("test_helper")
 module Bootsnap
   module LoadPathCache
     class ChangeObserverTest < MiniTest::Test
+      include LoadPathCacheHelper
+
       def setup
+        super
         @observer = Object.new
         @arr = []
         ChangeObserver.register(@arr, @observer)

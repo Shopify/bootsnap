@@ -2,7 +2,7 @@
 
 require("mkmf")
 
-if RUBY_ENGINE == "ruby"
+if %w[ruby truffleruby].include?(RUBY_ENGINE)
   $CFLAGS << " -O3 "
   $CFLAGS << " -std=c99"
 

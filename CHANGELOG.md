@@ -1,5 +1,7 @@
 # Unreleased
 
+* Support YAML and JSON CompileCache on TruffleRuby.
+
 # 1.16.0
 
 * Use `RbConfig::CONFIG["rubylibdir"]` instead of `RbConfig::CONFIG["libdir"]` to check for stdlib files. See #431.

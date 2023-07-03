@@ -5,7 +5,10 @@ require("test_helper")
 module Bootsnap
   module LoadPathCache
     class CacheTest < MiniTest::Test
+      include LoadPathCacheHelper
+
       def setup
+        super
         @dir1 = File.realpath(Dir.mktmpdir)
         @dir2 = File.realpath(Dir.mktmpdir)
         FileUtils.touch("#{@dir1}/a.rb")

@@ -94,24 +94,62 @@ module MiniTest
   end
 end
 
+module CompileCacheISeqHelper
+  def setup
+    unless defined?(Bootsnap::CompileCache::ISeq) && Bootsnap::CompileCache::ISeq.supported?
+      skip("Unsupported platform")
+    end
+
+    super
+  end
+end
+
+module LoadPathCacheHelper
+  def setup
+    skip("Unsupported platform") unless Bootsnap::LoadPathCache.supported?
+
+    super
+  end
+end
+
 module TmpdirHelper
   def setup
     super
     @prev_dir = Dir.pwd
     @tmp_dir = Dir.mktmpdir("bootsnap-test")
     Dir.chdir(@tmp_dir)
-    @prev = Bootsnap::CompileCache::ISeq.cache_dir
-    Bootsnap::CompileCache::ISeq.cache_dir = @tmp_dir
-    Bootsnap::CompileCache::YAML.cache_dir = @tmp_dir
-    Bootsnap::CompileCache::JSON.cache_dir = @tmp_dir
+
+    if Bootsnap::CompileCache.supported?
+      set_compile_cache_dir(:ISeq, @tmp_dir)
+      set_compile_cache_dir(:YAML, @tmp_dir)
+      set_compile_cache_dir(:JSON, @tmp_dir)
+    end
   end
 
   def teardown
     super
     Dir.chdir(@prev_dir)
     FileUtils.remove_entry(@tmp_dir)
-    Bootsnap::CompileCache::ISeq.cache_dir = @prev
-    Bootsnap::CompileCache::YAML.cache_dir = @prev
-    Bootsnap::CompileCache::JSON.cache_dir = @prev
+
+    if Bootsnap::CompileCache.supported?
+      restore_compile_cache_dir(:ISeq)
+      restore_compile_cache_dir(:YAML)
+      restore_compile_cache_dir(:JSON)
+    end
+  end
+
+  private
+
+  def restore_compile_cache_dir(mod_name)
+    prev = instance_variable_get("@prev_#{mod_name.downcase}")
+    # Restore directly to instance var to avoid duplication of suffix logic.
+    Bootsnap::CompileCache.const_get(mod_name).instance_variable_set(:@cache_dir, prev) if prev
+  end
+
+  def set_compile_cache_dir(mod_name, dir)
+    mod = Bootsnap::CompileCache.const_get(mod_name)
+    instance_variable_set("@prev_#{mod_name.downcase}", mod.cache_dir)
+    # Use setter method when setting to tmp dir.
+    mod.cache_dir = dir
   end
 end

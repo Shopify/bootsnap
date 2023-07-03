@@ -5,7 +5,10 @@ require("test_helper")
 module Bootsnap
   module LoadPathCache
     class LoadedFeaturesIndexTest < MiniTest::Test
+      include LoadPathCacheHelper
+
       def setup
+        super
         @index = LoadedFeaturesIndex.new
         # not really necessary but let's just make it a clean slate
         @index.instance_variable_set(:@lfi, {})

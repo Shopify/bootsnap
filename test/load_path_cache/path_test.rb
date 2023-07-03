@@ -6,7 +6,10 @@ require("bootsnap/load_path_cache")
 module Bootsnap
   module LoadPathCache
     class PathTest < MiniTest::Test
+      include LoadPathCacheHelper
+
       def setup
+        super
         @cache = Object.new
       end
 

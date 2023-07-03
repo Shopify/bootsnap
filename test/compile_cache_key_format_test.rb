@@ -7,6 +7,7 @@ require("fileutils")
 
 class CompileCacheKeyFormatTest < Minitest::Test
   FILE = File.expand_path(__FILE__)
+  include(CompileCacheISeqHelper)
   include(TmpdirHelper)
 
   R = {

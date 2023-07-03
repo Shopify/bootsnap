@@ -3,6 +3,7 @@
 require("test_helper")
 
 class CompileCacheHandlerErrorsTest < Minitest::Test
+  include(CompileCacheISeqHelper)
   include(TmpdirHelper)
 
   # now test three failure modes of each handler method:

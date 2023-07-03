@@ -12,6 +12,10 @@ module Bootsnap
         def cache_dir=(cache_dir)
           @cache_dir = cache_dir.end_with?("/") ? "#{cache_dir}iseq" : "#{cache_dir}-iseq"
         end
+
+        def supported?
+          CompileCache.supported? && defined?(RubyVM)
+        end
       end
 
       has_ruby_bug_18250 = begin # https://bugs.ruby-lang.org/issues/18250
@@ -103,11 +107,15 @@ module Bootsnap
         crc = Zlib.crc32(option.inspect)
         Bootsnap::CompileCache::Native.compile_option_crc32 = crc
       end
-      compile_option_updated
+      compile_option_updated if supported?
 
       def self.install!(cache_dir)
         Bootsnap::CompileCache::ISeq.cache_dir = cache_dir
+
+        return unless supported?
+
         Bootsnap::CompileCache::ISeq.compile_option_updated
+
         class << RubyVM::InstructionSequence
           prepend(InstructionSequenceMixin)
         end

@@ -7,7 +7,10 @@ require("fileutils")
 module Bootsnap
   module LoadPathCache
     class StoreTest < MiniTest::Test
+      include LoadPathCacheHelper
+
       def setup
+        super
         @dir = Dir.mktmpdir
         @path = "#{@dir}/store"
         @store = Store.new(@path)
