@@ -30,8 +30,9 @@ require 'bootsnap/setup'
 ```
 
 Note that bootsnap writes to `tmp/cache` (or the path specified by `ENV['BOOTSNAP_CACHE_DIR']`),
-and that directory *must* be writable. Rails will fail to
-boot if it is not. If this is unacceptable (e.g. you are running in a read-only container and
+and that directory *must* be writable. Rails will fail to boot if it is not; unless the whole
+filesystem is read-only (for example because of containerization/sandboxing).
+If this is unacceptable (e.g. you are running in a read-only container and
 unwilling to mount in a writable tmpdir), you should remove this line or wrap it in a conditional.
 
 **Note also that bootsnap will never clean up its own cache: this is left up to you. Depending on your
