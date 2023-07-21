@@ -38,7 +38,7 @@ class CompileCacheTest < Minitest::Test
       # list contents.
       #
       # Since we can't read directories on windows, this specific test doesn't
-      # make sense. In addtion we test read-only files in
+      # make sense. In addition we test read-only files in
       # `test_can_open_read_only_cache` so we are covered testing reading
       # read-only files.
       pass
@@ -48,6 +48,20 @@ class CompileCacheTest < Minitest::Test
       FileUtils.mkdir_p(folder)
       FileUtils.chmod(0o400, folder)
       load(path)
+    end
+  end
+
+  def test_no_read_permission
+    if RbConfig::CONFIG["host_os"] =~ /mswin|mingw|cygwin/
+      # On windows removing read permission doesn't prevent reading.
+      pass
+    else
+      path = Help.set_file("a.rb", "a = a = 3", 100)
+      FileUtils.chmod(0o000, path)
+      exception = assert_raises(LoadError) do
+        load(path)
+      end
+      assert_match(path, exception.message)
     end
   end
 

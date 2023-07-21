@@ -87,8 +87,6 @@ module Bootsnap
           return nil if defined?(Coverage) && Bootsnap::CompileCache::Native.coverage_running?
 
           Bootsnap::CompileCache::ISeq.fetch(path.to_s)
-        rescue Errno::EACCES
-          Bootsnap::CompileCache.permission_error(path)
         rescue RuntimeError => error
           if error.message =~ /unmatched platform/
             puts("unmatched platform for file #{path}")

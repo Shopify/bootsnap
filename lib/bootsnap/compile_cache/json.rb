@@ -74,16 +74,12 @@ module Bootsnap
             return super unless (kwargs.keys - ::Bootsnap::CompileCache::JSON.supported_options).empty?
           end
 
-          begin
-            ::Bootsnap::CompileCache::Native.fetch(
-              Bootsnap::CompileCache::JSON.cache_dir,
-              File.realpath(path),
-              ::Bootsnap::CompileCache::JSON,
-              kwargs,
-            )
-          rescue Errno::EACCES
-            ::Bootsnap::CompileCache.permission_error(path)
-          end
+          ::Bootsnap::CompileCache::Native.fetch(
+            Bootsnap::CompileCache::JSON.cache_dir,
+            File.realpath(path),
+            ::Bootsnap::CompileCache::JSON,
+            kwargs,
+          )
         end
 
         ruby2_keywords :load_file if respond_to?(:ruby2_keywords, true)
