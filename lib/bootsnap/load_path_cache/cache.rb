@@ -24,8 +24,16 @@ module Bootsnap
         @mutex.synchronize { @dirs[dir] }
       end
 
+      TRUFFLERUBY_LIB_DIR_PREFIX = if RUBY_ENGINE == "truffleruby"
+        "#{File.join(RbConfig::CONFIG['libdir'], 'truffle')}#{File::SEPARATOR}"
+      end
+
       # { 'enumerator' => nil, 'enumerator.so' => nil, ... }
       BUILTIN_FEATURES = $LOADED_FEATURES.each_with_object({}) do |feat, features|
+        if TRUFFLERUBY_LIB_DIR_PREFIX && feat.start_with?(TRUFFLERUBY_LIB_DIR_PREFIX)
+          feat = feat.byteslice(TRUFFLERUBY_LIB_DIR_PREFIX.bytesize..-1)
+        end
+
         # Builtin features are of the form 'enumerator.so'.
         # All others include paths.
         next unless feat.size < 20 && !feat.include?("/")

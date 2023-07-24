@@ -35,16 +35,21 @@ module Bootsnap
         assert_equal false, cache.find("thread")
         assert_equal false, cache.find("thread.rb")
         assert_equal false, cache.find("enumerator")
-        assert_equal false, cache.find("enumerator.so")
 
-        if RUBY_PLATFORM =~ /darwin/
-          assert_equal false, cache.find("enumerator.bundle")
+        if truffleruby?
+          assert_equal false, cache.find("enumerator.rb")
         else
-          assert_same FALLBACK_SCAN, cache.find("enumerator.bundle")
+          assert_equal false, cache.find("enumerator.so")
+          if RUBY_PLATFORM =~ /darwin/
+            assert_equal false, cache.find("enumerator.bundle")
+          else
+            assert_same FALLBACK_SCAN, cache.find("enumerator.bundle")
+          end
         end
 
         bundle = RUBY_PLATFORM =~ /darwin/ ? "bundle" : "so"
 
+        # These are not present in TruffleRuby but that means they will still return falsey.
         refute(cache.find("thread.#{bundle}"))
         refute(cache.find("enumerator.rb"))
         refute(cache.find("encdb.#{bundle}"))
@@ -165,9 +170,15 @@ module Bootsnap
           require path
           internal_path = $LOADED_FEATURES.last
           assert_equal(OS_ASCII_PATH_ENCODING, internal_path.encoding)
-          assert_equal(OS_ASCII_PATH_ENCODING, path.encoding)
+          # TruffleRuby object is a copy and the encoding resets to utf-8.
+          assert_equal(OS_ASCII_PATH_ENCODING, path.encoding) unless truffleruby?
           File.write(path, "")
-          assert_same path, internal_path
+
+          if truffleruby?
+            assert_equal path, internal_path
+          else
+            assert_same path, internal_path
+          end
 
           utf8_path = cache.find("béé")
           assert_equal("#{@dir1}/béé.rb", utf8_path)
@@ -176,8 +187,19 @@ module Bootsnap
           assert_equal(Encoding::UTF_8, internal_utf8_path.encoding)
           assert_equal(Encoding::UTF_8, utf8_path.encoding)
           File.write(utf8_path, "")
-          assert_same utf8_path, internal_utf8_path
+
+          if truffleruby?
+            assert_equal utf8_path, internal_utf8_path
+          else
+            assert_same utf8_path, internal_utf8_path
+          end
         end
+      end
+
+      private
+
+      def truffleruby?
+        RUBY_ENGINE == "truffleruby"
       end
     end
   end

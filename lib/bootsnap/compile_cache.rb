@@ -53,8 +53,9 @@ module Bootsnap
     end
 
     def self.supported?
-      # only enable on 'ruby' (MRI), POSIX (darwin, linux, *bsd), Windows (RubyInstaller2) and >= 2.3.0
-      %w[ruby truffleruby].include?(RUBY_ENGINE) && RUBY_PLATFORM.match?(/darwin|linux|bsd|mswin|mingw|cygwin/)
+      # only enable on 'ruby' (MRI) and TruffleRuby for POSIX (darwin, linux, *bsd), Windows (RubyInstaller2)
+      %w[ruby truffleruby].include?(RUBY_ENGINE) &&
+        RUBY_PLATFORM.match?(/darwin|linux|bsd|mswin|mingw|cygwin/)
     end
   end
 end

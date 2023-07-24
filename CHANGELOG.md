@@ -1,6 +1,7 @@
 # Unreleased
 
 * Support YAML and JSON CompileCache on TruffleRuby.
+* Support LoadPathCache on TruffleRuby.
 
 # 1.16.0
 

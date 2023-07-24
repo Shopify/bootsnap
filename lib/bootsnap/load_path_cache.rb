@@ -54,8 +54,17 @@ module Bootsnap
       end
 
       def supported?
-        RUBY_ENGINE == "ruby" &&
-          RUBY_PLATFORM =~ /darwin|linux|bsd|mswin|mingw|cygwin/
+        if RUBY_PLATFORM.match?(/darwin|linux|bsd|mswin|mingw|cygwin/)
+          case RUBY_ENGINE
+          when "truffleruby"
+            # https://github.com/oracle/truffleruby/issues/3131
+            RUBY_ENGINE_VERSION >= "23.1.0"
+          when "ruby"
+            true
+          else
+            false
+          end
+        end
       end
     end
   end
