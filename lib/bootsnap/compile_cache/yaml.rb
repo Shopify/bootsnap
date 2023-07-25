@@ -229,16 +229,12 @@ module Bootsnap
               return super unless (kwargs.keys - CompileCache::YAML.supported_options).empty?
             end
 
-            begin
-              CompileCache::Native.fetch(
-                CompileCache::YAML.cache_dir,
-                File.realpath(path),
-                CompileCache::YAML::Psych4::SafeLoad,
-                kwargs,
-              )
-            rescue Errno::EACCES
-              CompileCache.permission_error(path)
-            end
+            CompileCache::Native.fetch(
+              CompileCache::YAML.cache_dir,
+              File.realpath(path),
+              CompileCache::YAML::Psych4::SafeLoad,
+              kwargs,
+            )
           end
 
           ruby2_keywords :load_file if respond_to?(:ruby2_keywords, true)
@@ -253,16 +249,12 @@ module Bootsnap
               return super unless (kwargs.keys - CompileCache::YAML.supported_options).empty?
             end
 
-            begin
-              CompileCache::Native.fetch(
-                CompileCache::YAML.cache_dir,
-                File.realpath(path),
-                CompileCache::YAML::Psych4::UnsafeLoad,
-                kwargs,
-              )
-            rescue Errno::EACCES
-              CompileCache.permission_error(path)
-            end
+            CompileCache::Native.fetch(
+              CompileCache::YAML.cache_dir,
+              File.realpath(path),
+              CompileCache::YAML::Psych4::UnsafeLoad,
+              kwargs,
+            )
           end
 
           ruby2_keywords :unsafe_load_file if respond_to?(:ruby2_keywords, true)
@@ -309,16 +301,12 @@ module Bootsnap
               return super unless (kwargs.keys - CompileCache::YAML.supported_options).empty?
             end
 
-            begin
-              CompileCache::Native.fetch(
-                CompileCache::YAML.cache_dir,
-                File.realpath(path),
-                CompileCache::YAML::Psych3,
-                kwargs,
-              )
-            rescue Errno::EACCES
-              CompileCache.permission_error(path)
-            end
+            CompileCache::Native.fetch(
+              CompileCache::YAML.cache_dir,
+              File.realpath(path),
+              CompileCache::YAML::Psych3,
+              kwargs,
+            )
           end
 
           ruby2_keywords :load_file if respond_to?(:ruby2_keywords, true)
@@ -333,16 +321,12 @@ module Bootsnap
               return super unless (kwargs.keys - CompileCache::YAML.supported_options).empty?
             end
 
-            begin
-              CompileCache::Native.fetch(
-                CompileCache::YAML.cache_dir,
-                File.realpath(path),
-                CompileCache::YAML::Psych3,
-                kwargs,
-              )
-            rescue Errno::EACCES
-              CompileCache.permission_error(path)
-            end
+            CompileCache::Native.fetch(
+              CompileCache::YAML.cache_dir,
+              File.realpath(path),
+              CompileCache::YAML::Psych3,
+              kwargs,
+            )
           end
 
           ruby2_keywords :unsafe_load_file if respond_to?(:ruby2_keywords, true)

@@ -8,7 +8,6 @@ module Bootsnap
     end
 
     Error = Class.new(StandardError)
-    PermissionError = Class.new(Error)
 
     def self.setup(cache_dir:, iseq:, yaml:, json:, readonly: false)
       if iseq
@@ -41,15 +40,6 @@ module Bootsnap
       if supported? && defined?(Bootsnap::CompileCache::Native)
         Bootsnap::CompileCache::Native.readonly = readonly
       end
-    end
-
-    def self.permission_error(path)
-      cpath = Bootsnap::CompileCache::ISeq.cache_dir
-      raise(
-        PermissionError,
-        "bootsnap doesn't have permission to write cache entries in '#{cpath}' " \
-        "(or, less likely, doesn't have permission to read '#{path}')",
-      )
     end
 
     def self.supported?

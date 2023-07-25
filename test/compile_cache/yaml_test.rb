@@ -245,6 +245,21 @@ class CompileCacheYAMLTest < Minitest::Test
     end
   end
 
+  def test_no_read_permission
+    if RbConfig::CONFIG["host_os"] =~ /mswin|mingw|cygwin/
+      # On windows removing read permission doesn't prevent reading.
+      pass
+    else
+      file = "a.yml"
+      Help.set_file(file, ::YAML.dump(Object.new), 100)
+      FileUtils.chmod(0o000, file)
+      exception = assert_raises(Errno::EACCES) do
+        FakeYaml.load_file(file)
+      end
+      assert_match(file, exception.message)
+    end
+  end
+
   private
 
   def with_default_encoding_internal(encoding)

@@ -682,10 +682,14 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args
   VALUE output_data;  /* return data, e.g. ruby hash or loaded iseq */
 
   VALUE exception; /* ruby exception object to raise instead of returning */
+  VALUE exception_message; /* ruby exception string to use instead of errno_provenance */
 
   /* Open the source file and generate a cache key for it */
   current_fd = open_current_file(path, &current_key, &errno_provenance);
-  if (current_fd < 0) goto fail_errno;
+  if (current_fd < 0) {
+    exception_message = path_v;
+    goto fail_errno;
+  }
 
   /* Open the cache key if it exists, and read its cache key in */
   cache_fd = open_cache_file(cache_path, &cached_key, &errno_provenance);
@@ -695,6 +699,7 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args
       rb_funcall(rb_mBootsnap, instrumentation_method, 2, cache_fd == CACHE_MISS ? sym_miss : sym_stale, path_v);
     }
   } else if (cache_fd < 0) {
+    exception_message = rb_str_new_cstr(cache_path);
     goto fail_errno;
   } else {
     /* True if the cache existed and no invalidating changes have occurred since
@@ -717,12 +722,18 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args
     else if (res == CACHE_UNCOMPILABLE) {
       /* If fetch_cached_data returned `Uncompilable` we fallback to `input_to_output`
         This happens if we have say, an unsafe YAML cache, but try to load it in safe mode */
-      if ((input_data = bs_read_contents(current_fd, current_key.size, &errno_provenance)) == Qfalse) goto fail_errno;
+      if ((input_data = bs_read_contents(current_fd, current_key.size, &errno_provenance)) == Qfalse){
+        exception_message = path_v;
+        goto fail_errno;
+      }
       bs_input_to_output(handler, args, input_data, &output_data, &exception_tag);
       if (exception_tag != 0) goto raise;
       goto succeed;
     } else if (res == CACHE_MISS || res == CACHE_STALE) valid_cache = 0;
-    else if (res == ERROR_WITH_ERRNO) goto fail_errno;
+    else if (res == ERROR_WITH_ERRNO){
+      exception_message = rb_str_new_cstr(cache_path);
+      goto fail_errno;
+    }
     else if (!NIL_P(output_data)) goto succeed; /* fast-path, goal */
   }
   close(cache_fd);
@@ -730,7 +741,10 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args
   /* Cache is stale, invalid, or missing. Regenerate and write it out. */
 
   /* Read the contents of the source file into a buffer */
-  if ((input_data = bs_read_contents(current_fd, current_key.size, &errno_provenance)) == Qfalse) goto fail_errno;
+  if ((input_data = bs_read_contents(current_fd, current_key.size, &errno_provenance)) == Qfalse){
+    exception_message = path_v;
+    goto fail_errno;
+  }
 
   /* Try to compile the input_data using input_to_storage(input_data) */
   exception_tag = bs_input_to_storage(handler, args, input_data, path_v, &storage_data);
@@ -767,6 +781,7 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args
       * No point raising an error */
       if (errno != ENOENT) {
         errno_provenance = "bs_fetch:unlink";
+        exception_message = rb_str_new_cstr(cache_path);
         goto fail_errno;
       }
     }
@@ -785,7 +800,7 @@ succeed:
   return output_data;
 fail_errno:
   CLEANUP;
-  exception = rb_syserr_new(errno, errno_provenance);
+  exception = rb_syserr_new_str(errno, exception_message);
   rb_exc_raise(exception);
   __builtin_unreachable();
 raise:
