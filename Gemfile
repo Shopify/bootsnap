@@ -13,7 +13,7 @@ gem "bundler"
 gem "rake"
 gem "rake-compiler"
 gem "minitest", "~> 5.0"
-gem "mocha", "~> 1.2"
+gem "mocha"
 
 group :development do
   gem "rubocop", "~> 1.28.2" # Ruby 2.5 support

@@ -60,7 +60,7 @@ module NullCache
   end
 end
 
-module MiniTest
+module Minitest
   class Test
     module Help
       class << self

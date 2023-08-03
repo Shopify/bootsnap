@@ -6,7 +6,7 @@ require("fileutils")
 
 module Bootsnap
   module LoadPathCache
-    class StoreTest < MiniTest::Test
+    class StoreTest < Minitest::Test
       include LoadPathCacheHelper
 
       def setup

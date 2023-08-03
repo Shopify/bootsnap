@@ -4,7 +4,7 @@ require("test_helper")
 
 module Bootsnap
   module LoadPathCache
-    class PathScannerTest < MiniTest::Test
+    class PathScannerTest < Minitest::Test
       include LoadPathCacheHelper
 
       DLEXT = RbConfig::CONFIG["DLEXT"]
