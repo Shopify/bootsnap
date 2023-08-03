@@ -2,7 +2,7 @@
 
 require("test_helper")
 
-class HelperTest < MiniTest::Test
+class HelperTest < Minitest::Test
   include(CompileCacheISeqHelper)
   include(TmpdirHelper)
 

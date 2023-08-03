@@ -4,7 +4,7 @@ require("test_helper")
 
 module Bootsnap
   module LoadPathCache
-    class CacheTest < MiniTest::Test
+    class CacheTest < Minitest::Test
       include LoadPathCacheHelper
 
       def setup

@@ -33,7 +33,7 @@ module Bootsnap
     end
   end
 
-  class KernelLoadTest < MiniTest::Test
+  class KernelLoadTest < Minitest::Test
     def setup
       @initial_dir = Dir.pwd
       @dir1 = File.realpath(Dir.mktmpdir)
