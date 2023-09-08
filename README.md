@@ -1,6 +1,6 @@
 # Bootsnap [![Actions Status](https://github.com/Shopify/bootsnap/workflows/ci/badge.svg)](https://github.com/Shopify/bootsnap/actions)
 
-Bootsnap is a library that plugs into Ruby, with optional support for `YAML`,
+Bootsnap is a library that plugs into Ruby, with optional support for `YAML` and `JSON`,
 to optimize and cache expensive computations. See [How Does This Work](#how-does-this-work).
 
 #### Performance
@@ -57,6 +57,7 @@ Bootsnap.setup(
   load_path_cache:      true,                 # Optimize the LOAD_PATH with a cache
   compile_cache_iseq:   true,                 # Compile Ruby code into ISeq cache, breaks coverage reporting.
   compile_cache_yaml:   true,                 # Compile YAML into a cache
+  compile_cache_json:   true,                 # Compile JSON into a cache
   readonly:             true,                 # Use the caches but don't update them on miss or stale entries.
 )
 ```
@@ -119,6 +120,7 @@ into two broad categories:
       compilation.
     * `YAML.load_file` is modified to cache the result of loading a YAML object in MessagePack format
       (or Marshal, if the message uses types unsupported by MessagePack).
+    * `JSON.load_file` is modified to cache the result of loading a JSON object in MessagePack format
 
 ### Path Pre-Scanning
 
@@ -189,9 +191,9 @@ translated ruby source to an internal bytecode format, which is then executed by
 allows caching that bytecode. This allows us to bypass the relatively-expensive compilation step on
 subsequent loads of the same file.
 
-We also noticed that we spend a lot of time loading YAML documents during our application boot, and
-that MessagePack and Marshal are *much* faster at deserialization than YAML, even with a fast
-implementation. We use the same strategy of compilation caching for YAML documents, with the
+We also noticed that we spend a lot of time loading YAML and JSON documents during our application boot, and
+that MessagePack and Marshal are *much* faster at deserialization than YAML and JSON, even with a fast
+implementation. We use the same strategy of compilation caching for YAML and JSON documents, with the
 equivalent of Ruby's "bytecode" format being a MessagePack document (or, in the case of YAML
 documents with types unsupported by MessagePack, a Marshal stream).
 
