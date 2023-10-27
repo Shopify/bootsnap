@@ -54,6 +54,18 @@ module Bootsnap
             ret
           end
         end
+
+        def dup
+          new_obj = super
+          new_obj.remove_instance_variable(:@lpc_observer)
+          new_obj
+        end
+
+        def clone
+          new_obj = super
+          ChangeObserver.unregister(new_obj)
+          new_obj
+        end
       end
 
       def self.register(arr, observer)
