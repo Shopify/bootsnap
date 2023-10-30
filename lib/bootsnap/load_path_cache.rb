@@ -38,8 +38,8 @@ module Bootsnap
 
         @loaded_features_index = LoadedFeaturesIndex.new
 
-        @load_path_cache = Cache.new(store, $LOAD_PATH, development_mode: development_mode)
         PathScanner.ignored_directories = ignore_directories if ignore_directories
+        @load_path_cache = Cache.new(store, $LOAD_PATH, development_mode: development_mode)
         @enabled = true
         require_relative("load_path_cache/core_ext/kernel_require")
         require_relative("load_path_cache/core_ext/loaded_features")
