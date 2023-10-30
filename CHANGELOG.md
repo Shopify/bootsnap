@@ -2,8 +2,8 @@
 
 # 1.17.0
 
-* Ensure `$LOAD_PATH.dup` is Ractor shareable to fix an conflit with `did_you_mean`.
-* Allow to ignore direcotries using absolute paths.
+* Ensure `$LOAD_PATH.dup` is Ractor shareable to fix an conflict with `did_you_mean`.
+* Allow to ignore directories using absolute paths.
 * Support YAML and JSON CompileCache on TruffleRuby.
 * Support LoadPathCache on TruffleRuby.
 
@@ -24,7 +24,7 @@
 * Add a way to skip directories during load path scanning.
   If you have large non-ruby directories in the middle of your load path, it can severely slow down scanning.
   Typically this is a problem with `node_modules`. See #277.
-* Fix `Bootsnap.unload_cache!`, it simply wouldn't work at all becaue of a merge mistake. See #421.
+* Fix `Bootsnap.unload_cache!`, it simply wouldn't work at all because of a merge mistake. See #421.
 
 # 1.13.0
 
@@ -43,7 +43,7 @@
 
 * Stop decorating `Module#autoload` as it was only useful for supporting Ruby 2.2 and older.
 
-* Remove `uname` and other patform specific version from the cache keys. `RUBY_PLATFORM + RUBY_REVISION` should be
+* Remove `uname` and other platform specific version from the cache keys. `RUBY_PLATFORM + RUBY_REVISION` should be
   enough to ensure bytecode compatibility. This should improve caching for alpine based setups. See #409.
 
 # 1.11.1
