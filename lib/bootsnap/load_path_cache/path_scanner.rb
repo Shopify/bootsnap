@@ -54,7 +54,7 @@ module Bootsnap
 
             absolute_path = "#{absolute_dir_path}/#{name}"
             if File.directory?(absolute_path)
-              next if ignored_directories.include?(name)
+              next if ignored_directories.include?(name) || ignored_directories.include?(absolute_path)
 
               if yield relative_path, absolute_path, true
                 walk(absolute_path, relative_path, &block)
