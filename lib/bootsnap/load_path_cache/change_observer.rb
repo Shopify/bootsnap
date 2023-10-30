@@ -56,16 +56,10 @@ module Bootsnap
         end
 
         def dup
-          new_obj = super
-          new_obj.remove_instance_variable(:@lpc_observer)
-          new_obj
+          [] + self
         end
 
-        def clone
-          new_obj = super
-          ChangeObserver.unregister(new_obj)
-          new_obj
-        end
+        alias_method :clone, :dup
       end
 
       def self.register(arr, observer)

@@ -10,6 +10,7 @@ module Bootsnap
       def setup
         super
         @observer = Object.new
+        @observer.instance_variable_set(:@mutex, Mutex.new)
         @arr = []
         ChangeObserver.register(@arr, @observer)
       end
@@ -76,6 +77,20 @@ module Bootsnap
         @observer.expects(:push_paths).with(@arr, "a").once
         @arr << "a"
         assert_equal(%w(a), @arr)
+      end
+
+      def test_dup_returns_ractor_shareable_instance
+        return unless defined?(Ractor)
+
+        ChangeObserver.register(@arr, @observer)
+        Ractor.make_shareable(@arr.dup.freeze)
+      end
+
+      def test_clone_returns_ractor_shareable_instance
+        return unless defined?(Ractor)
+
+        ChangeObserver.register(@arr, @observer)
+        Ractor.make_shareable(@arr.clone.freeze)
       end
 
       def test_uniq_without_block
