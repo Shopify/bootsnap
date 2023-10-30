@@ -1,5 +1,7 @@
 # Unreleased
 
+# 1.17.0
+
 * Ensure `$LOAD_PATH.dup` is Ractor shareable to fix an conflit with `did_you_mean`.
 * Allow to ignore direcotries using absolute paths.
 * Support YAML and JSON CompileCache on TruffleRuby.
