@@ -17,9 +17,9 @@ module Bootsnap
           $LOAD_PATH.push(dir)
           FileUtils.touch("#{dir}/a.rb")
           stringish = mock
-          stringish.expects(:to_str).returns("a").twice # bootsnap + ruby
+          stringish.expects(:to_str).returns("a").at_least(2) # bootsnap + ruby
           pathish = mock
-          pathish.expects(:to_path).returns(stringish).twice # bootsnap + ruby
+          pathish.expects(:to_path).returns(stringish).at_least(2) # bootsnap + ruby
           assert pathish.respond_to?(:to_path)
           require(pathish)
           FileUtils.rm_rf(dir)
