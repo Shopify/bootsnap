@@ -17,5 +17,4 @@ gem "mocha"
 
 group :development do
   gem "rubocop", "~> 1.28.2" # Ruby 2.5 support
-  gem "byebug", platform: :ruby
 end
