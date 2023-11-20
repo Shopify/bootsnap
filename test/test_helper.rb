@@ -24,8 +24,8 @@ if GC.respond_to?(:verify_compaction_references)
   # This method was added in Ruby 3.0.0. Calling it this way asks the GC to
   # move objects around, helping to find object movement bugs.
   begin
-    GC.verify_compaction_references(double_heap: true, toward: :empty)
-  rescue NotImplementedError
+    GC.verify_compaction_references(expand_heap: true, toward: :empty)
+  rescue NotImplementedError, ArgumentError
     # some platforms do not support GC compaction
   end
 end
