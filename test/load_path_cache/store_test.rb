@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require("test_helper")
-require("tmpdir")
-require("fileutils")
+require "test_helper"
+require "tmpdir"
+require "fileutils"
 
 module Bootsnap
   module LoadPathCache

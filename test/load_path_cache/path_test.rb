@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require("test_helper")
-require("bootsnap/load_path_cache")
+require "test_helper"
+require "bootsnap/load_path_cache"
 
 module Bootsnap
   module LoadPathCache
@@ -14,7 +14,8 @@ module Bootsnap
       end
 
       def test_stability
-        require("time")
+        require "time"
+
         time_file       = Time.method(:rfc2822).source_location[0]
         volatile        = Path.new(__FILE__)
         stable          = Path.new(time_file)

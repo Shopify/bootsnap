@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Bootsnap
-  extend(self)
+  extend self
 
   def bundler?
     return false unless defined?(::Bundler)

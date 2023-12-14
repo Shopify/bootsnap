@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require("test_helper")
+require "test_helper"
 
 class CompileCacheJSONTest < Minitest::Test
-  include(TmpdirHelper)
+  include TmpdirHelper
 
   module FakeJson
     Fallback = Class.new(StandardError)

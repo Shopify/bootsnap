@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require("mkmf")
+require "mkmf"
 
 if %w[ruby truffleruby].include?(RUBY_ENGINE)
   $CFLAGS << " -O3 "

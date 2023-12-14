@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require("test_helper")
+require "test_helper"
 
 class BundlerTest < Minitest::Test
   def test_bundler_with_bundle_bin_path_env

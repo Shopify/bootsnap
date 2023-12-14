@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative("../explicit_require")
+require_relative "../explicit_require"
 
 module Bootsnap
   module LoadPathCache

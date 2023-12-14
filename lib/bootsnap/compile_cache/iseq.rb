@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require("bootsnap/bootsnap")
-require("zlib")
+require "bootsnap/bootsnap"
+require "zlib"
 
 module Bootsnap
   module CompileCache

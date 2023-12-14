@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
-require("test_helper")
-require("tempfile")
-require("tmpdir")
-require("fileutils")
+require "test_helper"
+require "tempfile"
+require "tmpdir"
+require "fileutils"
 
 class CompileCacheKeyFormatTest < Minitest::Test
   FILE = File.expand_path(__FILE__)
-  include(CompileCacheISeqHelper)
-  include(TmpdirHelper)
+  include CompileCacheISeqHelper
+  include TmpdirHelper
 
   R = {
     version: 0...4,

@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require("test_helper")
+require "test_helper"
 
 class CompileCacheTest < Minitest::Test
-  include(CompileCacheISeqHelper)
-  include(TmpdirHelper)
+  include CompileCacheISeqHelper
+  include TmpdirHelper
 
   def teardown
     super
@@ -21,7 +21,7 @@ class CompileCacheTest < Minitest::Test
 
   def test_coverage_running?
     refute(Bootsnap::CompileCache::Native.coverage_running?)
-    require("coverage")
+    require "coverage"
     begin
       Coverage.start
       assert(Bootsnap::CompileCache::Native.coverage_running?)

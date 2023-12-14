@@ -41,8 +41,8 @@ module Bootsnap
         PathScanner.ignored_directories = ignore_directories if ignore_directories
         @load_path_cache = Cache.new(store, $LOAD_PATH, development_mode: development_mode)
         @enabled = true
-        require_relative("load_path_cache/core_ext/kernel_require")
-        require_relative("load_path_cache/core_ext/loaded_features")
+        require_relative "load_path_cache/core_ext/kernel_require"
+        require_relative "load_path_cache/core_ext/loaded_features"
       end
 
       def unload!
@@ -71,10 +71,10 @@ module Bootsnap
 end
 
 if Bootsnap::LoadPathCache.supported?
-  require_relative("load_path_cache/path_scanner")
-  require_relative("load_path_cache/path")
-  require_relative("load_path_cache/cache")
-  require_relative("load_path_cache/store")
-  require_relative("load_path_cache/change_observer")
-  require_relative("load_path_cache/loaded_features_index")
+  require_relative "load_path_cache/path_scanner"
+  require_relative "load_path_cache/path"
+  require_relative "load_path_cache/cache"
+  require_relative "load_path_cache/store"
+  require_relative "load_path_cache/change_observer"
+  require_relative "load_path_cache/loaded_features_index"
 end

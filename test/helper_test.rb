@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require("test_helper")
+require "test_helper"
 
 class HelperTest < Minitest::Test
-  include(CompileCacheISeqHelper)
-  include(TmpdirHelper)
+  include CompileCacheISeqHelper
+  include TmpdirHelper
 
   def test_validate_cache_path
     path = Help.set_file("a.rb", "a = a = 3", 100)

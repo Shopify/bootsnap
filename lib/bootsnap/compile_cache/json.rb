@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require("bootsnap/bootsnap")
+require "bootsnap/bootsnap"
 
 module Bootsnap
   module CompileCache
@@ -46,8 +46,8 @@ module Bootsnap
         end
 
         def init!
-          require("json")
-          require("msgpack")
+          require "json"
+          require "msgpack"
 
           self.msgpack_factory = MessagePack::Factory.new
           self.supported_options = [:symbolize_names]

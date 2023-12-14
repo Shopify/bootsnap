@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require("test_helper")
+require "test_helper"
 
 class CompileCacheISeqTest < Minitest::Test
-  include(CompileCacheISeqHelper)
-  include(TmpdirHelper)
+  include CompileCacheISeqHelper
+  include TmpdirHelper
 
   def test_ruby_bug_18250
     Help.set_file("a.rb", "def foo(*); ->{ super }; end; def foo(**); ->{ super }; end", 100)

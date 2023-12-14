@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require("bootsnap/bootsnap")
+require "bootsnap/bootsnap"
 
 module Bootsnap
   module CompileCache
@@ -55,9 +55,9 @@ module Bootsnap
         end
 
         def init!
-          require("yaml")
-          require("msgpack")
-          require("date")
+          require "yaml"
+          require "msgpack"
+          require "date"
 
           @implementation = ::YAML::VERSION >= "4" ? Psych4 : Psych3
           if @implementation::Patch.method_defined?(:unsafe_load_file) && !::YAML.respond_to?(:unsafe_load_file)

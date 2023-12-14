@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require("test_helper")
+require "test_helper"
 
 class CompileCacheHandlerErrorsTest < Minitest::Test
-  include(CompileCacheISeqHelper)
-  include(TmpdirHelper)
+  include CompileCacheISeqHelper
+  include TmpdirHelper
 
   # now test three failure modes of each handler method:
   #   1. unexpected type

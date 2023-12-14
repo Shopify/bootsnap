@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require_relative("../explicit_require")
+require_relative "../explicit_require"
 
-Bootsnap::ExplicitRequire.with_gems("msgpack") { require("msgpack") }
+Bootsnap::ExplicitRequire.with_gems("msgpack") { require "msgpack" }
 
 module Bootsnap
   module LoadPathCache

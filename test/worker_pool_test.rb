@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require("test_helper")
-require("bootsnap/cli")
+require "test_helper"
+require "bootsnap/cli"
 
 module Bootsnap
   class WorkerPoolTestTest < Minitest::Test

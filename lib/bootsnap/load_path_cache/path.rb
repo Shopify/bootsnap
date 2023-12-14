@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative("path_scanner")
+require_relative "path_scanner"
 
 module Bootsnap
   module LoadPathCache

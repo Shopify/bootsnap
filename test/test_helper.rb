@@ -6,16 +6,16 @@ if Warning.respond_to?(:[]=)
   Warning[:deprecated] = true
 end
 
-require("bundler/setup")
-require("bootsnap")
-require("bootsnap/compile_cache/yaml")
-require("bootsnap/compile_cache/json")
+require "bundler/setup"
+require "bootsnap"
+require "bootsnap/compile_cache/yaml"
+require "bootsnap/compile_cache/json"
 
-require("tmpdir")
-require("fileutils")
+require "tmpdir"
+require "fileutils"
 
-require("minitest/autorun")
-require("mocha/minitest")
+require "minitest/autorun"
+require "mocha/minitest"
 
 cache_dir = File.expand_path("../tmp/bootsnap/compile-cache", __dir__)
 Bootsnap::CompileCache.setup(cache_dir: cache_dir, iseq: true, yaml: false, json: false)
