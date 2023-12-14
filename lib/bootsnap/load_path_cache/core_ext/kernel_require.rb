@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 module Kernel
-  module_function
+  alias_method :require_without_bootsnap, :require
 
-  alias_method(:require_without_bootsnap, :require)
+  alias_method :require, :require # Avoid method redefinition warnings
 
-  def require(path)
+  def require(path) # rubocop:disable Lint/DuplicateMethods
     return require_without_bootsnap(path) unless Bootsnap::LoadPathCache.enabled?
 
     string_path = Bootsnap.rb_get_path(path)
@@ -34,4 +34,6 @@ module Kernel
       return ret
     end
   end
+
+  private :require
 end
