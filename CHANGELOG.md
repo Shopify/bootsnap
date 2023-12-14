@@ -1,5 +1,7 @@
 # Unreleased
 
+* Improved the `Kernel#require` decorator to not cause a method redefinition warning. See #461.
+
 # 1.17.0
 
 * Ensure `$LOAD_PATH.dup` is Ractor shareable to fix an conflict with `did_you_mean`.
