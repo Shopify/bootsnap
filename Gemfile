@@ -16,5 +16,5 @@ gem "minitest", "~> 5.0"
 gem "mocha"
 
 group :development do
-  gem "rubocop", "~> 1.28.2" # Ruby 2.5 support
+  gem "rubocop", "~> 1.50.2" # Ruby 2.6 support
 end

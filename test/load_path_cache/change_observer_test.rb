@@ -29,7 +29,7 @@ module Bootsnap
         @arr.unshift("f", "g")
 
         @observer.expects(:push_paths).with(@arr, "h", "i")
-        @arr.concat(%w(h i))
+        @arr.push("h", "i")
 
         @observer.expects(:unshift_paths).with(@arr, "j", "k")
         @arr.prepend("j", "k")
@@ -46,7 +46,7 @@ module Bootsnap
         @arr.push("b", "c")
         @arr.append("d", "e")
         @arr.unshift("f", "g")
-        @arr.concat(%w(h i))
+        @arr.push("h", "i")
         @arr.prepend("j", "k")
         @arr.delete(3)
         @arr.compact!
