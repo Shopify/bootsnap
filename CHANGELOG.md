@@ -1,5 +1,7 @@
 # Unreleased
 
+# 1.17.1
+
 * Fix a compatibility issue with the `prism` library that ships with Ruby 3.3. See #463.
 * Improved the `Kernel#require` decorator to not cause a method redefinition warning. See #461.
 
