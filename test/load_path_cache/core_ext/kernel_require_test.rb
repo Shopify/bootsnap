@@ -31,6 +31,25 @@ module Bootsnap
         cache.unlink
       end
     end
+
+    def test_load_static_libaries
+      skip("Need a working Process.fork to test in isolation") unless Process.respond_to?(:fork)
+      skip("Need some libraries to be compiled statically") unless RUBY_VERSION >= "3.3"
+
+      begin
+        assert_nil LoadPathCache.load_path_cache
+        cache = Tempfile.new("cache")
+        pid = Process.fork do
+          LoadPathCache.setup(cache_path: cache, development_mode: false, ignore_directories: nil)
+          require("prism")
+        end
+        _, status = Process.wait2(pid)
+        assert_predicate status, :success?
+      ensure
+        cache.close
+        cache.unlink
+      end
+    end
   end
 
   class KernelLoadTest < Minitest::Test
