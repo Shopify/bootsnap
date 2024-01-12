@@ -24,9 +24,7 @@ module Kernel
     elsif false == resolved
       return false
     elsif resolved.nil?
-      error = LoadError.new(+"cannot load such file -- #{path}")
-      error.instance_variable_set(:@path, path)
-      raise error
+      return require_without_bootsnap(path)
     else
       # Note that require registers to $LOADED_FEATURES while load does not.
       ret = require_without_bootsnap(resolved)
