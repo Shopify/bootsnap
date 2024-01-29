@@ -1,5 +1,7 @@
 # Unreleased
 
+* `bootsnap precompile --gemfile` now look for `.rb` files in the whole gem and not just the `lib/` directory. See #466.
+
 # 1.17.1
 
 * Fix a compatibility issue with the `prism` library that ships with Ruby 3.3. See #463.
