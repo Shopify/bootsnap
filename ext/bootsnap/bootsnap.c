@@ -819,7 +819,6 @@ static VALUE
 bs_precompile(char * path, VALUE path_v, char * cache_path, VALUE handler)
 {
   struct bs_cache_key cached_key, current_key;
-  char * contents = NULL;
   int cache_fd = -1, current_fd = -1;
   int res, valid_cache = 0, exception_tag = 0;
   const char * errno_provenance = NULL;
