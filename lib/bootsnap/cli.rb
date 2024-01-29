@@ -60,14 +60,16 @@ module Bootsnap
         precompile_json_files(main_sources)
 
         if compile_gemfile
-          # Some gems embed their tests, they're very unlikely to be loaded, so not worth precompiling.
-          gem_exclude = Regexp.union([exclude, "/spec/", "/test/"].compact)
-          precompile_ruby_files($LOAD_PATH.map { |d| File.expand_path(d) }, exclude: gem_exclude)
-
           # Gems that include JSON or YAML files usually don't put them in `lib/`.
           # So we look at the gem root.
+          # Similarly, gems that include Rails engines generally file Ruby files in `app/`.
+          # However some gems embed their tests, they're very unlikely to be loaded, so not worth precompiling.
+          gem_exclude = Regexp.union([exclude, "/spec/", "/test/"].compact)
+
           gem_pattern = %r{^#{Regexp.escape(Bundler.bundle_path.to_s)}/?(?:bundler/)?gems/[^/]+}
-          gem_paths = $LOAD_PATH.map { |p| p[gem_pattern] }.compact.uniq
+          gem_paths = $LOAD_PATH.map { |p| p[gem_pattern] || p }.uniq
+
+          precompile_ruby_files(gem_paths, exclude: gem_exclude)
           precompile_yaml_files(gem_paths, exclude: gem_exclude)
           precompile_json_files(gem_paths, exclude: gem_exclude)
         end
