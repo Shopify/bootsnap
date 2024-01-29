@@ -99,7 +99,7 @@ Bootsnap cache misses can be monitored though a callback:
 Bootsnap.instrumentation = ->(event, path) { puts "#{event} #{path}" }
 ```
 
-`event` is either `:miss` or `:stale`. You can also call `Bootsnap.log!` as a shortcut to
+`event` is either `:miss`, `:stale` or `:revalidated`. You can also call `Bootsnap.log!` as a shortcut to
 log all events to STDERR.
 
 To turn instrumentation back off you can set it to nil:
