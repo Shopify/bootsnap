@@ -9,6 +9,7 @@ class CompileCacheTest < Minitest::Test
   def teardown
     super
     Bootsnap::CompileCache::Native.readonly = false
+    Bootsnap.instrumentation = nil
   end
 
   def test_compile_option_crc32
@@ -158,6 +159,34 @@ class CompileCacheTest < Minitest::Test
     load(path)
   end
 
+  def test_dont_revalidate_when_readonly
+    path = Help.set_file("a.rb", "a = a = 3", 100)
+    load(path)
+
+    entries = Dir["#{Bootsnap::CompileCache::ISeq.cache_dir}/**/*"].select { |f| File.file?(f) }
+    assert_equal 1, entries.size
+    cache_entry = entries.first
+    old_cache_content = File.binread(cache_entry)
+
+    Bootsnap::CompileCache::Native.readonly = true
+
+    output = RubyVM::InstructionSequence.compile_file(path)
+    Bootsnap::CompileCache::ISeq.expects(:input_to_storage).never
+    Bootsnap::CompileCache::ISeq.expects(:storage_to_output).once.returns(output)
+    Bootsnap::CompileCache::ISeq.expects(:input_to_output).never
+
+    FileUtils.touch(path, mtime: File.mtime(path) + 50)
+
+    calls = []
+    Bootsnap.instrumentation = ->(event, source_path) { calls << [event, source_path] }
+    load(path)
+
+    assert_equal [[:revalidated, "a.rb"]], calls
+
+    new_cache_content = File.binread(cache_entry)
+    assert_equal old_cache_content, new_cache_content, "Cache entry was mutated"
+  end
+
   def test_invalid_cache_file
     path = Help.set_file("a.rb", "a = a = 3", 100)
     cp = Help.cache_path("#{@tmp_dir}-iseq", path)
@@ -177,8 +206,6 @@ class CompileCacheTest < Minitest::Test
     load(file_path)
 
     assert_equal [], calls
-  ensure
-    Bootsnap.instrumentation = nil
   end
 
   def test_instrumentation_miss
@@ -190,8 +217,19 @@ class CompileCacheTest < Minitest::Test
     load(file_path)
 
     assert_equal [[:miss, "a.rb"]], calls
-  ensure
-    Bootsnap.instrumentation = nil
+  end
+
+  def test_instrumentation_revalidate
+    file_path = Help.set_file("a.rb", "a = a = 3", 100)
+    load(file_path)
+    FileUtils.touch("a.rb", mtime: File.mtime("a.rb") + 42)
+
+    calls = []
+    Bootsnap.instrumentation = ->(event, path) { calls << [event, path] }
+
+    load(file_path)
+
+    assert_equal [[:revalidated, "a.rb"]], calls
   end
 
   def test_instrumentation_stale
@@ -205,7 +243,5 @@ class CompileCacheTest < Minitest::Test
     load(file_path)
 
     assert_equal [[:stale, "a.rb"]], calls
-  ensure
-    Bootsnap.instrumentation = nil
   end
 end

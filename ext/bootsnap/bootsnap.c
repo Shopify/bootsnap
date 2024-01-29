@@ -58,8 +58,10 @@ struct bs_cache_key {
   uint32_t ruby_revision;
   uint64_t size;
   uint64_t mtime;
-  uint64_t data_size; /* not used for equality */
-  uint8_t  pad[24];
+  uint64_t data_size; //
+  uint64_t digest;
+  uint8_t digest_set;
+  uint8_t pad[15];
 } __attribute__((packed));
 
 /*
@@ -73,7 +75,7 @@ struct bs_cache_key {
 STATIC_ASSERT(sizeof(struct bs_cache_key) == KEY_SIZE);
 
 /* Effectively a schema version. Bumping invalidates all previous caches */
-static const uint32_t current_version = 4;
+static const uint32_t current_version = 5;
 
 /* hash of e.g. "x86_64-darwin17", invalidating when ruby is recompiled on a
  * new OS ABI, etc. */
@@ -93,6 +95,7 @@ static VALUE rb_cBootsnap_CompileCache_UNCOMPILABLE;
 static ID instrumentation_method;
 static VALUE sym_miss;
 static VALUE sym_stale;
+static VALUE sym_revalidated;
 static bool instrumentation_enabled = false;
 static bool readonly = false;
 
@@ -104,9 +107,18 @@ static VALUE bs_rb_fetch(VALUE self, VALUE cachedir_v, VALUE path_v, VALUE handl
 static VALUE bs_rb_precompile(VALUE self, VALUE cachedir_v, VALUE path_v, VALUE handler);
 
 /* Helpers */
+enum cache_status {
+  miss,
+  hit,
+  stale,
+};
 static void bs_cache_path(const char * cachedir, const VALUE path, char (* cache_path)[MAX_CACHEPATH_SIZE]);
 static int bs_read_key(int fd, struct bs_cache_key * key);
-static int cache_key_equal(struct bs_cache_key * k1, struct bs_cache_key * k2);
+static enum cache_status cache_key_equal_fast_path(struct bs_cache_key * k1, struct bs_cache_key * k2);
+static int cache_key_equal_slow_path(struct bs_cache_key * current_key, struct bs_cache_key * cached_key, const VALUE input_data);
+static int update_cache_key(struct bs_cache_key *current_key, int cache_fd, const char ** errno_provenance);
+
+static void bs_cache_key_digest(struct bs_cache_key * key, const VALUE input_data);
 static VALUE bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args);
 static VALUE bs_precompile(char * path, VALUE path_v, char * cache_path, VALUE handler);
 static int open_current_file(char * path, struct bs_cache_key * key, const char ** errno_provenance);
@@ -171,6 +183,9 @@ Init_bootsnap(void)
   sym_stale = ID2SYM(rb_intern("stale"));
   rb_global_variable(&sym_stale);
 
+  sym_revalidated = ID2SYM(rb_intern("revalidated"));
+  rb_global_variable(&sym_revalidated);
+
   rb_define_module_function(rb_mBootsnap, "instrumentation_enabled=", bs_instrumentation_enabled_set, 1);
   rb_define_module_function(rb_mBootsnap_CompileCache_Native, "readonly=", bs_readonly_set, 1);
   rb_define_module_function(rb_mBootsnap_CompileCache_Native, "coverage_running?", bs_rb_coverage_running, 0);
@@ -187,6 +202,14 @@ bs_instrumentation_enabled_set(VALUE self, VALUE enabled)
 {
   instrumentation_enabled = RTEST(enabled);
   return enabled;
+}
+
+static inline void
+bs_instrumentation(VALUE event, VALUE path)
+{
+    if (RB_UNLIKELY(instrumentation_enabled)) {
+       rb_funcall(rb_mBootsnap, instrumentation_method, 2, event, path);
+    }
 }
 
 static VALUE
@@ -294,17 +317,53 @@ bs_cache_path(const char * cachedir, const VALUE path, char (* cache_path)[MAX_C
  * The data_size member is not compared, as it serves more of a "header"
  * function.
  */
-static int
-cache_key_equal(struct bs_cache_key * k1, struct bs_cache_key * k2)
+static enum cache_status cache_key_equal_fast_path(struct bs_cache_key *k1,
+                                     struct bs_cache_key *k2) {
+  if (k1->version == k2->version &&
+          k1->ruby_platform == k2->ruby_platform &&
+          k1->compile_option == k2->compile_option &&
+          k1->ruby_revision == k2->ruby_revision && k1->size == k2->size) {
+    return (k1->mtime == k2->mtime) ? hit : stale;
+  }
+  return miss;
+}
+
+static int cache_key_equal_slow_path(struct bs_cache_key *current_key,
+                                     struct bs_cache_key *cached_key,
+                                     const VALUE input_data)
 {
-  return (
-    k1->version        == k2->version        &&
-    k1->ruby_platform  == k2->ruby_platform  &&
-    k1->compile_option == k2->compile_option &&
-    k1->ruby_revision  == k2->ruby_revision  &&
-    k1->size           == k2->size           &&
-    k1->mtime          == k2->mtime
-  );
+  bs_cache_key_digest(current_key, input_data);
+  return current_key->digest == cached_key->digest;
+}
+
+static int update_cache_key(struct bs_cache_key *current_key, int cache_fd, const char ** errno_provenance)
+{
+  lseek(cache_fd, 0, SEEK_SET);
+  ssize_t nwrite = write(cache_fd, current_key, KEY_SIZE);
+  if (nwrite < 0) {
+      *errno_provenance = "update_cache_key:write";
+      return -1;
+  }
+
+#ifdef HAVE_FDATASYNC
+  if (fdatasync(cache_fd) < 0) {
+      *errno_provenance = "update_cache_key:fdatasync";
+      return -1;
+  }
+#endif
+
+  return 0;
+}
+
+/*
+ * Fills the cache key digest.
+ */
+static void bs_cache_key_digest(struct bs_cache_key *key,
+                                const VALUE input_data) {
+  if (key->digest_set)
+    return;
+  key->digest = fnv1a_64(input_data);
+  key->digest_set = 1;
 }
 
 /*
@@ -393,6 +452,7 @@ open_current_file(char * path, struct bs_cache_key * key, const char ** errno_pr
   key->ruby_revision  = current_ruby_revision;
   key->size           = (uint64_t)statbuf.st_size;
   key->mtime          = (uint64_t)statbuf.st_mtime;
+  key->digest_set     = false;
 
   return fd;
 }
@@ -436,7 +496,12 @@ open_cache_file(const char * path, struct bs_cache_key * key, const char ** errn
 {
   int fd, res;
 
-  fd = open(path, O_RDONLY | O_NOATIME);
+  if (readonly) {
+    fd = open(path, O_RDONLY | O_NOATIME);
+  } else {
+    fd = open(path, O_RDWR | O_NOATIME);
+  }
+
   if (fd < 0) {
     *errno_provenance = "bs_fetch:open_cache_file:open";
     return CACHE_MISS;
@@ -681,7 +746,7 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args
   int res, valid_cache = 0, exception_tag = 0;
   const char * errno_provenance = NULL;
 
-  VALUE input_data;   /* data read from source file, e.g. YAML or ruby source */
+  VALUE input_data = Qfalse;   /* data read from source file, e.g. YAML or ruby source */
   VALUE storage_data; /* compiled data, e.g. msgpack / binary iseq */
   VALUE output_data;  /* return data, e.g. ruby hash or loaded iseq */
 
@@ -699,20 +764,43 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args
   cache_fd = open_cache_file(cache_path, &cached_key, &errno_provenance);
   if (cache_fd == CACHE_MISS || cache_fd == CACHE_STALE) {
     /* This is ok: valid_cache remains false, we re-populate it. */
-    if (RB_UNLIKELY(instrumentation_enabled)) {
-      rb_funcall(rb_mBootsnap, instrumentation_method, 2, cache_fd == CACHE_MISS ? sym_miss : sym_stale, path_v);
-    }
+    bs_instrumentation(cache_fd == CACHE_MISS ? sym_miss : sym_stale, path_v);
   } else if (cache_fd < 0) {
     exception_message = rb_str_new_cstr(cache_path);
     goto fail_errno;
   } else {
     /* True if the cache existed and no invalidating changes have occurred since
      * it was generated. */
-    valid_cache = cache_key_equal(&current_key, &cached_key);
-    if (RB_UNLIKELY(instrumentation_enabled)) {
-      if (!valid_cache) {
-        rb_funcall(rb_mBootsnap, instrumentation_method, 2, sym_stale, path_v);
+
+    switch(cache_key_equal_fast_path(&current_key, &cached_key)) {
+    case hit:
+      valid_cache = true;
+      break;
+    case miss:
+      valid_cache = false;
+      break;
+    case stale:
+      valid_cache = false;
+      if ((input_data = bs_read_contents(current_fd, current_key.size,
+                                     &errno_provenance)) == Qfalse) {
+        exception_message = path_v;
+        goto fail_errno;
       }
+      valid_cache = cache_key_equal_slow_path(&current_key, &cached_key, input_data);
+      if (valid_cache) {
+        if (!readonly) {
+          if (update_cache_key(&current_key, cache_fd, &errno_provenance)) {
+              exception_message = path_v;
+              goto fail_errno;
+          }
+        }
+        bs_instrumentation(sym_revalidated, path_v);
+      }
+      break;
+    };
+
+    if (!valid_cache) {
+      bs_instrumentation(sym_stale, path_v);
     }
   }
 
@@ -726,7 +814,7 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args
     else if (res == CACHE_UNCOMPILABLE) {
       /* If fetch_cached_data returned `Uncompilable` we fallback to `input_to_output`
         This happens if we have say, an unsafe YAML cache, but try to load it in safe mode */
-      if ((input_data = bs_read_contents(current_fd, current_key.size, &errno_provenance)) == Qfalse){
+      if (input_data == Qfalse && (input_data = bs_read_contents(current_fd, current_key.size, &errno_provenance)) == Qfalse) {
         exception_message = path_v;
         goto fail_errno;
       }
@@ -745,7 +833,7 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args
   /* Cache is stale, invalid, or missing. Regenerate and write it out. */
 
   /* Read the contents of the source file into a buffer */
-  if ((input_data = bs_read_contents(current_fd, current_key.size, &errno_provenance)) == Qfalse){
+  if (input_data == Qfalse && (input_data = bs_read_contents(current_fd, current_key.size, &errno_provenance)) == Qfalse) {
     exception_message = path_v;
     goto fail_errno;
   }
@@ -767,6 +855,7 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args
    * We do however ignore any failures to persist the cache, as it's better
    * to move along, than to interrupt the process.
    */
+  bs_cache_key_digest(&current_key, input_data);
   atomic_write_cache_file(cache_path, &current_key, storage_data, &errno_provenance);
 
   /* Having written the cache, now convert storage_data to output_data */
@@ -822,12 +911,16 @@ invalid_type_storage_data:
 static VALUE
 bs_precompile(char * path, VALUE path_v, char * cache_path, VALUE handler)
 {
+  if (readonly) {
+    return Qfalse;
+  }
+
   struct bs_cache_key cached_key, current_key;
   int cache_fd = -1, current_fd = -1;
   int res, valid_cache = 0, exception_tag = 0;
   const char * errno_provenance = NULL;
 
-  VALUE input_data;   /* data read from source file, e.g. YAML or ruby source */
+  VALUE input_data = Qfalse;   /* data read from source file, e.g. YAML or ruby source */
   VALUE storage_data; /* compiled data, e.g. msgpack / binary iseq */
 
   /* Open the source file and generate a cache key for it */
@@ -843,7 +936,28 @@ bs_precompile(char * path, VALUE path_v, char * cache_path, VALUE handler)
   } else {
     /* True if the cache existed and no invalidating changes have occurred since
      * it was generated. */
-    valid_cache = cache_key_equal(&current_key, &cached_key);
+    switch(cache_key_equal_fast_path(&current_key, &cached_key)) {
+    case hit:
+      valid_cache = true;
+      break;
+    case miss:
+      valid_cache = false;
+      break;
+    case stale:
+      valid_cache = false;
+      if ((input_data = bs_read_contents(current_fd, current_key.size, &errno_provenance)) == Qfalse) {
+        goto fail;
+      }
+      valid_cache = cache_key_equal_slow_path(&current_key, &cached_key, input_data);
+       if (valid_cache) {
+         if (update_cache_key(&current_key, cache_fd, &errno_provenance)) {
+             goto fail;
+         }
+
+         bs_instrumentation(sym_revalidated, path_v);
+      }
+      break;
+    };
   }
 
   if (valid_cache) {
@@ -870,6 +984,7 @@ bs_precompile(char * path, VALUE path_v, char * cache_path, VALUE handler)
   if (!RB_TYPE_P(storage_data, T_STRING)) goto fail;
 
   /* Write the cache key and storage_data to the cache directory */
+  bs_cache_key_digest(&current_key, input_data);
   res = atomic_write_cache_file(cache_path, &current_key, storage_data, &errno_provenance);
   if (res < 0) goto fail;
 

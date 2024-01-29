@@ -22,7 +22,7 @@ class CompileCacheKeyFormatTest < Minitest::Test
 
   def test_key_version
     key = cache_key_for_file(FILE)
-    exp = [4].pack("L")
+    exp = [5].pack("L")
     assert_equal(exp, key[R[:version]])
   end
 
