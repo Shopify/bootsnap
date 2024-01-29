@@ -64,7 +64,7 @@ module Bootsnap
           # So we look at the gem root.
           # Similarly, gems that include Rails engines generally file Ruby files in `app/`.
           # However some gems embed their tests, they're very unlikely to be loaded, so not worth precompiling.
-          gem_exclude = Regexp.union([exclude, "/spec/", "/test/"].compact)
+          gem_exclude = Regexp.union([exclude, "/spec/", "/test/", "/features/"].compact)
 
           gem_pattern = %r{^#{Regexp.escape(Bundler.bundle_path.to_s)}/?(?:bundler/)?gems/[^/]+}
           gem_paths = $LOAD_PATH.map { |p| p[gem_pattern] || p }.uniq
