@@ -354,6 +354,7 @@ bs_rb_fetch(VALUE self, VALUE cachedir_v, VALUE path_v, VALUE handler, VALUE arg
   /* generate cache path to cache_path */
   bs_cache_path(cachedir, path_v, &cache_path);
 
+  fprintf(stderr, "path: %s -> %s\n", RSTRING_PTR(path_v), cache_path);
   return bs_fetch(path, path_v, cache_path, handler, args);
 }
 
