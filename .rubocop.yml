@@ -64,6 +64,9 @@ Layout/RescueEnsureAlignment:
 Layout/FirstHashElementIndentation:
   EnforcedStyle: consistent
 
+Layout/FirstArrayElementIndentation:
+  EnforcedStyle: consistent
+
 Layout/SpaceInsideHashLiteralBraces:
   EnforcedStyle: no_space
 
