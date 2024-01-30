@@ -1,5 +1,7 @@
 # Unreleased
 
+# 1.18.1
+
 * Handle `EPERM` errors when opening files with `O_NOATIME`.
 
 # 1.18.0
