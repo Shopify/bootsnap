@@ -160,6 +160,8 @@ class CompileCacheTest < Minitest::Test
   end
 
   def test_dont_revalidate_when_readonly
+    skip("Not on Windows") if RUBY_PLATFORM.match?(/mswin|mingw|cygwin/)
+
     path = Help.set_file("a.rb", "a = a = 3", 100)
     load(path)
 
@@ -220,6 +222,8 @@ class CompileCacheTest < Minitest::Test
   end
 
   def test_instrumentation_revalidate
+    skip("Not on Windows") if RUBY_PLATFORM.match?(/mswin|mingw|cygwin/)
+
     file_path = Help.set_file("a.rb", "a = a = 3", 100)
     load(file_path)
     FileUtils.touch("a.rb", mtime: File.mtime("a.rb") + 42)

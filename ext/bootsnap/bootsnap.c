@@ -38,6 +38,10 @@
 #define RB_UNLIKELY(x) (x)
 #endif
 
+#ifdef HAVE_FDATASYNC
+#define BS_REVALIDATE_CACHE 1
+#endif
+
 /*
  * An instance of this key is written as the first 64 bytes of each cache file.
  * The mtime and size members track whether the file contents have changed, and
@@ -319,7 +323,15 @@ static enum cache_status cache_key_equal_fast_path(struct bs_cache_key *k1,
           k1->ruby_platform == k2->ruby_platform &&
           k1->compile_option == k2->compile_option &&
           k1->ruby_revision == k2->ruby_revision && k1->size == k2->size) {
-    return (k1->mtime == k2->mtime) ? hit : stale;
+    if (k1->mtime == k2->mtime) {
+      return hit;
+    } else {
+#ifdef BS_REVALIDATE_CACHE
+      return stale;
+#else
+      return miss;
+#endif
+    }
   }
   return miss;
 }
