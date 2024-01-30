@@ -93,9 +93,7 @@ static VALUE rb_mBootsnap_CompileCache;
 static VALUE rb_mBootsnap_CompileCache_Native;
 static VALUE rb_cBootsnap_CompileCache_UNCOMPILABLE;
 static ID instrumentation_method;
-static VALUE sym_miss;
-static VALUE sym_stale;
-static VALUE sym_revalidated;
+static VALUE sym_hit, sym_miss, sym_stale, sym_revalidated;
 static bool instrumentation_enabled = false;
 static bool readonly = false;
 
@@ -185,6 +183,9 @@ Init_bootsnap(void)
 
   sym_revalidated = ID2SYM(rb_intern("revalidated"));
   rb_global_variable(&sym_revalidated);
+
+  sym_hit = ID2SYM(rb_intern("hit"));
+  rb_global_variable(&sym_hit);
 
   rb_define_module_function(rb_mBootsnap, "instrumentation_enabled=", bs_instrumentation_enabled_set, 1);
   rb_define_module_function(rb_mBootsnap_CompileCache_Native, "readonly=", bs_readonly_set, 1);
@@ -796,6 +797,7 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args
     switch(cache_key_equal_fast_path(&current_key, &cached_key)) {
     case hit:
       valid_cache = true;
+      bs_instrumentation(sym_hit, path_v);
       break;
     case miss:
       valid_cache = false;
