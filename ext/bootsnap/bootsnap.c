@@ -297,14 +297,37 @@ bs_cache_path(const char * cachedir, const VALUE path, char (* cache_path)[MAX_C
 static int
 cache_key_equal(struct bs_cache_key * k1, struct bs_cache_key * k2)
 {
-  return (
-    k1->version        == k2->version        &&
-    k1->ruby_platform  == k2->ruby_platform  &&
-    k1->compile_option == k2->compile_option &&
-    k1->ruby_revision  == k2->ruby_revision  &&
-    k1->size           == k2->size           &&
-    k1->mtime          == k2->mtime
-  );
+  if (k1->version != k2->version) {
+    fprintf(stderr, "bootsnap: version mismatch\n");
+    return false;
+  }
+
+  if (k1->ruby_platform != k2->ruby_platform) {
+    fprintf(stderr, "bootsnap: ruby_platform mismatch\n");
+    return false;
+  }
+
+  if (k1->compile_option != k2->compile_option) {
+    fprintf(stderr, "bootsnap: compile_option mismatch\n");
+    return false;
+  }
+
+  if (k1->ruby_revision != k2->ruby_revision) {
+    fprintf(stderr, "bootsnap: ruby_revision mismatch\n");
+    return false;
+  }
+
+  if (k1->size != k2->size) {
+    fprintf(stderr, "bootsnap: size mismatch\n");
+    return false;
+  }
+
+  if (k1->mtime != k2->mtime) {
+    fprintf(stderr, "bootsnap: mtime mismatch\n");
+    return false;
+  }
+
+  return true;
 }
 
 /*
@@ -439,6 +462,7 @@ open_cache_file(const char * path, struct bs_cache_key * key, const char ** errn
   fd = open(path, O_RDONLY | O_NOATIME);
   if (fd < 0) {
     *errno_provenance = "bs_fetch:open_cache_file:open";
+    fprintf(stderr, "bootsnap: file doesn't exist\n");
     return CACHE_MISS;
   }
   #ifdef _WIN32
@@ -448,6 +472,7 @@ open_cache_file(const char * path, struct bs_cache_key * key, const char ** errn
   res = bs_read_key(fd, key);
   if (res < 0) {
     *errno_provenance = "bs_fetch:open_cache_file:read";
+    fprintf(stderr, "bootsnap: read failed\n");
     close(fd);
     return res;
   }
