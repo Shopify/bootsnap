@@ -21,6 +21,12 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
+#ifdef __APPLE__
+  // The symbol is present, however not in the headers
+  // See: https://github.com/Shopify/bootsnap/issues/470
+  extern int fdatasync(int);
+#endif
+
 #ifndef O_NOATIME
 #define O_NOATIME 0
 #endif
