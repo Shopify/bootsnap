@@ -81,6 +81,7 @@ well together.
 - `DISABLE_BOOTSNAP_COMPILE_CACHE` allows to disable ISeq and YAML caches.
 - `BOOTSNAP_READONLY` configure bootsnap to not update the cache on miss or stale entries.
 - `BOOTSNAP_LOG` configure bootsnap to log all caches misses to STDERR.
+- `BOOTSNAP_STATS` log hit rate statistics on exit. Can't be used if `BOOTSNAP_LOG` is enabled.
 - `BOOTSNAP_IGNORE_DIRECTORIES` a comma separated list of directories that shouldn't be scanned.
   Useful when you have large directories of non-ruby files inside `$LOAD_PATH`.
   It defaults to ignore any directory named `node_modules`.
@@ -99,8 +100,8 @@ Bootsnap cache misses can be monitored though a callback:
 Bootsnap.instrumentation = ->(event, path) { puts "#{event} #{path}" }
 ```
 
-`event` is either `:miss`, `:stale` or `:revalidated`. You can also call `Bootsnap.log!` as a shortcut to
-log all events to STDERR.
+`event` is either `:hit`, `:miss`, `:stale` or `:revalidated`.
+You can also call `Bootsnap.log!` as a shortcut to log all events to STDERR.
 
 To turn instrumentation back off you can set it to nil:
 

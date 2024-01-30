@@ -1,5 +1,7 @@
 # Unreleased
 
+* `Bootsnap.instrumentation` now receive `:hit` events.
+* Add `Bootsnap.log_stats!` to print hit rate statistics on process exit. Can also be enabled with `BOOTSNAP_STATS=1`.
 * Revalidate stale cache entries by digesting the source content.
   This should significantly improve performance in environments where `mtime` isn't preserved (e.g. CI systems doing a git clone, etc).
   See #468.

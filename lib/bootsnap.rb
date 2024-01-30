@@ -11,6 +11,16 @@ module Bootsnap
   class << self
     attr_reader :logger
 
+    def log_stats!
+      stats = {hit: 0, revalidated: 0, miss: 0, stale: 0}
+      self.instrumentation = ->(event, _path) { stats[event] += 1 }
+      Kernel.at_exit do
+        stats.each do |event, count|
+          $stderr.puts "bootsnap #{event}: #{count}"
+        end
+      end
+    end
+
     def log!
       self.logger = $stderr.method(:puts)
     end
@@ -18,9 +28,9 @@ module Bootsnap
     def logger=(logger)
       @logger = logger
       self.instrumentation = if logger.respond_to?(:debug)
-        ->(event, path) { @logger.debug("[Bootsnap] #{event} #{path}") }
+        ->(event, path) { @logger.debug("[Bootsnap] #{event} #{path}") unless event == :hit }
       else
-        ->(event, path) { @logger.call("[Bootsnap] #{event} #{path}") }
+        ->(event, path) { @logger.call("[Bootsnap] #{event} #{path}") unless event == :hit }
       end
     end
 
@@ -110,6 +120,8 @@ module Bootsnap
 
         if ENV["BOOTSNAP_LOG"]
           log!
+        elsif ENV["BOOTSNAP_STATS"]
+          log_stats!
         end
       end
     end

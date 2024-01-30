@@ -205,7 +205,7 @@ class CompileCacheTest < Minitest::Test
 
     load(file_path)
 
-    assert_equal [], calls
+    assert_equal [[:hit, "a.rb"]], calls
   end
 
   def test_instrumentation_miss

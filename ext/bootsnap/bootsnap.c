@@ -93,9 +93,7 @@ static VALUE rb_mBootsnap_CompileCache;
 static VALUE rb_mBootsnap_CompileCache_Native;
 static VALUE rb_cBootsnap_CompileCache_UNCOMPILABLE;
 static ID instrumentation_method;
-static VALUE sym_miss;
-static VALUE sym_stale;
-static VALUE sym_revalidated;
+static VALUE sym_hit, sym_miss, sym_stale, sym_revalidated;
 static bool instrumentation_enabled = false;
 static bool readonly = false;
 
@@ -177,14 +175,10 @@ Init_bootsnap(void)
 
   instrumentation_method = rb_intern("_instrument");
 
+  sym_hit = ID2SYM(rb_intern("hit"));
   sym_miss = ID2SYM(rb_intern("miss"));
-  rb_global_variable(&sym_miss);
-
   sym_stale = ID2SYM(rb_intern("stale"));
-  rb_global_variable(&sym_stale);
-
   sym_revalidated = ID2SYM(rb_intern("revalidated"));
-  rb_global_variable(&sym_revalidated);
 
   rb_define_module_function(rb_mBootsnap, "instrumentation_enabled=", bs_instrumentation_enabled_set, 1);
   rb_define_module_function(rb_mBootsnap_CompileCache_Native, "readonly=", bs_readonly_set, 1);
@@ -746,6 +740,7 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args
   int res, valid_cache = 0, exception_tag = 0;
   const char * errno_provenance = NULL;
 
+  VALUE status = Qfalse;
   VALUE input_data = Qfalse;   /* data read from source file, e.g. YAML or ruby source */
   VALUE storage_data; /* compiled data, e.g. msgpack / binary iseq */
   VALUE output_data;  /* return data, e.g. ruby hash or loaded iseq */
@@ -774,6 +769,7 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args
 
     switch(cache_key_equal_fast_path(&current_key, &cached_key)) {
     case hit:
+      status = sym_hit;
       valid_cache = true;
       break;
     case miss:
@@ -794,13 +790,13 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args
               goto fail_errno;
           }
         }
-        bs_instrumentation(sym_revalidated, path_v);
+        status = sym_revalidated;
       }
       break;
     };
 
     if (!valid_cache) {
-      bs_instrumentation(sym_stale, path_v);
+      status = sym_stale;
     }
   }
 
@@ -885,6 +881,7 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args
   goto succeed; /* output_data is now the correct return. */
 
 #define CLEANUP \
+  if (status != Qfalse) bs_instrumentation(status, path_v); \
   if (current_fd >= 0)  close(current_fd); \
   if (cache_fd >= 0)    close(cache_fd);
 
@@ -953,8 +950,6 @@ bs_precompile(char * path, VALUE path_v, char * cache_path, VALUE handler)
          if (update_cache_key(&current_key, cache_fd, &errno_provenance)) {
              goto fail;
          }
-
-         bs_instrumentation(sym_revalidated, path_v);
       }
       break;
     };
