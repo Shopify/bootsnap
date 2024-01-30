@@ -522,7 +522,7 @@ open_cache_file(const char * path, struct bs_cache_key * key, const char ** errn
 
   fd = open(path, O_RDWR | O_NOATIME);
   if (fd < 0) {
-    fprintf(stderr, "bootsnap: file doesn't exist\n");
+    fprintf(stderr, "bootsnap: open_cache_file (%s)\n", strerror(errno));
     *errno_provenance = "bs_fetch:open_cache_file:open";
     return CACHE_MISS;
   }
