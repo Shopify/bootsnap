@@ -319,13 +319,36 @@ bs_cache_path(const char * cachedir, const VALUE path, char (* cache_path)[MAX_C
  */
 static enum cache_status cache_key_equal_fast_path(struct bs_cache_key *k1,
                                      struct bs_cache_key *k2) {
-  if (k1->version == k2->version &&
-          k1->ruby_platform == k2->ruby_platform &&
-          k1->compile_option == k2->compile_option &&
-          k1->ruby_revision == k2->ruby_revision && k1->size == k2->size) {
-    return (k1->mtime == k2->mtime) ? hit : stale;
+  if (k1->version != k2->version) {
+    fprintf(stderr, "bootsnap: version mismatch\n");
+    return miss;
   }
-  return miss;
+  
+  if (k1->ruby_platform != k2->ruby_platform) {
+    fprintf(stderr, "bootsnap: ruby_platform mismatch\n");
+    return miss;
+  }
+  
+  if (k1->compile_option != k2->compile_option) {
+    fprintf(stderr, "bootsnap: compile_option mismatch\n");
+    return miss;
+  }
+  
+  if (k1->ruby_revision != k2->ruby_revision) {
+    fprintf(stderr, "bootsnap: ruby_revision mismatch\n");
+    return miss;
+  }
+  
+  if (k1->size != k2->size) {
+    fprintf(stderr, "bootsnap: size mismatch\n");
+    return miss;
+  }
+  
+  if (k1->mtime != k2->mtime) {
+    fprintf(stderr, "bootsnap: mtime mismatch\n");
+    return stale;
+  }
+  return hit;
 }
 
 static int cache_key_equal_slow_path(struct bs_cache_key *current_key,
@@ -333,6 +356,9 @@ static int cache_key_equal_slow_path(struct bs_cache_key *current_key,
                                      const VALUE input_data)
 {
   bs_cache_key_digest(current_key, input_data);
+  if (current_key->digest != cached_key->digest) {
+    fprintf(stderr, "bootsnap: digest mismatch\n");
+  }
   return current_key->digest == cached_key->digest;
 }
 
@@ -496,6 +522,7 @@ open_cache_file(const char * path, struct bs_cache_key * key, const char ** errn
 
   fd = open(path, O_RDWR | O_NOATIME);
   if (fd < 0) {
+    fprintf(stderr, "bootsnap: file doesn't exist\n");
     *errno_provenance = "bs_fetch:open_cache_file:open";
     return CACHE_MISS;
   }
@@ -505,6 +532,7 @@ open_cache_file(const char * path, struct bs_cache_key * key, const char ** errn
 
   res = bs_read_key(fd, key);
   if (res < 0) {
+    fprintf(stderr, "bootsnap: read failed\n");
     *errno_provenance = "bs_fetch:open_cache_file:read";
     close(fd);
     return res;
