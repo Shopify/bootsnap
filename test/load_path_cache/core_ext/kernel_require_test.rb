@@ -12,7 +12,7 @@ module Bootsnap
         assert_nil LoadPathCache.load_path_cache
         cache = Tempfile.new("cache")
         pid = Process.fork do
-          LoadPathCache.setup(cache_path: cache, development_mode: true, ignore_directories: nil)
+          LoadPathCache.setup(cache_path: cache.path, development_mode: true, ignore_directories: nil)
           dir = File.realpath(Dir.mktmpdir)
           $LOAD_PATH.push(dir)
           FileUtils.touch("#{dir}/a.rb")
@@ -40,7 +40,7 @@ module Bootsnap
         assert_nil LoadPathCache.load_path_cache
         cache = Tempfile.new("cache")
         pid = Process.fork do
-          LoadPathCache.setup(cache_path: cache, development_mode: false, ignore_directories: nil)
+          LoadPathCache.setup(cache_path: cache.path, development_mode: false, ignore_directories: nil)
           require("prism")
         end
         _, status = Process.wait2(pid)
@@ -53,7 +53,10 @@ module Bootsnap
   end
 
   class KernelLoadTest < Minitest::Test
+    include TmpdirHelper
+
     def setup
+      super
       @initial_dir = Dir.pwd
       @dir1 = File.realpath(Dir.mktmpdir)
       FileUtils.touch("#{@dir1}/a.rb")
@@ -70,6 +73,7 @@ module Bootsnap
       Dir.chdir(@initial_dir)
       FileUtils.rm_rf(@dir1)
       FileUtils.rm_rf(@dir2)
+      super
     end
 
     def test_no_exstensions_for_kernel_load
