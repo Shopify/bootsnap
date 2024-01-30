@@ -908,6 +908,12 @@ succeed:
   return output_data;
 fail_errno:
   CLEANUP;
+  if (errno_provenance) {
+    exception_message = rb_str_concat(
+      rb_str_new_cstr(errno_provenance),
+      rb_str_concat(rb_str_new_cstr(": "), exception_message)
+    );
+  }
   exception = rb_syserr_new_str(errno, exception_message);
   rb_exc_raise(exception);
   __builtin_unreachable();
