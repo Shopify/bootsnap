@@ -3,7 +3,7 @@
 require "mkmf"
 
 if %w[ruby truffleruby].include?(RUBY_ENGINE)
-  have_func "fdatasync", "fcntl.h"
+  have_func "fdatasync", "unistd.h"
 
   unless RUBY_PLATFORM.match?(/mswin|mingw|cygwin/)
     append_cppflags ["_GNU_SOURCE"] # Needed of O_NOATIME

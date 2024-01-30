@@ -1,5 +1,7 @@
 # Unreleased
 
+* Fix a potential compilation issue on some systems. See #470.
+
 # 1.18.1
 
 * Handle `EPERM` errors when opening files with `O_NOATIME`.
