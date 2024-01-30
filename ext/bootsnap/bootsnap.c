@@ -462,7 +462,7 @@ open_cache_file(const char * path, struct bs_cache_key * key, const char ** errn
   fd = open(path, O_RDONLY | O_NOATIME);
   if (fd < 0) {
     *errno_provenance = "bs_fetch:open_cache_file:open";
-    fprintf(stderr, "bootsnap: file doesn't exist\n");
+    fprintf(stderr, "bootsnap: file doesn't exist: %s\n", path);
     return CACHE_MISS;
   }
   #ifdef _WIN32
