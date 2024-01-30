@@ -1,5 +1,6 @@
 # Unreleased
 
+* Open source files and cache entries with `O_NOATIME` when available to reduce disk accesses. See #469.
 * `bootsnap precompile --gemfile` now look for `.rb` files in the whole gem and not just the `lib/` directory. See #466.
 
 # 1.17.1

@@ -62,21 +62,20 @@ class CompileCacheKeyFormatTest < Minitest::Test
   end
 
   def test_fetch
-    if RbConfig::CONFIG["host_os"] =~ /mswin|mingw|cygwin/
-      target = "NUL"
-      expected_file = "#{@tmp_dir}/36/9eba19c29ffe00"
-    else
-      target = "/dev/null"
-      expected_file = "#{@tmp_dir}/8c/d2d180bbd995df"
-    end
+    target = Help.set_file("a.rb", "foo = 1")
 
-    actual = Bootsnap::CompileCache::Native.fetch(@tmp_dir, target, TestHandler, nil)
+    cache_dir = File.join(@tmp_dir, "compile_cache")
+    actual = Bootsnap::CompileCache::Native.fetch(cache_dir, target, TestHandler, nil)
     assert_equal("NEATO #{target.upcase}", actual)
 
-    data = File.read(expected_file)
+    entries = Dir["#{cache_dir}/**/*"].select { |f| File.file?(f) }
+    assert_equal 1, entries.size
+    cache_file = entries.first
+
+    data = File.read(cache_file)
     assert_equal("neato #{target}", data.force_encoding(Encoding::BINARY)[64..])
 
-    actual = Bootsnap::CompileCache::Native.fetch(@tmp_dir, target, TestHandler, nil)
+    actual = Bootsnap::CompileCache::Native.fetch(cache_dir, target, TestHandler, nil)
     assert_equal("NEATO #{target.upcase}", actual)
   end
 

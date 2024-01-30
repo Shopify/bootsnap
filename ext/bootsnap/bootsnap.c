@@ -20,6 +20,10 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 
+#ifndef O_NOATIME
+#define O_NOATIME 0
+#endif
+
 /* 1000 is an arbitrary limit; FNV64 plus some slashes brings the cap down to
  * 981 for the cache dir */
 #define MAX_CACHEPATH_SIZE 1000
@@ -30,7 +34,7 @@
 #define MAX_CREATE_TEMPFILE_ATTEMPT 3
 
 #ifndef RB_UNLIKELY
-  #define RB_UNLIKELY(x) (x)
+#define RB_UNLIKELY(x) (x)
 #endif
 
 /*
@@ -366,7 +370,7 @@ open_current_file(char * path, struct bs_cache_key * key, const char ** errno_pr
   struct stat statbuf;
   int fd;
 
-  fd = open(path, O_RDONLY);
+  fd = open(path, O_RDONLY | O_NOATIME);
   if (fd < 0) {
     *errno_provenance = "bs_fetch:open_current_file:open";
     return fd;
@@ -432,7 +436,7 @@ open_cache_file(const char * path, struct bs_cache_key * key, const char ** errn
 {
   int fd, res;
 
-  fd = open(path, O_RDONLY);
+  fd = open(path, O_RDONLY | O_NOATIME);
   if (fd < 0) {
     *errno_provenance = "bs_fetch:open_cache_file:open";
     return CACHE_MISS;
