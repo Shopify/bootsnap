@@ -96,6 +96,7 @@ static ID instrumentation_method;
 static VALUE sym_hit, sym_miss, sym_stale, sym_revalidated;
 static bool instrumentation_enabled = false;
 static bool readonly = false;
+static bool perm_issue = false;
 
 /* Functions exposed as module functions on Bootsnap::CompileCache::Native */
 static VALUE bs_instrumentation_enabled_set(VALUE self, VALUE enabled);
@@ -119,7 +120,7 @@ static int update_cache_key(struct bs_cache_key *current_key, int cache_fd, cons
 static void bs_cache_key_digest(struct bs_cache_key * key, const VALUE input_data);
 static VALUE bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args);
 static VALUE bs_precompile(char * path, VALUE path_v, char * cache_path, VALUE handler);
-static int open_current_file(char * path, struct bs_cache_key * key, const char ** errno_provenance);
+static int open_current_file(const char * path, struct bs_cache_key * key, const char ** errno_provenance);
 static int fetch_cached_data(int fd, ssize_t data_size, VALUE handler, VALUE args, VALUE * output_data, int * exception_tag, const char ** errno_provenance);
 static uint32_t get_ruby_revision(void);
 static uint32_t get_ruby_platform(void);
@@ -413,17 +414,34 @@ bs_rb_precompile(VALUE self, VALUE cachedir_v, VALUE path_v, VALUE handler)
 
   return bs_precompile(path, path_v, cache_path, handler);
 }
+
+static int bs_open_noatime(const char *path, int flags) {
+  int fd = 1;
+  if (!perm_issue) {
+    fd = open(path, flags | O_NOATIME);
+    if (fd < 0 && errno == EPERM) {
+      errno = 0;
+      perm_issue = true;
+    }
+  }
+
+  if (perm_issue) {
+    fd = open(path, flags);
+  }
+  return fd;
+}
+
 /*
  * Open the file we want to load/cache and generate a cache key for it if it
  * was loaded.
  */
 static int
-open_current_file(char * path, struct bs_cache_key * key, const char ** errno_provenance)
+open_current_file(const char * path, struct bs_cache_key * key, const char ** errno_provenance)
 {
   struct stat statbuf;
   int fd;
 
-  fd = open(path, O_RDONLY | O_NOATIME);
+  fd = bs_open_noatime(path, O_RDONLY);
   if (fd < 0) {
     *errno_provenance = "bs_fetch:open_current_file:open";
     return fd;
@@ -491,9 +509,9 @@ open_cache_file(const char * path, struct bs_cache_key * key, const char ** errn
   int fd, res;
 
   if (readonly) {
-    fd = open(path, O_RDONLY | O_NOATIME);
+    fd = bs_open_noatime(path, O_RDONLY);
   } else {
-    fd = open(path, O_RDWR | O_NOATIME);
+    fd = bs_open_noatime(path, O_RDWR);
   }
 
   if (fd < 0) {

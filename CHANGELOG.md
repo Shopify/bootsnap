@@ -1,5 +1,7 @@
 # Unreleased
 
+* Handle `EPERM` errors when opening files with `O_NOATIME`.
+
 # 1.18.0
 
 * `Bootsnap.instrumentation` now receive `:hit` events.
