@@ -6,7 +6,7 @@ if %w[ruby truffleruby].include?(RUBY_ENGINE)
   have_func "fdatasync", "unistd.h"
 
   unless RUBY_PLATFORM.match?(/mswin|mingw|cygwin/)
-    append_cppflags ["_GNU_SOURCE"] # Needed of O_NOATIME
+    append_cppflags ["-D_GNU_SOURCE"] # Needed of O_NOATIME
   end
 
   append_cflags ["-O3", "-std=c99"]
