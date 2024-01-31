@@ -9,6 +9,7 @@ class CompileCacheTest < Minitest::Test
   def teardown
     super
     Bootsnap::CompileCache::Native.readonly = false
+    Bootsnap::CompileCache::Native.revalidation = false
     Bootsnap.instrumentation = nil
   end
 
@@ -160,6 +161,8 @@ class CompileCacheTest < Minitest::Test
   end
 
   def test_dont_revalidate_when_readonly
+    Bootsnap::CompileCache::Native.revalidation = true
+
     path = Help.set_file("a.rb", "a = a = 3", 100)
     load(path)
 
@@ -220,6 +223,8 @@ class CompileCacheTest < Minitest::Test
   end
 
   def test_instrumentation_revalidate
+    Bootsnap::CompileCache::Native.revalidation = true
+
     file_path = Help.set_file("a.rb", "a = a = 3", 100)
     load(file_path)
     FileUtils.touch("a.rb", mtime: File.mtime("a.rb") + 42)

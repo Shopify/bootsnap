@@ -51,6 +51,7 @@ module Bootsnap
       load_path_cache: true,
       ignore_directories: nil,
       readonly: false,
+      revalidation: false,
       compile_cache_iseq: true,
       compile_cache_yaml: true,
       compile_cache_json: true
@@ -70,6 +71,7 @@ module Bootsnap
         yaml: compile_cache_yaml,
         json: compile_cache_json,
         readonly: readonly,
+        revalidation: revalidation,
       )
     end
 

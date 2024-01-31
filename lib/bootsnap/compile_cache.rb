@@ -9,7 +9,7 @@ module Bootsnap
 
     Error = Class.new(StandardError)
 
-    def self.setup(cache_dir:, iseq:, yaml:, json:, readonly: false)
+    def self.setup(cache_dir:, iseq:, yaml:, json:, readonly: false, revalidation: false)
       if iseq
         if supported?
           require_relative "compile_cache/iseq"
@@ -39,6 +39,7 @@ module Bootsnap
 
       if supported? && defined?(Bootsnap::CompileCache::Native)
         Bootsnap::CompileCache::Native.readonly = readonly
+        Bootsnap::CompileCache::Native.revalidation = revalidation
       end
     end
 
