@@ -20,6 +20,11 @@ class CompileCacheKeyFormatTest < Minitest::Test
     data_size: 32...40,
   }.freeze
 
+  def teardown
+    Bootsnap::CompileCache::Native.revalidation = false
+    super
+  end
+
   def test_key_version
     key = cache_key_for_file(FILE)
     exp = [5].pack("L")
@@ -77,6 +82,22 @@ class CompileCacheKeyFormatTest < Minitest::Test
 
     actual = Bootsnap::CompileCache::Native.fetch(cache_dir, target, TestHandler, nil)
     assert_equal("NEATO #{target.upcase}", actual)
+  end
+
+  def test_revalidation
+    Bootsnap::CompileCache::Native.revalidation = true
+    cache_dir = File.join(@tmp_dir, "compile_cache")
+
+    target = Help.set_file("a.rb", "foo = 1")
+
+    actual = Bootsnap::CompileCache::Native.fetch(cache_dir, target, TestHandler, nil)
+    assert_equal("NEATO #{target.upcase}", actual)
+
+    10.times do
+      FileUtils.touch(target, mtime: File.mtime(target) + 42)
+      actual = Bootsnap::CompileCache::Native.fetch(cache_dir, target, TestHandler, nil)
+      assert_equal("NEATO #{target.upcase}", actual)
+    end
   end
 
   def test_unexistent_fetch

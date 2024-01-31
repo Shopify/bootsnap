@@ -160,6 +160,24 @@ class CompileCacheTest < Minitest::Test
     load(path)
   end
 
+  def test_revalidation
+    Bootsnap::CompileCache::Native.revalidation = true
+
+    file_path = Help.set_file("a.rb", "a = a = 3", 100)
+    load(file_path)
+
+    calls = []
+    Bootsnap.instrumentation = ->(event, path) { calls << [event, path] }
+
+    5.times do
+      FileUtils.touch("a.rb", mtime: File.mtime("a.rb") + 42)
+      load(file_path)
+      load(file_path)
+    end
+
+    assert_equal [[:revalidated, "a.rb"], [:hit, "a.rb"]] * 5, calls
+  end
+
   def test_dont_revalidate_when_readonly
     Bootsnap::CompileCache::Native.revalidation = true
 
