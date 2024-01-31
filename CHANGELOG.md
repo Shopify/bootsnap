@@ -1,6 +1,9 @@
 # Unreleased
 
+# 1.18.3
+
 * Fix the cache corruption issue in the revalidation feature. See #474.
+  The cache revalidation feature remains opt-in for now, until it is more battle tested.
 
 # 1.18.2
 
