@@ -1,5 +1,7 @@
 # Unreleased
 
+* Fix the cache corruption issue in the revalidation feature. See #474.
+
 # 1.18.2
 
 * Disable stale cache entries revalidation by default as it seems to cause cache corruption issues. See #471 and #474.

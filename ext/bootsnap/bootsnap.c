@@ -124,7 +124,7 @@ static void bs_cache_path(const char * cachedir, const VALUE path, char (* cache
 static int bs_read_key(int fd, struct bs_cache_key * key);
 static enum cache_status cache_key_equal_fast_path(struct bs_cache_key * k1, struct bs_cache_key * k2);
 static int cache_key_equal_slow_path(struct bs_cache_key * current_key, struct bs_cache_key * cached_key, const VALUE input_data);
-static int update_cache_key(struct bs_cache_key *current_key, int cache_fd, const char ** errno_provenance);
+static int update_cache_key(struct bs_cache_key *current_key, struct bs_cache_key *old_key, int cache_fd, const char ** errno_provenance);
 
 static void bs_cache_key_digest(struct bs_cache_key * key, const VALUE input_data);
 static VALUE bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args);
@@ -353,10 +353,11 @@ static int cache_key_equal_slow_path(struct bs_cache_key *current_key,
   return current_key->digest == cached_key->digest;
 }
 
-static int update_cache_key(struct bs_cache_key *current_key, int cache_fd, const char ** errno_provenance)
+static int update_cache_key(struct bs_cache_key *current_key, struct bs_cache_key *old_key, int cache_fd, const char ** errno_provenance)
 {
+  old_key->mtime = current_key->mtime;
   lseek(cache_fd, 0, SEEK_SET);
-  ssize_t nwrite = write(cache_fd, current_key, KEY_SIZE);
+  ssize_t nwrite = write(cache_fd, old_key, KEY_SIZE);
   if (nwrite < 0) {
       *errno_provenance = "update_cache_key:write";
       return -1;
@@ -825,7 +826,7 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args
       valid_cache = cache_key_equal_slow_path(&current_key, &cached_key, input_data);
       if (valid_cache) {
         if (!readonly) {
-          if (update_cache_key(&current_key, cache_fd, &errno_provenance)) {
+          if (update_cache_key(&current_key, &cached_key, cache_fd, &errno_provenance)) {
               exception_message = path_v;
               goto fail_errno;
           }
@@ -993,7 +994,7 @@ bs_precompile(char * path, VALUE path_v, char * cache_path, VALUE handler)
       }
       valid_cache = cache_key_equal_slow_path(&current_key, &cached_key, input_data);
        if (valid_cache) {
-         if (update_cache_key(&current_key, cache_fd, &errno_provenance)) {
+         if (update_cache_key(&current_key, &cached_key, cache_fd, &errno_provenance)) {
              goto fail;
          }
       }
