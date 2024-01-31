@@ -1,5 +1,8 @@
 # Unreleased
 
+* Disable stale cache entries revalidation by default as it seems to cause cache corruption issues. See #471 and #474.
+  Will be re-enabled in a future version once the root cause is identified.
+
 * Fix a potential compilation issue on some systems. See #470.
 
 # 1.18.1
