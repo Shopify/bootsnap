@@ -36,16 +36,16 @@ module Bootsnap
     end
 
     def precompile_command(*sources)
-      require "bootsnap/compile_cache/iseq"
-      require "bootsnap/compile_cache/yaml"
-      require "bootsnap/compile_cache/json"
+      require "bootsnap/compile_cache"
 
       fix_default_encoding do
-        Bootsnap::CompileCache::ISeq.cache_dir = cache_dir
-        Bootsnap::CompileCache::YAML.init!
-        Bootsnap::CompileCache::YAML.cache_dir = cache_dir
-        Bootsnap::CompileCache::JSON.init!
-        Bootsnap::CompileCache::JSON.cache_dir = cache_dir
+        Bootsnap::CompileCache.setup(
+          cache_dir: cache_dir,
+          iseq: iseq,
+          yaml: yaml,
+          json: json,
+          revalidation: true,
+        )
 
         @work_pool = WorkerPool.create(size: jobs, jobs: {
           ruby: method(:precompile_ruby),
