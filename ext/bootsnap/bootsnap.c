@@ -922,9 +922,9 @@ bs_fetch(char * path, VALUE path_v, char * cache_path, VALUE handler, VALUE args
   goto succeed; /* output_data is now the correct return. */
 
 #define CLEANUP \
-  if (status != Qfalse) bs_instrumentation(status, path_v); \
   if (current_fd >= 0)  close(current_fd); \
-  if (cache_fd >= 0)    close(cache_fd);
+  if (cache_fd >= 0)    close(cache_fd); \
+  if (status != Qfalse) bs_instrumentation(status, path_v);
 
 succeed:
   CLEANUP;
