@@ -24,6 +24,7 @@ module Bootsnap
         compile_cache_json: true,
         ignore_directories: nil,
         readonly: false,
+        revalidation: false,
       )
 
       Bootsnap.default_setup
@@ -41,6 +42,7 @@ module Bootsnap
         compile_cache_json: true,
         ignore_directories: nil,
         readonly: false,
+        revalidation: false,
       )
 
       Bootsnap.default_setup
@@ -58,6 +60,7 @@ module Bootsnap
         compile_cache_json: true,
         ignore_directories: nil,
         readonly: false,
+        revalidation: false,
       )
 
       Bootsnap.default_setup
@@ -75,6 +78,7 @@ module Bootsnap
         compile_cache_json: false,
         ignore_directories: nil,
         readonly: false,
+        revalidation: false,
       )
 
       Bootsnap.default_setup
@@ -99,6 +103,7 @@ module Bootsnap
         compile_cache_json: true,
         ignore_directories: nil,
         readonly: false,
+        revalidation: false,
       )
       Bootsnap.expects(:logger=).with($stderr.method(:puts))
 
@@ -117,6 +122,41 @@ module Bootsnap
         compile_cache_json: true,
         ignore_directories: %w[foo bar],
         readonly: false,
+        revalidation: false,
+      )
+
+      Bootsnap.default_setup
+    end
+
+    def test_default_setup_with_BOOTSNAP_READONLY
+      ENV["BOOTSNAP_READONLY"] = "something"
+
+      Bootsnap.expects(:setup).with(
+        cache_dir: @tmp_dir,
+        development_mode: true,
+        load_path_cache: true,
+        compile_cache_iseq: true,
+        compile_cache_yaml: true,
+        compile_cache_json: true,
+        ignore_directories: nil,
+        readonly: true,
+        revalidation: false,
+      )
+
+      Bootsnap.default_setup
+
+      ENV["BOOTSNAP_READONLY"] = "false"
+
+      Bootsnap.expects(:setup).with(
+        cache_dir: @tmp_dir,
+        development_mode: true,
+        load_path_cache: true,
+        compile_cache_iseq: true,
+        compile_cache_yaml: true,
+        compile_cache_json: true,
+        ignore_directories: nil,
+        readonly: false,
+        revalidation: false,
       )
 
       Bootsnap.default_setup

@@ -83,7 +83,7 @@ module Bootsnap
       env = ENV["RAILS_ENV"] || ENV["RACK_ENV"] || ENV["ENV"]
       development_mode = ["", nil, "development"].include?(env)
 
-      unless ENV["DISABLE_BOOTSNAP"]
+      if enabled?("BOOTSNAP")
         cache_dir = ENV["BOOTSNAP_CACHE_DIR"]
         unless cache_dir
           config_dir_frame = caller.detect do |line|
@@ -112,11 +112,12 @@ module Bootsnap
         setup(
           cache_dir: cache_dir,
           development_mode: development_mode,
-          load_path_cache: !ENV["DISABLE_BOOTSNAP_LOAD_PATH_CACHE"],
-          compile_cache_iseq: !ENV["DISABLE_BOOTSNAP_COMPILE_CACHE"],
-          compile_cache_yaml: !ENV["DISABLE_BOOTSNAP_COMPILE_CACHE"],
-          compile_cache_json: !ENV["DISABLE_BOOTSNAP_COMPILE_CACHE"],
-          readonly: !!ENV["BOOTSNAP_READONLY"],
+          load_path_cache: enabled?("BOOTSNAP_LOAD_PATH_CACHE"),
+          compile_cache_iseq: enabled?("BOOTSNAP_COMPILE_CACHE"),
+          compile_cache_yaml: enabled?("BOOTSNAP_COMPILE_CACHE"),
+          compile_cache_json: enabled?("BOOTSNAP_COMPILE_CACHE"),
+          readonly: bool_env("BOOTSNAP_READONLY"),
+          revalidation: bool_env("BOOTSNAP_REVALIDATE"),
           ignore_directories: ignore_directories,
         )
 
@@ -148,5 +149,16 @@ module Bootsnap
 
     # Allow the C extension to redefine `rb_get_path` without warning.
     alias_method :rb_get_path, :rb_get_path # rubocop:disable Lint/DuplicateMethods
+
+    private
+
+    def enabled?(key)
+      !ENV["DISABLE_#{key}"]
+    end
+
+    def bool_env(key, default = false)
+      value = ENV.fetch(key) { default }
+      !["0", "false", false].include?(value)
+    end
   end
 end
