@@ -85,6 +85,13 @@ module Bootsnap
         store.transaction { store.set("a", 1) }
       end
 
+      def test_with_broken_symlink
+        FileUtils.ln_s(@path, "#{@dir}/store_broken")
+        store = Store.new("#{@dir}/store_broken/store")
+
+        store.transaction { store.set("a", "b") }
+      end
+
       def test_ignore_read_only_filesystem
         MessagePack.expects(:dump).raises(Errno::EROFS.new("Read-only file system @ rb_sysopen"))
         store.transaction { store.set("a", 1) }

@@ -1,5 +1,7 @@
 # Unreleased
 
+* Fix startup failure if the cache directory points to a broken symlink.
+
 # 1.18.3
 
 * Fix the cache corruption issue in the revalidation feature. See #474.
