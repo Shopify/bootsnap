@@ -122,6 +122,8 @@ module Bootsnap
         stack.reverse_each do |dir|
           Dir.mkdir(dir)
         rescue SystemCallError
+          # Check for broken symlinks. Calling File.realpath will raise Errno::ENOENT if that is the case
+          File.realpath(dir) if File.symlink?(dir)
           raise unless File.directory?(dir)
         end
       end
