@@ -146,15 +146,6 @@ struct s2o_data;
 struct i2o_data;
 struct i2s_data;
 
-/* https://bugs.ruby-lang.org/issues/13667 */
-extern VALUE rb_get_coverages(void);
-static VALUE
-bs_rb_coverage_running(VALUE self)
-{
-  VALUE cov = rb_get_coverages();
-  return RTEST(cov) ? Qtrue : Qfalse;
-}
-
 static VALUE
 bs_rb_get_path(VALUE self, VALUE fname)
 {
@@ -193,7 +184,6 @@ Init_bootsnap(void)
   rb_define_module_function(rb_mBootsnap, "instrumentation_enabled=", bs_instrumentation_enabled_set, 1);
   rb_define_module_function(rb_mBootsnap_CompileCache_Native, "readonly=", bs_readonly_set, 1);
   rb_define_module_function(rb_mBootsnap_CompileCache_Native, "revalidation=", bs_revalidation_set, 1);
-  rb_define_module_function(rb_mBootsnap_CompileCache_Native, "coverage_running?", bs_rb_coverage_running, 0);
   rb_define_module_function(rb_mBootsnap_CompileCache_Native, "fetch", bs_rb_fetch, 4);
   rb_define_module_function(rb_mBootsnap_CompileCache_Native, "precompile", bs_rb_precompile, 3);
   rb_define_module_function(rb_mBootsnap_CompileCache_Native, "compile_option_crc32=", bs_compile_option_crc32_set, 1);
