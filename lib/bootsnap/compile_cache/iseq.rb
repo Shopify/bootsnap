@@ -84,7 +84,7 @@ module Bootsnap
       module InstructionSequenceMixin
         def load_iseq(path)
           # Having coverage enabled prevents iseq dumping/loading.
-          return nil if defined?(Coverage) && Bootsnap::CompileCache::Native.coverage_running?
+          return nil if defined?(Coverage) && Coverage.running?
 
           Bootsnap::CompileCache::ISeq.fetch(path.to_s)
         rescue RuntimeError => error

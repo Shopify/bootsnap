@@ -21,12 +21,13 @@ class CompileCacheTest < Minitest::Test
     end
   end
 
-  def test_coverage_running?
-    refute(Bootsnap::CompileCache::Native.coverage_running?)
+  def test_coverage_running
     require "coverage"
+    Bootsnap::CompileCache::ISeq.expects(:fetch).times(0)
     begin
       Coverage.start
-      assert(Bootsnap::CompileCache::Native.coverage_running?)
+      path = Help.set_file("a.rb", "a = a = 3", 100)
+      load(path)
     ensure
       Coverage.result
     end
