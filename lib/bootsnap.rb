@@ -156,7 +156,7 @@ module Bootsnap
       !ENV["DISABLE_#{key}"]
     end
 
-    def bool_env(key, default = false)
+    def bool_env(key, default: false)
       value = ENV.fetch(key) { default }
       !["0", "false", false].include?(value)
     end
