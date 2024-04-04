@@ -2,7 +2,7 @@ env:
   BOOTSNAP_PEDANTIC: '1'
 
 up:
-  - ruby: 2.6.0
+  - ruby
   - bundler
 commands:
   build: rake compile
