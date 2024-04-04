@@ -222,6 +222,9 @@ module Bootsnap
 
     def parser
       @parser ||= OptionParser.new do |opts|
+        opts.version = Bootsnap::VERSION
+        opts.program_name = "bootsnap"
+
         opts.banner = "Usage: bootsnap COMMAND [ARGS]"
         opts.separator ""
         opts.separator "GLOBAL OPTIONS"

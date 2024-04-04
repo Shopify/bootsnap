@@ -75,6 +75,24 @@ module Bootsnap
       assert_equal 0, CLI.new(["precompile", "-j", "0", "--no-yaml", path]).run
     end
 
+    if Process.respond_to?(:fork)
+      def test_version_flag
+        read, write = IO.pipe
+        # optparse --version immediately call exit so we test in a subprocess
+        pid = fork do 
+          STDOUT.reopen(write)
+          read.close
+          exit(CLI.new(["--version"]).run)
+        end
+        write.close
+
+        _, status = Process.waitpid2(pid)
+        assert_predicate status, :success?
+
+        assert_includes read.read, Bootsnap::VERSION
+      end
+    end
+
     private
 
     def skip_unless_iseq
