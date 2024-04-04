@@ -21,7 +21,16 @@ module Bootsnap
 
     attr_reader :cache_dir, :argv
 
-    attr_accessor :compile_gemfile, :exclude, :verbose, :iseq, :yaml, :json, :jobs
+    attr_accessor(
+      :compile_gemfile,
+      :exclude,
+      :verbose,
+      :iseq,
+      :yaml,
+      :json,
+      :jobs,
+      :version
+    )
 
     def initialize(argv)
       @argv = argv
@@ -29,10 +38,16 @@ module Bootsnap
       self.compile_gemfile = false
       self.exclude = nil
       self.verbose = false
+      self.version = false
       self.jobs = Etc.nprocessors
       self.iseq = true
       self.yaml = true
       self.json = true
+    end
+
+    def version_command
+      puts Bootsnap::VERSION
+      0
     end
 
     def precompile_command(*sources)
@@ -113,7 +128,7 @@ module Bootsnap
     def run
       parser.parse!(argv)
       command = argv.shift
-      method = "#{command}_command"
+      method = version ? "version_command" : "#{command}_command"
       if respond_to?(method)
         public_send(method, *argv)
       else
@@ -228,6 +243,13 @@ module Bootsnap
         opts.separator ""
 
         help = <<~HELP
+          Prints the version of bootsnap
+        HELP
+        opts.on("--version", help.strip) do
+          self.version = true
+        end
+
+        help = <<~HELP
           Path to the bootsnap cache directory. Defaults to tmp/cache
         HELP
         opts.on("--cache-dir DIR", help.strip) do |dir|
@@ -252,6 +274,7 @@ module Bootsnap
         opts.separator "COMMANDS"
         opts.separator ""
         opts.separator "    precompile [DIRECTORIES...]: Precompile all .rb files in the passed directories"
+        opts.separator "    version: Prints the version of bootsnap"
 
         help = <<~HELP
           Precompile the gems in Gemfile

@@ -75,6 +75,24 @@ module Bootsnap
       assert_equal 0, CLI.new(["precompile", "-j", "0", "--no-yaml", path]).run
     end
 
+    def test_version
+      out, err = capture_io do
+        assert_equal 0, CLI.new(["version"]).run
+      end
+
+      assert_equal Bootsnap::VERSION + "\n", out
+      assert_equal "", err
+    end
+
+    def test_version_flag
+      out, err = capture_io do
+        assert_equal 0, CLI.new(["--version"]).run
+      end
+
+      assert_equal Bootsnap::VERSION + "\n", out
+      assert_equal "", err
+    end
+
     private
 
     def skip_unless_iseq
