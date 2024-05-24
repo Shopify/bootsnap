@@ -79,8 +79,8 @@ module Bootsnap
       def test_version_flag
         read, write = IO.pipe
         # optparse --version immediately call exit so we test in a subprocess
-        pid = fork do 
-          STDOUT.reopen(write)
+        pid = fork do
+          $stdout.reopen(write)
           read.close
           exit(CLI.new(["--version"]).run)
         end
