@@ -25,6 +25,11 @@ module Bootsnap
     # This is useful before bootsnap is fully-initialized to load gems that it
     # depends on, without forcing full LOAD_PATH traversals.
     def self.with_gems(*gems)
+      # Ensure the gems are activated (their paths are in $LOAD_PATH)
+      gems.each do |gem_name|
+        gem gem_name
+      end
+
       orig = $LOAD_PATH.dup
       $LOAD_PATH.clear
       gems.each do |gem|
