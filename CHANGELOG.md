@@ -1,5 +1,7 @@
 # Unreleased
 
+# 1.18.4
+
 * Allow using bootsnap without bundler. See #488.
 * Fix startup failure if the cache directory points to a broken symlink.
 
