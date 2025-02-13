@@ -45,14 +45,9 @@ module Bootsnap
           @pid = nil
         end
 
-        def write(message, block: true)
+        def write(message)
           payload = Marshal.dump(message)
-          if block
-            to_io.write(payload)
-            true
-          else
-            to_io.write_nonblock(payload, exception: false) != :wait_writable
-          end
+          to_io.write_nonblock(payload)
         end
 
         def close
@@ -74,7 +69,7 @@ module Bootsnap
           @pid = Process.fork do
             to_io.close
             work_loop
-            exit!(0)
+            exit!(true)
           end
           @pipe_out.close
           true
@@ -84,7 +79,7 @@ module Bootsnap
       def initialize(size:, jobs: {})
         @size = size
         @jobs = jobs
-        @queue = Queue.new
+        @queue = Thread::Queue.new
         @pids = []
       end
 
@@ -98,23 +93,25 @@ module Bootsnap
 
       def dispatch_loop
         loop do
-          case job = @queue.pop
-          when nil
+          job = @queue.pop
+          if job
+            IO.select(nil, @workers).tap do |(_nil, available)|
+              available.sample.write(job)
+            end
+          else
+            closed = []
             @workers.each do |worker|
               worker.write([:exit])
               worker.close
+              closed << worker
+            rescue IO::WaitWritable
+              next
             end
-            return true
-          else
-            unless @workers.sample.write(job, block: false)
-              free_worker.write(job)
-            end
+            @workers.delete_if(&closed.method(:include?))
+            return if @workers.empty?
+            IO.select(nil, @workers)
           end
         end
-      end
-
-      def free_worker
-        IO.select(nil, @workers)[1].sample
       end
 
       def push(*args)
