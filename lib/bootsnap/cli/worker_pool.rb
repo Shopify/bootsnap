@@ -5,11 +5,40 @@ module Bootsnap
     class WorkerPool
       class << self
         def create(size:, jobs:)
-          if size > 0 && Process.respond_to?(:fork)
+          if size > 0 && _fork_works?
             new(size: size, jobs: jobs)
           else
             Inline.new(jobs: jobs)
           end
+        end
+
+        private
+
+        def _fork_works?
+          return false unless ::Process.respond_to?(:fork)
+
+          # test forks
+          # this will hang on certain QEMU environments
+          pids = 2.times.map do
+            ::Process.fork do
+              exit!(true)
+            end
+          end
+          # Wait for all forked processes, 1 second at most
+          returned = []
+          11.times do |count|
+            sleep 0.1 unless count.zero?
+            pids.each do |pid|
+              next if returned.include?(pid)
+
+              pid, _status = ::Process.wait2(pid, ::Process::WNOHANG)
+              returned << pid if pid
+            end
+            # No issues
+            return true unless returned.size < pids.size
+          end
+          # Detected a freeze
+          false
         end
       end
 
