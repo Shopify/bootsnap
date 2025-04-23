@@ -331,7 +331,7 @@ To do so you can use the `bootsnap precompile` command.
 Example:
 
 ```bash
-$ bundle exec bootsnap precompile --gemfile app/ lib/
+$ bundle exec bootsnap precompile --gemfile app/ lib/ config/
 ```
 
 ## When not to use Bootsnap
