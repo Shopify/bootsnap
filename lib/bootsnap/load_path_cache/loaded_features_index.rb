@@ -142,7 +142,7 @@ module Bootsnap
       # will _never_ run on MacOS, and therefore think they can get away
       # with calling a Ruby file 'x.dylib.rb' and then requiring it as 'x.dylib'.)
       #
-      # See <https://ruby-doc.org/core-2.6.4/Kernel.html#method-i-require>.
+      # See <https://docs.ruby-lang.org/en/master/Kernel.html#method-i-require>.
       def extension_elidable?(feature)
         feature.to_s.end_with?(".rb", ".so", ".o", ".dll", ".dylib")
       end
