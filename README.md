@@ -188,7 +188,7 @@ result too, raising a `LoadError` without touching the filesystem at all.
 
 Ruby has complex grammar and parsing it is not a particularly cheap operation. Since 1.9, Ruby has
 translated ruby source to an internal bytecode format, which is then executed by the Ruby VM. Since
-2.3.0, Ruby [exposes an API](https://ruby-doc.org/core-2.3.0/RubyVM/InstructionSequence.html) that
+2.3.0, Ruby [exposes an API](https://docs.ruby-lang.org/en/master/RubyVM/InstructionSequence.html) that
 allows caching that bytecode. This allows us to bypass the relatively-expensive compilation step on
 subsequent loads of the same file.
 
