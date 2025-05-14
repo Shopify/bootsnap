@@ -1,14 +1,48 @@
 # frozen_string_literal: true
 
+require "etc"
+require "rbconfig"
+
 module Bootsnap
   class CLI
     class WorkerPool
       class << self
         def create(size:, jobs:)
+          size ||= default_size
           if size > 0 && Process.respond_to?(:fork)
             new(size: size, jobs: jobs)
           else
             Inline.new(jobs: jobs)
+          end
+        end
+
+        def default_size
+          size = [Etc.nprocessors, cpu_quota || 0].min
+          case size
+          when 0, 1
+            0
+          else
+            size
+          end
+        end
+
+        def cpu_quota
+          if RbConfig::CONFIG["target_os"].include?("linux")
+            if File.exist?("/sys/fs/cgroup/cpu.max")
+              # cgroups v2: https://docs.kernel.org/admin-guide/cgroup-v2.html#cpu-interface-files
+              cpu_max = File.read("/sys/fs/cgroup/cpu.max")
+              return nil if cpu_max.start_with?("max ") # no limit
+              max, period = cpu_max.split.map(&:to_f)
+              max / period
+            elsif File.exist?("/sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us")
+              # cgroups v1: https://kernel.googlesource.com/pub/scm/linux/kernel/git/glommer/memcg/+/cpu_stat/Documentation/cgroups/cpu.txt
+              max = File.read("/sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us").to_i
+              # If the cpu.cfs_quota_us is -1, cgroup does not adhere to any CPU time restrictions
+              # https://docs.kernel.org/scheduler/sched-bwc.html#management
+              return nil if max <= 0
+              period = File.read("/sys/fs/cgroup/cpu,cpuacct/cpu.cfs_period_us").to_f
+              max / period
+            end
           end
         end
       end

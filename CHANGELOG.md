@@ -1,5 +1,7 @@
 # Unreleased
 
+* Improve CLI to detect cgroup CPU limits and avoid spawning too many worker processes.
+
 # 1.18.4
 
 * Allow using bootsnap without bundler. See #488.

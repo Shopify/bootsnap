@@ -4,7 +4,6 @@ require "bootsnap"
 require "bootsnap/cli/worker_pool"
 require "optparse"
 require "fileutils"
-require "etc"
 
 module Bootsnap
   class CLI
@@ -29,7 +28,7 @@ module Bootsnap
       self.compile_gemfile = false
       self.exclude = nil
       self.verbose = false
-      self.jobs = Etc.nprocessors
+      self.jobs = nil
       self.iseq = true
       self.yaml = true
       self.json = true
