@@ -24,6 +24,7 @@ jobs:
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
+          cache-version: 2
       - run: bundle exec rake
 
   rubocop:
@@ -36,6 +37,7 @@ jobs:
         with:
           ruby-version: '3.3'
           bundler-cache: true
+          cache-version: 2
       - run: bundle exec rubocop
 
   rubies:
@@ -51,6 +53,7 @@ jobs:
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
+          cache-version: 2
       - run: bundle exec rake
 
   psych4:
@@ -68,6 +71,7 @@ jobs:
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
+          cache-version: 2
       - run: bundle exec rake
 
   minimal:
@@ -83,4 +87,5 @@ jobs:
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
+          cache-version: 2
       - run: bin/test-minimal-support
