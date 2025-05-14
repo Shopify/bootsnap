@@ -1,5 +1,7 @@
 # Unreleased
 
+# 1.18.5
+
 * Attempt to detect a QEMU bug that can cause `bootsnap precompile` to hang forever when building ARM64 docker images
   from x86_64 machines. See #495.
 * Improve CLI to detect cgroup CPU limits and avoid spawning too many worker processes.
