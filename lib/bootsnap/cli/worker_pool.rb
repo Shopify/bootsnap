@@ -19,7 +19,7 @@ module Bootsnap
 
         def default_size
           nprocessors = Etc.nprocessors
-          size = [nprocessors, cpu_quota || nprocessors].min
+          size = [nprocessors, cpu_quota&.to_i || nprocessors].min
           case size
           when 0, 1
             0
