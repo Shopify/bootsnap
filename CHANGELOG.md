@@ -1,5 +1,7 @@
 # Unreleased
 
+# 1.18.6
+
 * Fix cgroup CPU limits detection in CLI.
 
 # 1.18.5
