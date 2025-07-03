@@ -334,6 +334,20 @@ Example:
 $ bundle exec bootsnap precompile --gemfile app/ lib/ config/
 ```
 
+## Known issues
+
+### QEMU environments
+
+When building cross-platform Docker images, QEMU is often used for emulation and can be the source of a limitation that causes forked processes to hang. While Bootsnap includes automatic detection for this issue (as of [PR #501](https://github.com/Shopify/bootsnap/pull/501)), the detection may not always be sufficient.
+
+If you encounter hangs during precompilation in QEMU-based environments (such as when using Docker buildx for cross-platform builds), you can work around this by disabling parallelization with the `-j 0` option:
+
+```bash
+$ bundle exec bootsnap precompile -j 0 --gemfile app/ lib/ config/
+```
+
+See [Issue #495](https://github.com/Shopify/bootsnap/issues/495) for more details about this QEMU-related issue.
+
 ## When not to use Bootsnap
 
 *Alternative engines*: Bootsnap is pretty reliant on MRI features, and parts are disabled entirely on alternative ruby
